@@ -41,6 +41,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
     const onSubmit = useCallback((_: GestureResponderEvent) => {
         // TODO: form validation + submit
         console.log({ name, email, pass });
+        navigation.navigate('Home');
     }, [name, email, pass]);
 
     return (

@@ -1,0 +1,75 @@
+// app/navigation/Root.tsx
+import React, { useEffect, useState, useRef } from 'react';
+import {
+      StatusBar, Platform,
+      StyleSheet,
+      useColorScheme,
+      Animated,
+} from "react-native";
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import MainTabs from './MainTabs';
+
+import SplashScreen from '../../components/SplashScreen';
+import ResetPasswordScreen from '../auth/ResetPasswordScreen';
+import AboutScreen from "../../screens/AboutScreen";
+import SignUpScreen from '../auth/SignUpScreen';
+import SignInScreen from '../auth/SignInScreen';
+import ForgetPasswordScreen from '../auth/ForgetPasswordScreen';
+import CodeVerificationScreen from '../auth/CodeVerificationScreen';
+import MedicalPreferencesScreen from '../preferences/MedicalPreferencesScreen';
+import SelectPreferencesScreen from '../preferences/SelectPreferencesScreen';
+import DietaryPreferencesScreen from '../preferences/DietaryPreferences';
+import OrderDetailScreen from '../order/OrderDetailScreen';
+const Stack = createNativeStackNavigator();
+
+export default function Root() {
+      const isDarkMode = useColorScheme() === "dark";
+      const [loading, setLoading] = useState(true);
+      const fadeAnim = useRef(new Animated.Value(1)).current;
+
+      useEffect(() => {
+            const timer = setTimeout(() => {
+                  // Fade out splash
+                  Animated.timing(fadeAnim, {
+                        toValue: 0,
+                        duration: 800,
+                        useNativeDriver: true,
+                  }).start(() => setLoading(false));
+            }, 2000);
+
+            return () => clearTimeout(timer);
+      }, [fadeAnim]);
+
+      if (loading) {
+            return <SplashScreen fadeAnim={fadeAnim} />;
+      }
+      return (
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="About" component={AboutScreen} />
+                  <Stack.Screen name="SignUp" component={SignUpScreen} />
+                  <Stack.Screen name="SignIn" component={SignInScreen} />
+                  <Stack.Screen name="ForgetPassword" component={ForgetPasswordScreen} />
+                  <Stack.Screen name="CodeVerification" component={CodeVerificationScreen} />
+                  <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+                  {/* Add preference screens here */}
+                  <Stack.Screen name="MedicalPreferences" component={MedicalPreferencesScreen} />
+                  <Stack.Screen name="SelectPreferences" component={SelectPreferencesScreen} />
+                  <Stack.Screen name="DietaryPreferences" component={DietaryPreferencesScreen} />
+
+                  {/* group WITH bottom bar */}
+                  <Stack.Screen name="Home" component={MainTabs} />
+                  <Stack.Screen name="Order" component={MainTabs} />
+                  <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+
+                  <Stack.Screen name="Account" component={MainTabs} />
+                  <Stack.Screen name="Favorites" component={MainTabs} />
+                  <Stack.Screen name="Progress" component={MainTabs} />
+
+                  {/* deep screens without bar (pushed over tabs) */}
+                  {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
+
+                  <Stack.Screen name="DishDetail" component={SignInScreen} />
+
+            </Stack.Navigator>
+      );
+}

@@ -7,26 +7,20 @@ import {
       TextInput,
       Modal,
       FlatList,
-      SafeAreaView,
+
       Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS } from '../../ui/theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
 
-const COLORS = {
-      green: '#0B5733',
-      greenLight: '#0E6C40',
-      white: '#FFFFFF',
-      text: '#232323',
-      subText: '#8e8e8e',
-      divider: '#e7e7e7',
-      chip: '#E3F0E7',
-} as const;
+
 
 const ages = Array.from({ length: 83 }, (_, i) => `${i + 18}`); // 18..100
 const genders = ['Male', 'Female', 'Other'];

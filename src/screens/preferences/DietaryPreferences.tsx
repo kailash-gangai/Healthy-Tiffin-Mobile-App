@@ -5,13 +5,13 @@ import {
       StyleSheet,
       TouchableOpacity,
       FlatList,
-      SafeAreaView,
       Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };

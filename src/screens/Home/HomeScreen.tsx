@@ -1,6 +1,6 @@
-import React from 'react';
-import { SafeAreaView, ScrollView, View } from 'react-native';
-import { COLORS, GAP, PADDING } from '../../ui/theme';
+import React, { useState } from 'react';
+import { ScrollView, View, StyleSheet, Text } from 'react-native';
+import { COLORS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
 import StatChips from '../../components/StatChips';
 import OrderToggle from '../../components/OrderToggle';
@@ -20,46 +20,59 @@ const DISHES = [
 
 const HomeScreen: React.FC = () => {
       const [dayIndex, setDayIndex] = React.useState(0);
+      const [tab, setTab] = useState<0 | 1>(0);
 
       return (
-            <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
-                  <ScrollView contentContainerStyle={{ padding: PADDING, gap: GAP }}>
+            <View style={{ flex: 1, backgroundColor: COLORS.white }}>
+                  <ScrollView bounces={false}>
                         <HeaderGreeting name="Sam" />
                         <StatChips
                               items={[
-                                    { label: '70g', sub: 'Protein' },
-                                    { label: '120g', sub: 'Carbs' },
-                                    { label: '50g', sub: 'Fats' },
-                                    { label: '850', sub: 'Calories' },
+                                    { value: '70', unit: 'kg', type: 'Weight', bgColor: '#DDE3F6', color: '#3B49DF' },
+                                    { value: '120', unit: '', type: 'Steps', bgColor: '#DDEEE2', color: '#0B5733' },
+                                    { value: '10', unit: 'hrs', type: 'Sleep', bgColor: '#EDE7FB', color: '#6A4CDB' },
+                                    { value: '8', unit: 'Glasses', type: 'Water', bgColor: '#EAF3FB', color: '#0B73B3' },
+                                    { value: '60', unit: 'Cal', type: 'Calories', bgColor: '#FDF1D9', color: '#D27C00' },
                               ]}
                         />
 
-                        <OrderToggle />
+                        <OrderToggle index={tab} onChange={setTab} />
+                        {tab === 0 && (
+                              <View style={{ marginTop: 20, backgroundColor: COLORS.white }}>
+                                    <DayTabs
+                                          days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']} onChange={setDayIndex}
+                                    />
+                                    <Section hero={require('../../assets/banners/chana.jpg')} title="PROTEINS" note="Select from 4 options" collapsed={false}>
+                                          {DISHES.map(d => (
+                                                <DishCard key={d.id} item={d} />
+                                          ))}
+                                    </Section>
 
-                        <DayTabs
-                              days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
-                              index={dayIndex}
-                              onChange={setDayIndex}
-                        />
+                                    <Section hero={require('../../assets/banners/chana.jpg')} title="VEGGIES" note="Select 2 from 6 options"
+                                          collapsed={false}>
+                                          {DISHES.map(d => (
+                                                <DishCard key={d.id} item={d} />
+                                          ))}
+                                    </Section>
+                                    <Section hero={require('../../assets/banners/chana.jpg')} title="SIDES" note="Select from 4 options" />
+                                    <Section hero={require('../../assets/banners/chana.jpg')} title="PROBIOTIC" note="Select from 2 options" />
 
-                        <Section title="PROTEINS" note="Select from 4 options" collapsed={false}>
-                              {DISHES.map(d => (
-                                    <DishCard key={d.id} item={d} />
-                              ))}
-                        </Section>
 
-                        <Section title="VEGGIES" note="Select 2 from 6 options" />
-                        <Section title="SIDES" note="Select from 4 options" />
-                        <Section title="PROBIOTIC" note="Select from 2 options" />
+                              </View>
 
-                        <Section title="Immunity Add on’s">
-                              <AddonRow title="Gluten/sugar FREE Dessert" note="Select from 2 options" />
-                              <AddonRow title="Health Boost Drink" note="Select from 3 options" />
-                        </Section>
+                        )}
 
-                        <PriceSummary rows={[['Meal cost', '$28'], ['Add on’s', '$5'], ['Total', '$33']]} />
-
-                        <CTAButton label="Add to cart" icon="shopping-bag" onPress={() => { }} />
+                        {/* One Week Order */}
+                        {tab === 1 && (
+                              <View style={{ marginTop: 20 }}>
+                                    <Text style={{ fontSize: 18, fontWeight: "700" }}>One Week Order Section</Text>
+                                    {/* put your components here */}
+                              </View>
+                        )}
+                        <View style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}>
+                              <PriceSummary rows={[['Meal cost', '$28'], ['Add on’s', '$5'], ['Total', '$33']]} />
+                              <CTAButton label="Add to cart" iconName="shopping-bag" onPress={() => { }} />
+                        </View>
 
                         <FitnessCarousel
                               items={[
@@ -68,8 +81,12 @@ const HomeScreen: React.FC = () => {
                               ]}
                         />
                   </ScrollView>
-            </SafeAreaView>
+            </View>
       );
 };
 
 export default HomeScreen;
+const styles = StyleSheet.create({
+      pad: { paddingHorizontal: SPACING, marginTop: -34 },
+
+});

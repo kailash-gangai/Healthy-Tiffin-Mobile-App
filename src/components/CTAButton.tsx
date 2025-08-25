@@ -1,22 +1,43 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { Fontisto } from '@react-native-vector-icons/fontisto';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
-import { COLORS } from '../ui/theme';
+import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent } from 'react-native';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
-export default function CTAButton({ label, icon, onPress }: { label: string; icon?: string; onPress: () => void }) {
+type Props = {
+      label: string;
+      onPress: (e: GestureResponderEvent) => void;
+      iconName?: string;     // defaults to shopping-bag
+      disabled?: boolean;
+};
+
+export default function CTAButton({ label, onPress, iconName = 'shopping-bag', disabled }: Props) {
       return (
-            <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
-                  <LinearGradient colors={['#FFC107', '#FFC107']} style={s.btn}>
-                        <Text style={s.txt}>{label}</Text>
-                        {icon && <FontAwesome5 iconStyle='solid' name={icon} size={18} color="#000" />}
-                  </LinearGradient>
+            <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={onPress}
+                  disabled={disabled}
+                  style={[s.btn, disabled && s.btnDisabled]}
+                  accessibilityRole="button"
+            >
+                  <Text style={s.txt}>{label}</Text>
+                  <FontAwesome5 iconStyle='solid' name={iconName} size={18} color="#000" style={{ marginLeft: 8 }} />
             </TouchableOpacity>
       );
 }
 
 const s = StyleSheet.create({
-      btn: { height: 50, borderRadius: 12, backgroundColor: '#FFC107', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-      txt: { fontWeight: '800', color: '#000' },
+      btn: {
+            height: 54,
+            borderRadius: 12,
+            backgroundColor: '#FFC107',   // mustard like design
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            shadowColor: '#000',
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 2,
+      },
+      btnDisabled: { opacity: 0.5 },
+      txt: { fontWeight: '800', color: '#000', fontSize: 16 },
 });

@@ -1,24 +1,32 @@
 import React from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS } from '../ui/theme';
+import { COLORS, SHADOW } from '../ui/theme';
 
-export default function FitnessCarousel({ items }: { items: { id: string; title: string; image: any }[] }) {
+type Item = { id: string; title: string; image: any };
+
+export default function FitnessCarousel({ items }: { items: Item[] }) {
       return (
             <View>
                   <View style={s.head}>
                         <Text style={s.title}>Free Fitness Sessions</Text>
-                        <TouchableOpacity><Text style={s.link}>View All</Text></TouchableOpacity>
+                        <TouchableOpacity activeOpacity={0.7}>
+                              <Text style={s.link}>View All</Text>
+                        </TouchableOpacity>
                   </View>
+
                   <FlatList
                         horizontal
                         data={items}
-                        keyExtractor={i => i.id}
-                        ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
                         showsHorizontalScrollIndicator={false}
+                        keyExtractor={(i) => i.id}
+                        ItemSeparatorComponent={() => <View style={{ width: 14 }} />}
+                        contentContainerStyle={{ paddingRight: 6 }}
                         renderItem={({ item }) => (
                               <View style={s.card}>
                                     <Image source={item.image} style={s.img} />
-                                    <Text numberOfLines={2} style={s.txt}>{item.title}</Text>
+                                    <Text style={s.caption} numberOfLines={2}>
+                                          {item.title}
+                                    </Text>
                               </View>
                         )}
                   />
@@ -27,10 +35,27 @@ export default function FitnessCarousel({ items }: { items: { id: string; title:
 }
 
 const s = StyleSheet.create({
-      head: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-      title: { fontWeight: '800', color: COLORS.text },
-      link: { color: COLORS.sub },
-      card: { width: 220, backgroundColor: COLORS.white, borderRadius: 12, overflow: 'hidden' },
-      img: { width: '100%', height: 110 },
-      txt: { padding: 10, color: COLORS.text },
+      head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 16 },
+      title: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
+      link: { color: COLORS.green, textDecorationLine: 'underline', fontWeight: '700' },
+
+      card: {
+            width: 250,
+            backgroundColor: COLORS.white,
+            borderRadius: 16,
+            padding: 10,
+            ...SHADOW,
+            marginBottom: 20,
+      },
+      img: {
+            width: '100%',
+            height: 140,
+            borderRadius: 12,
+      },
+      caption: {
+            marginTop: 10,
+            color: COLORS.text,
+            fontSize: 16,
+            fontWeight: '700',
+      },
 });

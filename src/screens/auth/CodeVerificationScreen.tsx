@@ -78,7 +78,7 @@ const CodeVerificationScreen: React.FC<Props> = ({ navigation }) => {
     if (!isComplete) return;
     // TODO: call verify API 
     console.log('Verify code:', value);
-    navigation.navigate('ResetPassword');  
+    navigation.navigate('ResetPassword');
   }, [isComplete, value]);
 
   const onResend = () => {
@@ -153,7 +153,7 @@ const CodeVerificationScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Continue</Text>
-            <FontAwesome5  iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+            <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
           </LinearGradient>
         </TouchableOpacity>
 
