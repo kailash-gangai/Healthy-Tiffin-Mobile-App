@@ -14,8 +14,13 @@ export type RootStackParamList = {
   OrderDetail: { orderId: string };
   Order: undefined;
   Account: undefined;
+  Subscription: undefined;
+  EditProfile: undefined;
+  NotificationSettings: undefined;
+  EditPreferences: undefined;
+  ChangePassword: undefined;
+  AboutProfile: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
   // Add other screens here
-  // e.g., Profile: { userId: string };
-  // Settings: undefined;
-  // etc.
 };

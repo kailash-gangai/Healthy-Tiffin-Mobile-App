@@ -20,10 +20,16 @@ import MedicalPreferencesScreen from '../preferences/MedicalPreferencesScreen';
 import SelectPreferencesScreen from '../preferences/SelectPreferencesScreen';
 import DietaryPreferencesScreen from '../preferences/DietaryPreferences';
 import OrderDetailScreen from '../order/OrderDetailScreen';
+import SubscriptionScreen from '../account/SubscriptionScreen';
+import NotificationSettings from '../account/NotificationSettingScreen';
+import AboutProfile from '../account/AboutProfileScreen';
+import PrivacyPolicyScreen from '../account/PrivacyPolicyScreen';
+import TermsOfServiceScreen from '../account/TermsOfServiceScreen';
+import ChangePassword from '../account/ChangePasswordScreen';
+import EditProfile from '../account/EditProfileScreen';
 const Stack = createNativeStackNavigator();
 
 export default function Root() {
-      const isDarkMode = useColorScheme() === "dark";
       const [loading, setLoading] = useState(true);
       const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -44,7 +50,10 @@ export default function Root() {
             return <SplashScreen fadeAnim={fadeAnim} />;
       }
       return (
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Navigator screenOptions={{
+                  headerShown: false,
+                  animation: 'slide_from_bottom',
+            }}>
                   <Stack.Screen name="About" component={AboutScreen} />
                   <Stack.Screen name="SignUp" component={SignUpScreen} />
                   <Stack.Screen name="SignIn" component={SignInScreen} />
@@ -57,13 +66,21 @@ export default function Root() {
                   <Stack.Screen name="DietaryPreferences" component={DietaryPreferencesScreen} />
 
                   {/* group WITH bottom bar */}
-                  <Stack.Screen name="Home" component={MainTabs} />
-                  <Stack.Screen name="Order" component={MainTabs} />
                   <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
 
+                  <Stack.Screen name="Home" component={MainTabs} />
+                  <Stack.Screen name="Order" component={MainTabs} />
                   <Stack.Screen name="Account" component={MainTabs} />
                   <Stack.Screen name="Favorites" component={MainTabs} />
                   <Stack.Screen name="Progress" component={MainTabs} />
+
+                  <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+                  <Stack.Screen name="EditProfile" component={EditProfile} />
+                  <Stack.Screen name="NotificationSettings" component={NotificationSettings} />
+                  <Stack.Screen name="ChangePassword" component={ChangePassword} />
+                  <Stack.Screen name="AboutProfile" component={AboutProfile} />
+                  <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+                  <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
 
                   {/* deep screens without bar (pushed over tabs) */}
                   {/* <Stack.Screen name="Home" component={HomeScreen} /> */}

@@ -5,9 +5,10 @@ import { StatusBar, useColorScheme, Platform } from 'react-native';
 
 export default function App() {
   const isDarkMode = useColorScheme() === "dark";
+  console.log(isDarkMode);
   return (
     <NavigationContainer>
-      <StatusBar barStyle={isDarkMode == true ? "light-content" : "dark-content"} backgroundColor={Platform.OS === 'android' ? 'transparent' : undefined}
+      <StatusBar barStyle={isDarkMode == false ? "dark-content" : "light-content"} backgroundColor={Platform.OS === 'android' ? 'transparent' : undefined}
       />
       <Root />
     </NavigationContainer>

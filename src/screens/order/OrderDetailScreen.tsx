@@ -12,13 +12,13 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
       orderId?: string;
       plan?: 'Weekly' | 'One Day';
-      placedAt?: string;     // '17/12/2023 | 12:45 PM'
-      deliveredAt?: string;  // '17/12/2023 | 02:00 PM'
+      placedAt?: string;
+      deliveredAt?: string;
       items?: Item[];
-      total?: string;        // '$384'
-      cardLast4?: string;    // '436'
+      total?: string;
+      cardLast4?: string;
       addressLines?: string[];
-      receipt?: { label: string; value: string }[]; // [{label:'Total',value:'$80.45'},...]s
+      receipt?: { label: string; value: string }[];
       navigation: Nav
 };
 

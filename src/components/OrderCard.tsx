@@ -31,18 +31,21 @@ export default function OrderCard({
                         {/* title + plan tag */}
                         <View style={s.topRow}>
                               <Text style={s.title} numberOfLines={1}>{title}</Text>
+
+                        </View>
+
+                        {/* total */}
+                        <View style={s.kvWrap}>
+                              <Text style={s.kv}>
+                                    <Text style={s.k}>Order Total :</Text>
+                                    <Text style={s.v}> {total}</Text>
+                              </Text>
                               <View style={[s.tag, plan === 'Weekly' ? s.tagWeekly : s.tagOneDay]}>
                                     <Text style={[s.tagTxt, plan === 'Weekly' ? s.tagTxtWeekly : s.tagTxtOneDay]}>
                                           {plan}
                                     </Text>
                               </View>
                         </View>
-
-                        {/* total */}
-                        <Text style={s.kv}>
-                              <Text style={s.k}>Order Total :</Text>
-                              <Text style={s.v}> {total}</Text>
-                        </Text>
 
                         {/* meta */}
                         <Text style={s.meta}>Ordered : {orderedAt}</Text>
@@ -63,6 +66,7 @@ const s = StyleSheet.create({
       img: { width: 110, height: 110, borderRadius: 12, marginRight: 10, resizeMode: 'cover' },
       right: { flex: 1 },
       topRow: { flexDirection: 'row', alignItems: 'center' },
+      kvWrap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
       title: { flex: 1, color: COLORS.text, fontWeight: '800' },
 
       tag: { height: 24, borderRadius: 12, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },

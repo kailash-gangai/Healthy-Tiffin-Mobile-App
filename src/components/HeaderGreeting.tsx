@@ -57,7 +57,7 @@ const s = StyleSheet.create({
       },
       rowStats: { flexDirection: 'row', justifyContent: 'space-around' },
       pill: { alignItems: 'center', justifyContent: 'center', borderRadius: 12, padding: 8 },
-      value: { fontWeight: '800', color: COLORS.text },
+      value: { fontWeight: '800', color: COLORS.black },
       unit: { fontSize: 11, color: COLORS.sub },
       label: { fontSize: 12, color: COLORS.sub },
 });

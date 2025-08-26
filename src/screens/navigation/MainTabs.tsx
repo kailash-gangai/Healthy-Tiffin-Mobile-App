@@ -4,22 +4,17 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import BottomTabs from '../../components/BottomTabs';
 import HomeScreen from '../home/HomeScreen';
 import ProgressScreen from '../menutabs/ProgressScreen';
-import FavoritesScreen from '../menutabs/FavoritesScreen;';
+import FavoritesScreen from '../favorites/FavoritesScreen';
 import OrderScreen from '../order/OrderScreen';
-import AccountScreen from '../menutabs/AccountScreen';
+import AccountScreen from '../account/AccountScreen';
 
-// import Progress from '../screens/Progress';
-// import Favorites from '../screens/Favorites';
-// import Home from '../screens/Home';
-// import Orders from '../screens/Orders';
-// import Account from '../screens/Account';
-
-type TabKey = 'progress' | 'favorites' | 'home' | 'orders' | 'account';
+type TabKey = 'progress' | 'favorites' | 'home' | 'Order' | 'account';
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
       return (
             <Tab.Navigator
+                  initialRouteName="home"
                   screenOptions={{ headerShown: false }}
                   tabBar={({ state, navigation }) => (
                         <BottomTabs
@@ -31,7 +26,7 @@ export default function MainTabs() {
                   <Tab.Screen name="progress" component={ProgressScreen} />
                   <Tab.Screen name="favorites" component={FavoritesScreen} />
                   <Tab.Screen name="home" component={HomeScreen} />
-                  <Tab.Screen name="orders" component={OrderScreen} />
+                  <Tab.Screen name="Order" component={OrderScreen} />
                   <Tab.Screen name="account" component={AccountScreen} />
             </Tab.Navigator>
       );

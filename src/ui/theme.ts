@@ -2,7 +2,7 @@ export const COLORS = {
   bg: '#FFFFFF',
   white: '#FFFFFF',
   card: '#FFFFFF',
-  text: '#232323',
+  black: '#232323',
   sub: '#8e8e8e',
   green: '#0B5733',
   white50: 'rgba(255,255,255,0.5)',
@@ -14,6 +14,15 @@ export const COLORS = {
   chipText: '#F6A300',
   link: '#1E6FE3',
   panel2: '#EFEFEF',
+  accent: '#F6A868',
+  overlay: 'rgba(0,0,0,0.55)',
+  red: '#D32F2F',
+  gray: '#f9f9f9',
+  badge: '#FFC107',
+  border: '#D9D9D9',
+  thumb: '#FFFFFF',
+  oranger: '#F6A300',
+  trackOff: '#D9D9D9',
 };
 export const SPACING = 16;
 export const RADIUS = 22;

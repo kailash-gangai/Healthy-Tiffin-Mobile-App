@@ -76,7 +76,7 @@ export default function DishCard({ item, onChange }: { item: Dish; onChange?: (d
                               style={[s.heartWrap, !enabled && { opacity: 0.35 }]}
                               activeOpacity={0.85}
                         >
-                              <FontAwesome5 iconStyle='solid' name="heart" size={18} color={COLORS.accent} solid={liked} />
+                              <FontAwesome5 iconStyle='solid' name="heart" size={18} color={COLORS.accent} />
                         </TouchableOpacity>
                   </TouchableOpacity>
 
