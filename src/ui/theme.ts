@@ -17,12 +17,17 @@ export const COLORS = {
   accent: '#F6A868',
   overlay: 'rgba(0,0,0,0.55)',
   red: '#D32F2F',
-  gray: '#f9f9f9',
+  gray: '#f5f5f5',
   badge: '#FFC107',
   border: '#D9D9D9',
   thumb: '#FFFFFF',
-  oranger: '#F6A300',
+  oranger: '#feae0d',
+  lightOrange: '#ffefcf',
   trackOff: '#D9D9D9',
+  fieldBorder: '#E5E5E5',
+  label: '#1b1b1b',
+  line: '#D9D9D9',
+  placeholder: '#9DA3AF',
 };
 export const SPACING = 16;
 export const RADIUS = 22;

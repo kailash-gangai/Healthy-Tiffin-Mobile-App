@@ -27,6 +27,9 @@ import PrivacyPolicyScreen from '../account/PrivacyPolicyScreen';
 import TermsOfServiceScreen from '../account/TermsOfServiceScreen';
 import ChangePassword from '../account/ChangePasswordScreen';
 import EditProfile from '../account/EditProfileScreen';
+import CartScreen from '../cart/CartScreen';
+import TrackOrderScreen from '../cart/TrackOrderScreen';
+import NotificationsScreen from '../cart/NotificationsScreen';
 const Stack = createNativeStackNavigator();
 
 export default function Root() {
@@ -86,6 +89,10 @@ export default function Root() {
                   {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
 
                   <Stack.Screen name="DishDetail" component={SignInScreen} />
+                  <Stack.Screen name="Cart" component={CartScreen} />
+                  <Stack.Screen name="OrderTrack" component={TrackOrderScreen} />
+                  <Stack.Screen name="Notifications" component={NotificationsScreen} />
+
 
             </Stack.Navigator>
       );

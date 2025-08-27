@@ -132,7 +132,7 @@ const s = StyleSheet.create({
       img: { width: '100%', height: 200, borderRadius: 10, resizeMode: 'cover' },
 
       titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-      title: { color: COLORS.text, fontWeight: '800', fontSize: 18, flex: 1, paddingRight: 10 },
+      title: { color: COLORS.black, fontWeight: '800', fontSize: 18, flex: 1, paddingRight: 10 },
 
       kcal: { marginTop: 8 },
       kcalNum: { color: COLORS.green, fontWeight: '800', fontSize: 20 },

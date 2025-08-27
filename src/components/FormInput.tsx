@@ -16,15 +16,7 @@ type Props = {
     secure?: boolean;
 } & Omit<TextInputProps, 'style' | 'placeholderTextColor'>;
 
-const COLORS = {
-    green: '#0B5733',
-    fieldBorder: '#E5E5E5',
-    label: '#1b1b1b',
-    line: '#D9D9D9',
-    placeholder: '#9DA3AF',
-    text: '#0C0C0C',
-    white: '#FFFFFF',
-} as const;
+import { COLORS } from '../ui/theme';
 
 const FormInput: React.FC<Props> = ({ label, icon, secure, ...inputProps }) => {
     const [show, setShow] = useState(false);
@@ -103,7 +95,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 15.5,
-        color: COLORS.text,
+        color: COLORS.black,
         paddingVertical: 10,
     },
 });

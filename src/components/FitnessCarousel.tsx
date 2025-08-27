@@ -36,7 +36,7 @@ export default function FitnessCarousel({ items }: { items: Item[] }) {
 
 const s = StyleSheet.create({
       head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 16 },
-      title: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
+      title: { color: COLORS.black, fontSize: 20, fontWeight: '800' },
       link: { color: COLORS.green, textDecorationLine: 'underline', fontWeight: '700' },
 
       card: {
@@ -54,7 +54,7 @@ const s = StyleSheet.create({
       },
       caption: {
             marginTop: 10,
-            color: COLORS.text,
+            color: COLORS.black,
             fontSize: 16,
             fontWeight: '700',
       },

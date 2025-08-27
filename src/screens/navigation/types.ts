@@ -23,4 +23,7 @@ export type RootStackParamList = {
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   // Add other screens here
+  Cart: undefined;
+  OrderTrack: undefined;
+  Notifications: undefined;
 };

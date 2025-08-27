@@ -67,7 +67,7 @@ const s = StyleSheet.create({
       right: { flex: 1 },
       topRow: { flexDirection: 'row', alignItems: 'center' },
       kvWrap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-      title: { flex: 1, color: COLORS.text, fontWeight: '800' },
+      title: { flex: 1, color: COLORS.black, fontWeight: '800' },
 
       tag: { height: 24, borderRadius: 12, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
       tagOneDay: { backgroundColor: COLORS.chipBg },
