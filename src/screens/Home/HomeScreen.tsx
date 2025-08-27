@@ -26,15 +26,7 @@ const HomeScreen: React.FC = () => {
             <View style={{ flex: 1, backgroundColor: COLORS.white }}>
                   <ScrollView bounces={false}>
                         <HeaderGreeting name="Sam" />
-                        <StatChips
-                              items={[
-                                    { value: '70', unit: 'kg', type: 'Weight', bgColor: '#DDE3F6', color: '#3B49DF' },
-                                    { value: '120', unit: '', type: 'Steps', bgColor: '#DDEEE2', color: '#0B5733' },
-                                    { value: '10', unit: 'hrs', type: 'Sleep', bgColor: '#EDE7FB', color: '#6A4CDB' },
-                                    { value: '8', unit: 'Glasses', type: 'Water', bgColor: '#EAF3FB', color: '#0B73B3' },
-                                    { value: '60', unit: 'Cal', type: 'Calories', bgColor: '#FDF1D9', color: '#D27C00' },
-                              ]}
-                        />
+                        <StatChips />
 
                         <OrderToggle index={tab} onChange={setTab} />
                         {tab === 0 && (

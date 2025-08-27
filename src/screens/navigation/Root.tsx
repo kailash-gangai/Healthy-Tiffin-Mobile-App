@@ -30,6 +30,13 @@ import EditProfile from '../account/EditProfileScreen';
 import CartScreen from '../cart/CartScreen';
 import TrackOrderScreen from '../cart/TrackOrderScreen';
 import NotificationsScreen from '../cart/NotificationsScreen';
+import HealthFeedScreen from '../feed/HealthFeedScreen';
+import WaterTrackerScreen from '../trackers/WaterTrackerScreen';
+import ConnectDevicesScreen from '../trackers/ConnectDevicesScreen';
+import CaloriesScreen from '../trackers/CaloriesScreen';
+import StepsTrackerScreen from '../trackers/StepsTrackerScreen';
+import WeightTrackerScreen from '../trackers/WeightTrackerScreen';
+import SleepTrackerScreen from '../trackers/SleepTrackerScreen';
 const Stack = createNativeStackNavigator();
 
 export default function Root() {
@@ -92,6 +99,18 @@ export default function Root() {
                   <Stack.Screen name="Cart" component={CartScreen} />
                   <Stack.Screen name="OrderTrack" component={TrackOrderScreen} />
                   <Stack.Screen name="Notifications" component={NotificationsScreen} />
+                  <Stack.Screen name="HealthFeed" component={HealthFeedScreen} />
+
+
+                  <Stack.Screen name="WaterTracker" component={WaterTrackerScreen} />
+                  <Stack.Screen name="SleepTracker" component={SleepTrackerScreen} />
+                  <Stack.Screen name="WeightTracker" component={WeightTrackerScreen} />
+                  <Stack.Screen name="StepsTracker" component={StepsTrackerScreen} />
+                  <Stack.Screen name="CaloriesTracker" component={CaloriesScreen} />
+                  <Stack.Screen name="ConnectDevice" component={ConnectDevicesScreen} />
+
+
+
 
 
             </Stack.Navigator>

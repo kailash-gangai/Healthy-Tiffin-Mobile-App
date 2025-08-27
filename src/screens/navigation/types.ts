@@ -26,4 +26,12 @@ export type RootStackParamList = {
   Cart: undefined;
   OrderTrack: undefined;
   Notifications: undefined;
+  HealthFeed: undefined;  
+  // tracker
+  WaterTracker: undefined;
+  SleepTracker: undefined;
+  WeightTracker: undefined;
+  StepsTracker: undefined;
+  CaloriesTracker: undefined;
+  ConnectDevice: undefined;
 };

@@ -109,7 +109,7 @@ export default function ConnectDevicesScreen({ navigation }: any) {
 
                         {/* Fitbit */}
                         <DeviceCard
-                              icon={<Image source={require('../../assets/devices/fitbit.png')} style={s.icon} />}
+                              icon={<Image source={require('../../assets/banners/chana.jpg')} style={s.icon} />}
                               title="Fitbit"
                               status={fitbitAuth ? 'Connected' : 'SETUP'}
                               onPress={connectFitbit}

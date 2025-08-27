@@ -1,15 +1,23 @@
 import React from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, SHADOW } from '../ui/theme';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../screens/navigation/types';
 
 type Item = { id: string; title: string; image: any };
 
 export default function FitnessCarousel({ items }: { items: Item[] }) {
+      const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
       return (
             <View>
                   <View style={s.head}>
                         <Text style={s.title}>Free Fitness Sessions</Text>
-                        <TouchableOpacity activeOpacity={0.7}>
+                        <TouchableOpacity activeOpacity={0.7}
+                              onPress={() => {
+                                    navigation.navigate('HealthFeed');
+                              }}
+                        >
                               <Text style={s.link}>View All</Text>
                         </TouchableOpacity>
                   </View>

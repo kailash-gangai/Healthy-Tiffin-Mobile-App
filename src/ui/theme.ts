@@ -38,6 +38,15 @@ export const SHADOW = {
   shadowOffset: { width: 0, height: 6 },
   elevation: 3,
 };
+export const SHADOW2 = {
+  // Shadow for iOS
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.5,
+  shadowRadius: 16,
+  // Shadow for Android
+  elevation: 52,
+};
 export const CARTWRAP = {
   backgroundColor: COLORS.white,
   flex: 1,
