@@ -133,7 +133,7 @@ const s = StyleSheet.create({
             marginBottom: 32,
       },
       avatar: { width: 64, height: 64, borderRadius: 32, marginRight: 12 },
-      name: { color: COLORS.text, fontWeight: '800', fontSize: 18 },
+      name: { color: COLORS.black, fontWeight: '800', fontSize: 18 },
       edit: { color: COLORS.green, textDecorationLine: 'underline', marginTop: 2, fontWeight: '700' },
       profile: { flexDirection: 'row', alignItems: 'center', gap: 10 },
       badge: {
@@ -165,7 +165,7 @@ const s = StyleSheet.create({
             alignItems: 'center', justifyContent: 'center',
             marginRight: 10,
       },
-      rowText: { color: COLORS.text, fontSize: 18, flex: 1 },
+      rowText: { color: COLORS.black, fontSize: 18, flex: 1 },
 
       divider: { height: 1, backgroundColor: '#E8E8E8', marginVertical: 6 },
 

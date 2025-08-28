@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
       topTitle: { flex: 1, textAlign: 'center', color: COLORS.white, fontWeight: '700', fontSize: 16 },
 
       container: { flex: 1, padding: 16, backgroundColor: COLORS.white },
-      label: { color: COLORS.text, marginBottom: 8, fontWeight: '600' },
+      label: { color: COLORS.black, marginBottom: 8, fontWeight: '600' },
 
       select: {
             height: 56,
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
             flexDirection: 'row',
             backgroundColor: '#fff',
       },
-      selectText: { fontSize: 16, color: COLORS.text },
+      selectText: { fontSize: 16, color: COLORS.black },
 
       inputWrap: {
             height: 56,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
             paddingRight: 74,
             justifyContent: 'center',
       },
-      input: { fontSize: 16, color: COLORS.text },
+      input: { fontSize: 16, color: COLORS.black },
       unitBadge: {
             position: 'absolute',
             right: 8,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
 
       divider: { height: 1, backgroundColor: COLORS.divider, marginVertical: 18 },
 
-      bmiTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
+      bmiTitle: { fontSize: 18, fontWeight: '700', color: COLORS.black, marginBottom: 8 },
       bmiCard: {
             height: 56,
             borderRadius: 14,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
             justifyContent: 'space-between',
       },
       bmiLeft: { color: COLORS.subText, fontWeight: '600' },
-      bmiRight: { color: COLORS.text, fontWeight: '800', fontSize: 18 },
+      bmiRight: { color: COLORS.black, fontWeight: '800', fontSize: 18 },
 
       ctaBtn: { marginTop: 22 },
       ctaGradient: {
@@ -329,5 +329,5 @@ const styles = StyleSheet.create({
             elevation: 4,
       },
       option: { paddingVertical: 14, paddingHorizontal: 16 },
-      optionText: { fontSize: 16, color: COLORS.text },
+      optionText: { fontSize: 16, color: COLORS.black },
 });

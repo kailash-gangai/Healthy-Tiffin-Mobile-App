@@ -128,25 +128,25 @@ const s = StyleSheet.create({
       title: { flex: 1, textAlign: 'center', color: COLORS.white, fontWeight: '800', fontSize: 16 },
 
       container: { flex: 1, paddingHorizontal: 16, paddingTop: 14 },
-      id: { color: COLORS.text, marginBottom: 8 },
-      plan: { color: COLORS.text, fontWeight: '800', marginTop: 4, marginBottom: 6 },
-      meta: { color: COLORS.text, marginTop: 2 },
-      metaStrong: { color: COLORS.text, fontWeight: '700' },
+      id: { color: COLORS.black, marginBottom: 8 },
+      plan: { color: COLORS.black, fontWeight: '800', marginTop: 4, marginBottom: 6 },
+      meta: { color: COLORS.black, marginTop: 2 },
+      metaStrong: { color: COLORS.black, fontWeight: '700' },
       link: { color: COLORS.link, textDecorationLine: 'underline', fontWeight: '700' },
       itemLine: { marginTop: 2 },
 
-      sectionHd: { marginTop: 16, marginBottom: 8, color: COLORS.text, fontWeight: '800' },
+      sectionHd: { marginTop: 16, marginBottom: 8, color: COLORS.black, fontWeight: '800' },
 
       panel: {
             backgroundColor: '#F3F4F6',
             borderRadius: 14,
             padding: 14,
       },
-      cardLabel: { color: COLORS.text, fontWeight: '800', marginBottom: 8 },
+      cardLabel: { color: COLORS.black, fontWeight: '800', marginBottom: 8 },
       cardRow: { flexDirection: 'row', alignItems: 'center' },
-      cardNum: { color: COLORS.text, fontWeight: '700' },
+      cardNum: { color: COLORS.black, fontWeight: '700' },
 
-      addr: { color: COLORS.text, marginTop: 2 },
+      addr: { color: COLORS.black, marginTop: 2 },
 
       receipt: {
             backgroundColor: '#EFEFEF',
@@ -157,8 +157,8 @@ const s = StyleSheet.create({
       },
       rRow: { minHeight: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
       rDiv: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: COLORS.divider },
-      rKey: { color: COLORS.text },
-      rVal: { color: COLORS.text },
+      rKey: { color: COLORS.black },
+      rVal: { color: COLORS.black },
       rKeyBold: { fontWeight: '800' },
       rValBold: { fontWeight: '800' },
 });

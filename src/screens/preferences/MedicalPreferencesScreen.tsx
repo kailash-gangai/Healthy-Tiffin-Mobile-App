@@ -151,7 +151,7 @@ const YN = ({
 }) => (
       <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.yn, active && styles.ynOn]}>
             <View style={[styles.dot, active && styles.dotOn]} />
-            <Text style={[styles.ynText, active && { color: COLORS.text, fontWeight: '700' }]}>{label}</Text>
+            <Text style={[active && { color: COLORS.text, fontWeight: '700' }]}>{label}</Text>
       </TouchableOpacity>
 );
 
