@@ -8,13 +8,12 @@ type Props = {
       onChange?: (i: number) => void; // callback when selected index changes
 };
 
-const { width: SCREEN_W } = Dimensions.get('window');
 const ITEM_W = 200; // width of each day card
 
-export default function DayTabs({ days, onChange }: Props) {
+export default function DurationTabs({ days, onChange }: Props) {
       const listRef = useRef<FlatList<string>>(null);
 
-      const WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const WEEK = ['Today', 'Weekly', 'Monthly', 'Yearly'];
 
       // figure out today
       const todayIdx = useMemo(() => {
@@ -24,17 +23,6 @@ export default function DayTabs({ days, onChange }: Props) {
       }, [days]);
 
       const [active, setActive] = useState(todayIdx);
-
-      // helper: date for a given weekday of this week
-      const dateForWeekday = (wIdx: number) => {
-            const now = new Date();
-            const sunday = new Date(now);
-            sunday.setDate(now.getDate() - now.getDay());
-            const d = new Date(sunday);
-            d.setDate(sunday.getDate() + wIdx);
-            const m = d.toLocaleString('en-US', { month: 'short' });
-            return `${d.getDate()} ${m}`;
-      };
 
       // on mount → scroll today to center
       useEffect(() => {
@@ -53,8 +41,6 @@ export default function DayTabs({ days, onChange }: Props) {
             });
       };
 
-
-
       const renderItem = ({ item, index }: { item: string; index: number }) => {
             const isActive = index === active;
             if (!isActive) {
@@ -66,13 +52,12 @@ export default function DayTabs({ days, onChange }: Props) {
             }
             return (
                   <View style={s.activeWrap}>
-                        <Text style={s.badge}>{index === todayIdx ? 'TODAY' : ''}</Text>
                         <TouchableOpacity style={[s.chev, { left: 12 }]} onPress={() => select(Math.max(0, index - 1))}>
                               <FontAwesome5 iconStyle='solid' name="chevron-left" size={18} color="#F6D873" />
                         </TouchableOpacity>
                         <View style={{ alignItems: 'center' }}>
                               <Text style={s.day}>{item}</Text>
-                              <Text style={s.date}>{dateForWeekday(index)}</Text>
+
                         </View>
                         <TouchableOpacity style={[s.chev, { right: 12 }]} onPress={() => select(Math.min(days.length - 1, index + 1))}>
                               <FontAwesome5 iconStyle='solid' name="chevron-right" size={18} color="#F6D873" />
@@ -106,7 +91,7 @@ const s = StyleSheet.create({
             width: ITEM_W,
             height: 64,
             borderRadius: 12,
-            backgroundColor: '#EDEDED',
+            backgroundColor: '#919090ff',
             alignItems: 'center',
             justifyContent: 'center',
             marginHorizontal: 6,
@@ -115,11 +100,11 @@ const s = StyleSheet.create({
       activeWrap: {
             width: ITEM_W,
             height: 64,
-            borderRadius: 12,
+            borderRadius: 7,
             backgroundColor: COLORS.green,
             alignItems: 'center',
             justifyContent: 'center',
-            marginHorizontal: 'auto',
+            marginHorizontal: 12,
       },
       badge: { position: 'absolute', top: 6, fontSize: 11, fontWeight: '700', color: '#CFE7D6', marginBottom: 2 },
       chev: { position: 'absolute', top: 20, padding: 6 },

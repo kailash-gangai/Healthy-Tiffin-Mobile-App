@@ -11,6 +11,8 @@ import AddonRow from '../../components/AddonRow';
 import PriceSummary from '../../components/PriceSummary';
 import CTAButton from '../../components/CTAButton';
 import FitnessCarousel from '../../components/FitnessCarousel';
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { addItem, decreaseItem, setQty, removeItem, selectSubtotal, selectLines } from "../../store/slice/cartSlice";
 
 const DISHES = [
       { id: '1', title: 'Kalmi Kabab', image: require('../../assets/banners/chana.jpg'), selected: true },
@@ -18,9 +20,12 @@ const DISHES = [
       { id: '3', title: 'Chicken Wings', image: require('../../assets/banners/chana.jpg') },
 ];
 
+
 const HomeScreen: React.FC = () => {
       const [dayIndex, setDayIndex] = React.useState(0);
       const [tab, setTab] = useState<0 | 1>(0);
+      const dispatch = useAppDispatch();
+
 
       return (
             <View style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -63,7 +68,10 @@ const HomeScreen: React.FC = () => {
                         )}
                         <View style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}>
                               <PriceSummary rows={[['Meal cost', '$28'], ['Add on’s', '$5'], ['Total', '$33']]} />
-                              <CTAButton label="Add to cart" iconName="shopping-bag" onPress={() => { }} />
+                              <CTAButton label="Add to cart" iconName="shopping-bag"
+                                    onPress={() => dispatch(addItem({ id: '1', name: 'Kalmi Kabab', price: 28, variant: 'Kalmi Kabab' }))}
+
+                              />
                         </View>
 
                         <FitnessCarousel

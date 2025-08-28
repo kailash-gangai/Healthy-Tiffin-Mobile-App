@@ -9,6 +9,7 @@ import {
       KeyboardAvoidingView,
       Platform,
       TouchableWithoutFeedback,
+      Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -16,7 +17,8 @@ import { RootStackParamList } from "../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
-import { COLORS } from "../../ui/theme";
+import { COLORS, SHADOW, SPACING } from "../../ui/theme";
+import SleepSVG from "../../assets/svg/Sleep-analysis-amico.svg";
 
 type Clock = { h: number; m: number; am: boolean };
 
@@ -74,7 +76,7 @@ export default function SleepTrackerScreen() {
 
       const Card = ({ title, value, onPress, icon }: { title: string; value: string; onPress: () => void; icon: string }) => (
             <Pressable style={styles.card} onPress={onPress}>
-                  <Text style={styles.cardIcon}>{icon}</Text>
+                  <Image source={icon} style={styles.cardIcon} />
                   <Text style={styles.cardTitle}>{title}</Text>
                   <Text style={styles.cardValue}>{value}</Text>
             </Pressable>
@@ -85,29 +87,32 @@ export default function SleepTrackerScreen() {
                   <AppHeader title="Sleep Tracker" onBack={() => navigate.goBack()} />
                   <View style={styles.container}>
 
-                        <View>
-                              <Text style={styles.helper}>Select bed and wakeup time to track sleep</Text>
+                        <View style={styles.header}>
+                              <Text style={styles.title}>Select bed and wakeup time to track sleep</Text>
+                              <SleepSVG />
+                              {/* Cards */}
+                              <View style={styles.rowCards}>
+                                    <Card title="Bed Time" value={fmt(bed)} onPress={() => openModal("bed")} icon={require("../../assets/icons/moon.png")} />
+                                    <Card title="Wake Time" value={fmt(wake)} onPress={() => openModal("wake")} icon={require("../../assets/icons/sun.png")} />
+                              </View>
                         </View>
 
 
                         {/* Illustration placeholder */}
 
 
-                        {/* Cards */}
-                        <View style={styles.rowCards}>
-                              <Card title="Bed Time" value={fmt(bed)} onPress={() => openModal("bed")} icon="🌙" />
-                              <Card title="Wake Time" value={fmt(wake)} onPress={() => openModal("wake")} icon="🌅" />
+
+
+                        <View>
+                              {/* Summary */}
+                              <Text style={styles.summary}>
+                                    Sleep Hours {total.hrs} hr {total.mins} m
+                              </Text>
+                              {/* CTA */}
+                              <Pressable style={styles.cta} onPress={() => setOpen("bed")}>
+                                    <Text style={styles.ctaText}>Update Sleep Data    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} /></Text>
+                              </Pressable>
                         </View>
-
-                        {/* Summary */}
-                        <Text style={styles.summary}>
-                              Sleep Hours {total.hrs} hr {total.mins} m
-                        </Text>
-
-                        {/* CTA */}
-                        <Pressable style={styles.cta} onPress={() => setOpen("bed")}>
-                              <Text style={styles.ctaText}>Update Sleep Data    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} /></Text>
-                        </Pressable>
 
                         {/* Modal */}
                         <Modal visible={open !== null} transparent animationType="fade" onRequestClose={() => setOpen(null)}>
@@ -165,7 +170,7 @@ export default function SleepTrackerScreen() {
                                                       <Text style={[styles.btnText, { color: "#333" }]}>Cancel</Text>
                                                 </Pressable>
                                                 <Pressable onPress={submit} style={[styles.btn, styles.btnPrimary]}>
-                                                      <Text style={[styles.btnText, { color: "#111" }]}>Submit</Text>
+                                                      <Text style={[styles.btnText, { color: COLORS.black }]}>Submit</Text>
                                                 </Pressable>
                                           </View>
                                     </View>
@@ -177,57 +182,48 @@ export default function SleepTrackerScreen() {
 }
 
 const styles = StyleSheet.create({
-      container: { paddingHorizontal: 18 },
+      container: { paddingHorizontal: SPACING, display: "flex", flexDirection: "column", gap: 100 },
       header: {
-            height: 48,
-            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "space-between",
-            backgroundColor: "#0F5C33",
-            borderRadius: 8,
-            paddingHorizontal: 12,
+            marginVertical: SPACING * 2,
       },
-      back: { color: "#E8FFF3", fontSize: 26 },
-      headerTitle: { color: "#E8FFF3", fontSize: 18, fontWeight: "600" },
-      helper: { marginTop: 10, color: "#6B7280" },
-
-      illus: { height: 140, marginTop: 14, borderRadius: 12, backgroundColor: "#E9F4EE" },
-
+      title: { fontSize: 18, fontWeight: "800", color: COLORS.black, marginBottom: 14 },
       rowCards: { flexDirection: "row", justifyContent: "space-between", marginTop: 18 },
       card: {
             width: "48%",
-            backgroundColor: "#fff",
             borderRadius: 14,
-            paddingVertical: 16,
-            paddingHorizontal: 14,
-            alignItems: "flex-start",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.12,
+            paddingVertical: 14,
+            paddingHorizontal: 12,
+            alignItems: "center",
+            backgroundColor: COLORS.gray,
+            shadowColor: COLORS.white50,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.9,
             shadowRadius: 16,
-            elevation: 8,
+            elevation: 0.5,
+            marginHorizontal: 12,
       },
-      cardIcon: { fontSize: 28, marginBottom: 8 },
+      cardIcon: { marginBottom: 8, height: 96, width: 96, alignItems: "center", justifyContent: "center" },
       cardTitle: { color: "#6B7280", marginBottom: 6, fontWeight: "600" },
-      cardValue: { fontSize: 18, fontWeight: "800", color: "#0F172A" },
+      cardValue: { fontSize: 18, fontWeight: "800", color: COLORS.black },
 
-      summary: { textAlign: "center", marginTop: 22, color: "#111" },
+      summary: { textAlign: "center", marginTop: 22, color: COLORS.subText, fontSize: 18, fontWeight: "700" },
 
       cta: {
             marginTop: 18,
-            backgroundColor: "#0F5C33",
+            backgroundColor: COLORS.green,
             paddingVertical: 16,
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
       },
-      ctaText: { color: "#E8FFF3", fontSize: 16, fontWeight: "700", letterSpacing: 0.5 },
+      ctaText: { color: COLORS.white, fontSize: 16, fontWeight: "700", letterSpacing: 0.5 },
 
       // modal
       backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)" },
       center: { flex: 1, justifyContent: "center", paddingHorizontal: 22 },
       sheet: {
-            backgroundColor: "#fff",
+            backgroundColor: COLORS.white,
             borderRadius: 16,
             padding: 18,
             shadowColor: "#000",
@@ -236,7 +232,7 @@ const styles = StyleSheet.create({
             shadowRadius: 20,
             elevation: 16,
       },
-      sheetTitle: { fontSize: 18, fontWeight: "700", color: "#111", textAlign: "center", marginBottom: 12 },
+      sheetTitle: { fontSize: 18, fontWeight: "700", color: COLORS.black, textAlign: "center", marginBottom: 12 },
 
       pickerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
       col: { width: 110 },
@@ -247,7 +243,7 @@ const styles = StyleSheet.create({
             borderRadius: 12,
             borderWidth: 1,
             borderColor: "#E1E5EC",
-            backgroundColor: "#fff",
+            backgroundColor: COLORS.white,
             paddingHorizontal: 14,
             fontSize: 28,
             fontWeight: "700",
@@ -264,7 +260,7 @@ const styles = StyleSheet.create({
             borderColor: "#E1E5EC",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#fff",
+            backgroundColor: COLORS.white,
             marginVertical: 4,
       },
       amActive: { backgroundColor: "#F7F7F7", borderColor: "#0F5C33" },
@@ -273,7 +269,7 @@ const styles = StyleSheet.create({
 
       row: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
       btn: { flex: 1, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-      btnGhost: { borderWidth: 1, borderColor: "#E1E5EC", marginRight: 10, backgroundColor: "#fff" },
+      btnGhost: { borderWidth: 1, borderColor: "#E1E5EC", marginRight: 10, backgroundColor: COLORS.white },
       btnPrimary: { backgroundColor: "#F7A500", marginLeft: 10 },
       btnText: { fontSize: 16, fontWeight: "700" },
 });

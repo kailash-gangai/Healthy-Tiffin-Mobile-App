@@ -6,10 +6,13 @@ import { COLORS, RADIUS, SPACING, SHADOW } from '../ui/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../screens/navigation/types';
-
+import { useSelector } from 'react-redux'; // ← NEW
+import { selectCount } from '../store/slice/cartSlice';
 
 export default function HeaderGreeting({ name }: { name: string }) {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+      const cartCount = useSelector(selectCount); // ← NEW
+
       return (
             <View>
                   {/* Orange bar */}
@@ -25,11 +28,26 @@ export default function HeaderGreeting({ name }: { name: string }) {
                                                 navigation.navigate('Notifications')
                                           }}
                                     ><FontAwesome5 name="bell" size={20} color={COLORS.white} /></TouchableOpacity>
-                                    <TouchableOpacity
+                                    {/* <TouchableOpacity
                                           onPress={() => {
                                                 navigation.navigate('Cart')
                                           }}
-                                    ><FontAwesome5 iconStyle='solid' name="shopping-bag" size={20} color={COLORS.white} /></TouchableOpacity>
+                                    ><FontAwesome5 iconStyle='solid' name="shopping-bag" size={20} color={COLORS.white} /></TouchableOpacity> */}
+                                    {/* ↓↓↓ CHANGES: wrap the cart icon to position a badge */}
+                                    <View style={s.iconWrap}> {/* ← NEW */}
+                                          <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
+                                                <FontAwesome5 iconStyle="solid" name="shopping-bag" size={20} color={COLORS.white} />
+                                                {cartCount > 0 && ( // ← NEW
+
+                                                      <View style={s.badge}> {/* ← NEW */}
+                                                            <Text style={s.badgeText}>{cartCount > 99 ? '99+' : cartCount} </Text> {/* ← NEW */}
+                                                      </View>
+                                                )}
+                                          </TouchableOpacity>
+
+                                    </View>
+                                    {/* ↑↑↑ CHANGES */}
+
                               </View>
                         </View>
                   </View>
@@ -72,5 +90,23 @@ const s = StyleSheet.create({
       value: { fontWeight: '800', color: COLORS.black },
       unit: { fontSize: 11, color: COLORS.sub },
       label: { fontSize: 12, color: COLORS.sub },
+      // ↓↓↓ CHANGES: styles for cart badge
+      iconWrap: { position: 'relative' }, // ← NEW
+      badge: {
+            position: 'absolute',
+            top: -6,
+            right: -8,
+            minWidth: 18,
+            height: 18,
+            paddingHorizontal: 4,
+            borderRadius: 9,
+            backgroundColor: '#EF4444',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: COLORS.white,
+      }, // ← NEW
+      badgeText: { color: '#fff', fontSize: 10, fontWeight: '800' }, // ← NEW
+      // ↑↑↑ CHANGES
 });
 

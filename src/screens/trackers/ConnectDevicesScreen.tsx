@@ -4,7 +4,7 @@ import {
       View, Text, StyleSheet, TouchableOpacity, Image, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authorize, refresh, revoke, AuthorizeResult } from 'react-native-app-auth';
+// import { authorize, refresh, revoke, AuthorizeResult } from 'react-native-app-auth';
 import AppleHealthKit, { HealthValue } from 'react-native-health';
 import AppHeader from '../../components/AppHeader';
 
@@ -42,7 +42,7 @@ const HK_PERMS = {
 type Steps = { today: number; last7: { date: string; value: number }[] };
 
 export default function ConnectDevicesScreen({ navigation }: any) {
-      const [fitbitAuth, setFitbitAuth] = useState<AuthorizeResult | null>(null);
+      // const [fitbitAuth, setFitbitAuth] = useState<AuthorizeResult | null>(null);
       const [fitbitSteps, setFitbitSteps] = useState<Steps | null>(null);
 
       const [hkReady, setHkReady] = useState<boolean>(false);
@@ -50,13 +50,13 @@ export default function ConnectDevicesScreen({ navigation }: any) {
 
       // ----- Fitbit -----
       const connectFitbit = async () => {
-            try {
-                  const res = await authorize(FITBIT as any);
-                  setFitbitAuth(res);
-                  await loadFitbitSteps(res.accessToken);
-            } catch (e) {
-                  console.warn('Fitbit auth error', e);
-            }
+            // try {
+            //       const res = await authorize(FITBIT as any);
+            //       setFitbitAuth(res);
+            //       await loadFitbitSteps(res.accessToken);
+            // } catch (e) {
+            //       console.warn('Fitbit auth error', e);
+            // }
       };
 
       const loadFitbitSteps = async (token: string) => {
@@ -108,12 +108,12 @@ export default function ConnectDevicesScreen({ navigation }: any) {
                         <SectionTitle t="Connect To a Device" />
 
                         {/* Fitbit */}
-                        <DeviceCard
+                        {/* <DeviceCard
                               icon={<Image source={require('../../assets/banners/chana.jpg')} style={s.icon} />}
                               title="Fitbit"
                               status={fitbitAuth ? 'Connected' : 'SETUP'}
                               onPress={connectFitbit}
-                        />
+                        /> */}
                         {fitbitSteps && (
                               <MetricsRow
                                     label="Steps (Fitbit)"
