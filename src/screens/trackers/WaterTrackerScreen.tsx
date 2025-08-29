@@ -1,5 +1,5 @@
 // WaterTrackerScreen.tsx
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
       View,
       Text,
@@ -11,6 +11,7 @@ import {
       TouchableWithoutFeedback,
       ScrollView,
       Image,
+      Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
@@ -18,30 +19,89 @@ import { COLORS, SPACING } from "../../ui/theme";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
 import Glass from "../../assets/svg/water-glass.svg";
 import DurationTabs from "../../components/DurationTabs";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
+import { getValidTokens, getfitBitWater, setfitBitWaterGole, setfitBitWaterLog } from "../../config/fitbitService";
 
 type TabKey = "today" | "weekly" | "monthly";
 
 export default function WaterTrackerScreen() {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
       const [activeTab, setActiveTab] = useState(0); // TAB STATE
-      const [count, setCount] = useState(10);
-      const [goal, setGoal] = useState(56);
+      const [count, setCount] = useState(0);
+      const [goal, setGoal] = useState(0);
       const [open, setOpen] = useState(false); // modal
       const [draft, setDraft] = useState(String(goal)); // selected value
       const [selectOpen, setSelectOpen] = useState(false); // dropdown open
+      const [saving, setSaving] = useState(false); // loading
+      const [accessToken, setAccessToken] = useState<string | null>(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState<string | null>(null);
+
 
       const GOAL_OPTIONS = [8, 10, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64];
 
+      //check connection 
+      useFocusEffect(
+            useCallback(() => {
+                  let alive = true;
+                  (async () => {
+                        setLoading(true);
+                        setError(null);
+                        const t = await getValidTokens(); // load/refresh from Keychain
+                        setAccessToken(t?.accessToken);
+                        if (!alive) return;
+                        if (!t) {
+                              navigation.replace("ConnectDevice"); // not connected → go connect
+                              return;
+                        }
+                        try {
+                              const s = await getfitBitWater(t.accessToken);
+                              console.log('myres', s.goal.goal);
+                              // setCurrent(s?.goal.goal);
+                              setGoal(s?.goal?.goal);
+                              // setStartingDate(s?.goal?.startDate);
+
+                              if (!alive) return;
+                        } catch (e: any) {
+                              if (!alive) return;
+                              setError(e?.message ?? "Failed to load steps");
+                        } finally {
+                              if (alive) setLoading(false);
+                        }
+                  })();
+                  return () => { alive = false; };
+            }, [navigation])
+      );
       const submit = () => {
             const n = parseInt(draft, 10);
-            if (!Number.isNaN(n) && n > 0) setGoal(n);
-            setOpen(false);
-            setSelectOpen(false);
+            console.log(n);
+            if (Number.isNaN(n) || n <= 0) {
+                  Alert.alert("Invalid goal", "Enter a positive number.");
+                  return;
+            }
+            try {
+                  setSaving(true);
+                  setfitBitWaterGole(accessToken, n);
+                  setGoal(n);
+                  setOpen(false);
+                  Alert.alert("Goal updated", `Daily water goal set to ${n.toLocaleString()} glasses.`);
+            } catch (e: any) {
+                  const msg =
+                        typeof e?.message === "string" ? e.message :
+                              "Could not update your Fitbit goal. Please try again.";
+                  Alert.alert("Fitbit error", msg);
+            } finally {
+                  setSaving(false);
+            }
       };
 
+      const updateCount = (n: number) => {
+            setCount((c) => c + n);
+            console.log('count', count);
+            setfitBitWaterLog(accessToken, new Date().toISOString().slice(0, 10), count + n);
+      };
 
       return (
             <SafeAreaView>
@@ -51,29 +111,25 @@ export default function WaterTrackerScreen() {
                   </View>
                   <View style={styles.container}>
                         {/* Tabs */}
-
-
                         <View style={styles.imageContainer}>
                               <Image source={require("../../assets/svg/image-drinking.png")} style={styles.image} />
                         </View>
-
-
 
                         {/* Counter Card */}
                         <View style={styles.card}>
                               <Text style={styles.count}>{count}</Text>
                               <Text style={styles.goalText}>
-                                    {activeTab === "weekly" ? "Weekly" : activeTab === "today" ? "Daily" : "Monthly"} goal:{" "}
+                                    {activeTab === 1 ? "Weekly" : activeTab === 0 ? "Daily" : activeTab === 2 ? "Monthly" : "Yearly"} goal:{" "}
                                     <Text style={{ fontWeight: "700" }}>{goal} glass</Text>
                               </Text>
 
                               <View style={styles.row}>
-                                    <Pressable style={styles.circleBtn} onPress={() => setCount((c) => Math.max(0, c - 1))}>
+                                    <Pressable style={styles.circleBtn} onPress={() => updateCount(-1)}>
                                           <FontAwesome5 iconStyle="solid" name="minus" size={16} color={COLORS.black} />
 
                                     </Pressable>
                                     <Glass />
-                                    <Pressable style={styles.circleBtn} onPress={() => setCount((c) => c + 1)}>
+                                    <Pressable style={styles.circleBtn} onPress={() => updateCount(1)}>
 
                                           <FontAwesome5 iconStyle="solid" name="plus" size={16} color={COLORS.black} />
                                     </Pressable>

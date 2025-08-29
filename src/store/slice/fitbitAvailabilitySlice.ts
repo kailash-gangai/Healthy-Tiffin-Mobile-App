@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Linking } from 'react-native';
+import type { RootState } from '../../store/index';
 
 export type AvailabilityState = {
   installed: boolean | null; // null until checked
@@ -51,7 +52,7 @@ const slice = createSlice({
 export default slice.reducer;
 
 // selectors
-export const selectFitbitInstalled = (s: any) =>
-  s.fitbitAvailability.installed as boolean | null;
-export const selectFitbitChecking = (s: any) =>
-  s.fitbitAvailability.checking as boolean;
+export const selectFitbitInstalled = (s: RootState) =>
+  s.fitbitAvailability.installed;
+export const selectFitbitChecking = (s: RootState) =>
+  s.fitbitAvailability.checking;

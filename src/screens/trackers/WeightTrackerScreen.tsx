@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
       View,
       Text,
@@ -11,15 +11,20 @@ import {
       Platform,
       TouchableWithoutFeedback,
       Image,
+      Button,
+      Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import AppHeader from "../../components/AppHeader";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { COLORS as C, SPACING } from "../../ui/theme";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { getValidTokens, getfitBitWeight, setfitBitWeight } from "../../config/fitbitService";
+
 
 const { width } = Dimensions.get("window");
 const RING_SIZE = Math.min(width * 0.52, 130);
@@ -29,18 +34,82 @@ export default function WeightTrackerScreen() {
       const [current, setCurrent] = useState(200);
       const [goal, setGoal] = useState(154);
       const [open, setOpen] = useState(false);
+      const [startingDate, setStartingDate] = useState('');
       const [curDraft, setCurDraft] = useState(String(current));
       const [goalDraft, setGoalDraft] = useState(String(goal));
+      const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState<string | null>(null);
+      const [accessToken, setAccessToken] = useState<string | null>(null);
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-      const diff = Math.max(current - goal, 0);
 
+      //check connection 
+      useFocusEffect(
+            useCallback(() => {
+                  let alive = true;
+                  (async () => {
+                        setLoading(true);
+                        setError(null);
+                        const t = await getValidTokens(); // load/refresh from Keychain
+                        setAccessToken(t?.accessToken);
+                        if (!alive) return;
+                        if (!t) {
+                              navigate.replace("ConnectDevice"); // not connected → go connect
+                              return;
+                        }
+                        try {
+                              const s = await getfitBitWeight(t.accessToken, '');
+
+                              setCurrent(s?.goal.startWeight);
+                              setGoal(s?.goal?.weight);
+                              setStartingDate(s?.goal?.startDate);
+
+                              if (!alive) return;
+                        } catch (e: any) {
+                              if (!alive) return;
+                              setError(e?.message ?? "Failed to load steps");
+                        } finally {
+                              if (alive) setLoading(false);
+                        }
+                  })();
+                  return () => { alive = false; };
+            }, [navigate])
+      );
       const submit = () => {
             const c = parseInt(curDraft, 10);
             const g = parseInt(goalDraft, 10);
-            if (!Number.isNaN(c)) setCurrent(c);
-            if (!Number.isNaN(g)) setGoal(g);
-            setOpen(false);
+
+            try {
+                  setfitBitWeight(accessToken, startingDate, c, g);
+                  setCurrent(c);
+                  setGoal(g);
+                  Alert.alert("Goal updated", `Weight goal set to ${g.toLocaleString()} lbs.`);
+            } catch (e: any) {
+                  const msg =
+                        typeof e?.message === "string" ? e.message :
+                              "Could not update your Fitbit goal. Please try again.";
+                  Alert.alert("Fitbit error", msg);
+            } finally {
+                  setOpen(false);
+            }
       };
+
+      //check connection and fetch data
+      const showDatePicker = () => {
+            setDatePickerVisibility(true);
+      };
+
+      const hideDatePicker = () => {
+            setDatePickerVisibility(false);
+      };
+
+      const handleConfirm = (date) => {
+            //format date to yyyy-mm-dd
+            date = date.toISOString().slice(0, 10);
+            setStartingDate(date);
+            hideDatePicker();
+      };
+
 
       return (
             <SafeAreaView >
@@ -84,14 +153,14 @@ export default function WeightTrackerScreen() {
                                           cy={RING_SIZE / 2}
                                           r={R}
                                           stroke={C.green}
-                                          strokeWidth={10}
+                                          strokeWidth={5}
                                           fill="none"
                                           // strokeDasharray={[20, 20] as any}
                                           strokeLinecap="round"
                                     />
                               </Svg>
                               <View style={s.ringCenter}>
-                                    <Text style={s.diff}>{diff}</Text>
+                                    <Text style={s.diff}>{goal - current}</Text>
                                     <Text style={s.diffUnit}>lbs</Text>
                               </View>
                         </View>
@@ -119,6 +188,24 @@ export default function WeightTrackerScreen() {
                               <View style={s.sheet}>
                                     <Text style={s.sheetTitle}>Update Weight</Text>
 
+                                    <Text style={s.label}>Starting Date</Text>
+                                    <View style={s.inputWrap}>
+                                          <TextInput
+                                                keyboardType="number-pad"
+                                                value={startingDate.toString()}
+                                                style={s.input}
+                                                placeholder="yyyy-mm-dd" //2019-03-21
+                                                placeholderTextColor="#9AA2AF"
+
+                                                onFocus={showDatePicker} />
+                                          <DateTimePickerModal
+                                                isVisible={isDatePickerVisible}
+                                                mode="date"
+                                                onConfirm={handleConfirm}
+                                                onCancel={hideDatePicker}
+                                          />
+
+                                    </View>
                                     <Text style={s.label}>Current Weight</Text>
                                     <View style={s.inputWrap}>
                                           <TextInput

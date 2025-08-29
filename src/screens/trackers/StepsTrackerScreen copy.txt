@@ -1,5 +1,5 @@
 // StepsTrackerScreen.tsx
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
       View,
       Text,
@@ -13,17 +13,15 @@ import {
       Platform,
       TouchableWithoutFeedback,
       TouchableOpacity,
-      Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import AppHeader from "../../components/AppHeader";
 import { COLORS, SPACING } from "../../ui/theme";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import { getValidTokens, getfitBitData, setActivityGoal } from "../../config/fitbitService";
 
 const { width } = Dimensions.get("window");
 const SIZE = Math.min(width * 0.7, 280);
@@ -33,73 +31,26 @@ const CIRC = 2 * Math.PI * R;
 
 const RING_R = R - STROKE / 2;
 const CIRCUM = 2 * Math.PI * RING_R;
+const stepsProp = 60;
+const goalProp = 100;
+const pct = goalProp > 0 ? Math.min(stepsProp / goalProp, 1) : 0;
+const displayPct = Math.round(pct * 100);
 
+type Props = { steps?: number; goal?: number };
 export default function StepsTrackerScreen() {
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-      const [goal, setGoal] = useState(0);
+      const [steps] = useState(stepsProp);
+      const [goal, setGoal] = useState(goalProp);
       const [open, setOpen] = useState(false);
-      const [draft, setDraft] = useState(String(0));
-      const [loading, setLoading] = useState(true);
-      const [steps, setSteps] = useState(0);
-      const [error, setError] = useState<string | null>(null);
-      const [accessToken, setAccessToken] = useState<string | null>(null);
-      const [saving, setSaving] = useState(false);             // ← NEW
+      const [draft, setDraft] = useState(String(goalProp));
+
 
       const submit = () => {
             const n = parseInt(draft, 10);
-
-            if (Number.isNaN(n) || n <= 0) {
-                  Alert.alert("Invalid goal", "Enter a positive number.");
-                  return;
-            }
-            try {
-                  setSaving(true);
-                  setActivityGoal(accessToken, "daily", "steps", n);
-                  setGoal(n);
-                  setOpen(false);
-                  Alert.alert("Goal updated", `Daily steps goal set to ${n.toLocaleString()} steps.`);
-            } catch (e: any) {
-                  const msg =
-                        typeof e?.message === "string" ? e.message :
-                              "Could not update your Fitbit goal. Please try again.";
-                  Alert.alert("Fitbit error", msg);
-            } finally {
-                  setSaving(false);
-            }
+            if (!Number.isNaN(n) && n > 0) setGoal(n);
+            setOpen(false);
       };
 
-      //check connection 
-      useFocusEffect(
-            useCallback(() => {
-                  let alive = true;
-                  (async () => {
-                        setLoading(true);
-                        setError(null);
-                        const t = await getValidTokens(); // load/refresh from Keychain
-                        setAccessToken(t?.accessToken);
-                        if (!alive) return;
-                        if (!t) {
-                              navigate.replace("ConnectDevice"); // not connected → go connect
-                              return;
-                        }
-                        try {
-                              const s = await getfitBitData(t.accessToken, '');
-                              setGoal(s?.goals.steps);
-                              setSteps(s?.summary?.steps);
-                              if (!alive) return;
-                        } catch (e: any) {
-                              if (!alive) return;
-                              setError(e?.message ?? "Failed to load steps");
-                        } finally {
-                              if (alive) setLoading(false);
-                        }
-                  })();
-                  return () => { alive = false; };
-            }, [navigate])
-      );
-
-      const pct = goal > 0 ? Math.min(steps / goal, 1) : 0;
-      const displayPct = Math.round(pct * 100);
       return (
             <SafeAreaView>
                   <AppHeader title="Steps Tracker" onBack={() => navigate.goBack()} />
