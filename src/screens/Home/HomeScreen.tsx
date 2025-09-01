@@ -11,82 +11,150 @@ import AddonRow from '../../components/AddonRow';
 import PriceSummary from '../../components/PriceSummary';
 import CTAButton from '../../components/CTAButton';
 import FitnessCarousel from '../../components/FitnessCarousel';
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { addItem, decreaseItem, setQty, removeItem, selectSubtotal, selectLines } from "../../store/slice/cartSlice";
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  addItem,
+  decreaseItem,
+  setQty,
+  removeItem,
+  selectSubtotal,
+  selectLines,
+} from '../../store/slice/cartSlice';
 
 const DISHES = [
-      { id: '1', title: 'Kalmi Kabab', image: require('../../assets/banners/chana.jpg'), selected: true },
-      { id: '2', title: 'Fish Fry', image: require('../../assets/banners/chana.jpg') },
-      { id: '3', title: 'Chicken Wings', image: require('../../assets/banners/chana.jpg') },
+  {
+    id: '1',
+    title: 'Kalmi Kabab 1 ',
+    image: require('../../assets/banners/chana.jpg'),
+    selected: true,
+  },
+  {
+    id: '2',
+    title: 'Fish Fry',
+    image: require('../../assets/banners/chana.jpg'),
+  },
+  {
+    id: '3',
+    title: 'Chicken Wings',
+    image: require('../../assets/banners/chana.jpg'),
+  },
 ];
 
-
 const HomeScreen: React.FC = () => {
-      const [dayIndex, setDayIndex] = React.useState(0);
-      const [tab, setTab] = useState<0 | 1>(0);
-      const dispatch = useAppDispatch();
+  const [dayIndex, setDayIndex] = React.useState(0);
+  const [tab, setTab] = useState<0 | 1>(0);
+  const dispatch = useAppDispatch();
+  console.log('hello world');
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.white }}>
+      <ScrollView bounces={false}>
+        <HeaderGreeting name="Sam" />
+        <StatChips />
 
+        <OrderToggle index={tab} onChange={setTab} />
+        {tab === 0 && (
+          <View style={{ marginTop: 20, backgroundColor: COLORS.white }}>
+            <DayTabs
+              days={[
+                'Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday',
+                'Sunday',
+              ]}
+              onChange={setDayIndex}
+            />
+            <Section
+              hero={require('../../assets/banners/chana.jpg')}
+              title="PROTEINS"
+              note="Select from 4 options"
+              collapsed={false}
+            >
+              {DISHES.map(d => (
+                <DishCard key={d.id} item={d} />
+              ))}
+            </Section>
 
-      return (
-            <View style={{ flex: 1, backgroundColor: COLORS.white }}>
-                  <ScrollView bounces={false}>
-                        <HeaderGreeting name="Sam" />
-                        <StatChips />
+            <Section
+              hero={require('../../assets/banners/chana.jpg')}
+              title="VEGGIES"
+              note="Select 2 from 6 options"
+              collapsed={false}
+            >
+              {DISHES.map(d => (
+                <DishCard key={d.id} item={d} />
+              ))}
+            </Section>
+            <Section
+              hero={require('../../assets/banners/chana.jpg')}
+              title="SIDES"
+              note="Select from 4 options"
+            />
+            <Section
+              hero={require('../../assets/banners/chana.jpg')}
+              title="PROBIOTIC"
+              note="Select from 2 options"
+            />
+          </View>
+        )}
 
-                        <OrderToggle index={tab} onChange={setTab} />
-                        {tab === 0 && (
-                              <View style={{ marginTop: 20, backgroundColor: COLORS.white }}>
-                                    <DayTabs
-                                          days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']} onChange={setDayIndex}
-                                    />
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="PROTEINS" note="Select from 4 options" collapsed={false}>
-                                          {DISHES.map(d => (
-                                                <DishCard key={d.id} item={d} />
-                                          ))}
-                                    </Section>
+        {/* One Week Order */}
+        {tab === 1 && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700' }}>
+              One Week Order Section
+            </Text>
+            {/* put your components here */}
+          </View>
+        )}
+        <View
+          style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}
+        >
+          <PriceSummary
+            rows={[
+              ['Meal cost', '$28'],
+              ['Add on’s', '$5'],
+              ['Total', '$33'],
+            ]}
+          />
+          <CTAButton
+            label="Add to cart"
+            iconName="shopping-bag"
+            onPress={() =>
+              dispatch(
+                addItem({
+                  id: '1',
+                  name: 'Kalmi Kabab',
+                  price: 28,
+                  variant: 'Kalmi Kabab',
+                }),
+              )
+            }
+          />
+        </View>
 
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="VEGGIES" note="Select 2 from 6 options"
-                                          collapsed={false}>
-                                          {DISHES.map(d => (
-                                                <DishCard key={d.id} item={d} />
-                                          ))}
-                                    </Section>
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="SIDES" note="Select from 4 options" />
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="PROBIOTIC" note="Select from 2 options" />
-
-
-                              </View>
-
-                        )}
-
-                        {/* One Week Order */}
-                        {tab === 1 && (
-                              <View style={{ marginTop: 20 }}>
-                                    <Text style={{ fontSize: 18, fontWeight: "700" }}>One Week Order Section</Text>
-                                    {/* put your components here */}
-                              </View>
-                        )}
-                        <View style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}>
-                              <PriceSummary rows={[['Meal cost', '$28'], ['Add on’s', '$5'], ['Total', '$33']]} />
-                              <CTAButton label="Add to cart" iconName="shopping-bag"
-                                    onPress={() => dispatch(addItem({ id: '1', name: 'Kalmi Kabab', price: 28, variant: 'Kalmi Kabab' }))}
-
-                              />
-                        </View>
-
-                        <FitnessCarousel
-                              items={[
-                                    { id: 'a', title: '5 healthy tips to lose fat fast and effectively', image: require('../../assets/banners/chana.jpg') },
-                                    { id: 'b', title: 'What to do when you stop binge eating', image: require('../../assets/banners/chana.jpg') },
-                              ]}
-                        />
-                  </ScrollView>
-            </View>
-      );
+        <FitnessCarousel
+          items={[
+            {
+              id: 'a',
+              title: '5 healthy tips to lose fat fast and effectively',
+              image: require('../../assets/banners/chana.jpg'),
+            },
+            {
+              id: 'b',
+              title: 'What to do when you stop binge eating',
+              image: require('../../assets/banners/chana.jpg'),
+            },
+          ]}
+        />
+      </ScrollView>
+    </View>
+  );
 };
 
 export default HomeScreen;
 const styles = StyleSheet.create({
-      pad: { paddingHorizontal: SPACING, marginTop: -34 },
-
+  pad: { paddingHorizontal: SPACING, marginTop: -34 },
 });
