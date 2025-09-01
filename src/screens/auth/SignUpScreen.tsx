@@ -10,6 +10,7 @@ import {
     Platform,
     GestureResponderEvent,
     KeyboardAvoidingView,
+    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -19,6 +20,7 @@ import FormInput from '../../components/FormInput';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { customerUpsert } from '../../shopify/mutation/CustomerAuth';
 
 const COLORS = {
     green: '#0B5733',
@@ -47,11 +49,54 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     const [name, setName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [pass, setPass] = useState<string>('');
+    const [errors, setErrors] = useState<any>({});
+    const validateEmail = (email: string) => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    };
 
+    const validatePassword = (password: string) => {
+        return password.length >= 6; // Simple check for password length
+    };
+
+    const validateName = (name: string) => {
+        const [firstName, lastName] = name.trim().split(" ");
+        return firstName && lastName; // Ensure both first and last name are present
+    };
     const onSubmit = useCallback((_: GestureResponderEvent) => {
-        // TODO: form validation + submit
-        console.log({ name, email, pass });
-        navigation.navigate('SelectPreferences');
+
+        if (!name || !email || !pass) {
+            setErrors({ name: 'Is required', email: 'Is required', pass: 'Is required' });
+        }
+        if (!validateEmail(email)) {
+            return Alert.alert("Error", "Please enter a valid email.");
+        }
+        if (!validateName(name)) {
+            return Alert.alert("Error", "Please enter both first and last name.");
+        }
+        if (!validatePassword(pass)) {
+            return Alert.alert("Error", "Password must be at least 6 characters.");
+        }
+
+        const [firstName, lastName] = name.trim().split(" "); // Split name into first and last
+
+        // Prepare user data for customerUpsert
+        const userData = {
+            email,
+            password: pass,
+            firstName,
+            lastName,
+        };
+
+        try {
+            const response = customerUpsert(userData);
+            console.log(response);  // Log the response from the API
+            Alert.alert("Success", "Customer registration successful.");
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Error", (error as Error).message);
+        }
+        // navigation.navigate('SelectPreferences');
     }, [name, email, pass]);
 
     return (
@@ -98,6 +143,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         autoCapitalize="words"
                         returnKeyType="next"
                     />
+
 
                     <FormInput
                         label="Password"

@@ -17,11 +17,11 @@ export default function PrivacyPolicyScreen({ navigation }: any) {
                         showsVerticalScrollIndicator={false}
                   >
                         {/* Illustration */}
-                        {/* <Image
+                        <Image
                               source={require('../../assets/icons/privacy.png')}
                               style={s.img}
                               resizeMode="contain"
-                        /> */}
+                        />
 
                         {/* Body text */}
                         <Text style={s.txt}>

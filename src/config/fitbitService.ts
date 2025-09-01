@@ -119,24 +119,17 @@ export async function setfitBitWaterLog(
   return await postDataToApi(url, accessToken);
 }
 
-export async function getfitBitSleepgoal(
-  accessToken: string,
-  date: string,
-  target: number,
-): Promise<number> {
-  date = date || new Date().toISOString().slice(0, 10);
-  let url =
-    FITBIT_API_URL +
-    `sleep/goal.json` +
-    `?date=${date}&amount=${target}&unit=cup`;
-  return await postDataToApi(url, accessToken);
+export async function getfitBitSleepgoal(accessToken: string): Promise<number> {
+  let url = FITBIT_API_URL + `sleep/goal.json`;
+  return await getDataFromApi(url, accessToken);
 }
 export async function setfitBitSleepgoal(
   accessToken: string,
   bedtime: string,
   wakeupTime: string,
-  minDuration: string,
+  minDuration: number,
 ): Promise<number> {
+  console.log('setfitBitSleepgoal', bedtime, wakeupTime, minDuration);
   let payload = '';
   if (bedtime) {
     payload += `bedtime=${bedtime}`;
@@ -145,6 +138,9 @@ export async function setfitBitSleepgoal(
     payload += `&wakeupTime=${wakeupTime}`;
   } else if (wakeupTime) {
     payload += `wakeupTime=${wakeupTime}`;
+  }
+  if (minDuration) {
+    payload += `&minDuration=${minDuration}`;
   }
   let url = FITBIT_API_URL + `sleep/goal.json?` + payload;
   return await postDataToApi(url, accessToken);

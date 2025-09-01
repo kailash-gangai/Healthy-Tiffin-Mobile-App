@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
       View,
       Text,
@@ -11,7 +11,7 @@ import {
       TouchableWithoutFeedback,
       Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,8 +19,9 @@ import AppHeader from "../../components/AppHeader";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
 import { COLORS, SHADOW, SPACING } from "../../ui/theme";
 import SleepSVG from "../../assets/svg/Sleep-analysis-amico.svg";
+import { getfitBitSleepgoal, getValidTokens, setfitBitSleepgoal } from "../../config/fitbitService";
 
-type Clock = { h: number; m: number; am: boolean };
+type Clock = { h: number | null; m: number | null; am: boolean | null };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const to12 = (h24: number) => {
@@ -32,25 +33,40 @@ const to24 = (h12: number, am: boolean) => {
       const h = h12 % 12;
       return am ? h : (h + 12) % 24;
 };
-const fmt = (t: Clock) => `${pad(t.h === 0 ? 12 : t.h)}:${pad(t.m)} ${t.am ? "AM" : "PM"}`;
+const fmt = (t: Clock) => `${pad((t.h ?? 12) === 0 ? 12 : (t.h ?? 12))}:${pad(t.m ?? 0)} ${t.am ? "AM" : "PM"}`;
+const fmt24 = (t: Clock) => {
+      let h = (t.h ?? 12) % 12;
+      if (!t.am) h += 12;
+      return `${pad(h)}:${pad(t.m ?? 0)}`;
+};
 
 export default function SleepTrackerScreen() {
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
       // defaults: 12:00 AM -> 8:00 AM
-      const [bed, setBed] = useState<Clock>({ h: 12, m: 0, am: true });
-      const [wake, setWake] = useState<Clock>({ h: 8, m: 0, am: true });
+
+      const [bed, setBed] = useState<Clock>({ h: null, m: null, am: null });
+      const [wake, setWake] = useState<Clock>({ h: null, m: null, am: null });
 
       const [open, setOpen] = useState<null | "bed" | "wake">(null);
       const editing = open === "bed" ? bed : wake;
-
       const [hDraft, setHDraft] = useState(String(editing.h));
-      const [mDraft, setMDraft] = useState(pad(editing.m));
+      const [mDraft, setMDraft] = useState(pad(editing.m ?? 0));
       const [amDraft, setAmDraft] = useState(editing.am);
+      const [accessToken, setAccessToken] = useState<string | null>(null);
+      const [saving, setSaving] = useState(false);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState<string | null>(null);
 
       const total = useMemo(() => {
-            const bedMins = to24(bed.h === 12 ? 0 : bed.h, bed.am) * 60 + bed.m;
-            const wakeMins = to24(wake.h === 12 ? 0 : wake.h, wake.am) * 60 + wake.m;
+            const bedHour = bed.h === null ? 12 : bed.h;
+            const bedMinute = bed.m === null ? 0 : bed.m;
+            const bedAm = bed.am === null ? true : bed.am;
+            const wakeHour = wake.h === null ? 8 : wake.h;
+            const wakeMinute = wake.m === null ? 0 : wake.m;
+            const wakeAm = wake.am === null ? true : wake.am;
+
+            const bedMins = to24(bedHour === 12 ? 0 : bedHour, bedAm) * 60 + bedMinute;
+            const wakeMins = to24(wakeHour === 12 ? 0 : wakeHour, wakeAm) * 60 + wakeMinute;
             const diff = (wakeMins - bedMins + 24 * 60) % (24 * 60);
             const hrs = Math.floor(diff / 60);
             const mins = diff % 60;
@@ -65,12 +81,63 @@ export default function SleepTrackerScreen() {
             setOpen(which);
       };
 
+      useFocusEffect(
+            useCallback(() => {
+                  let alive = true;
+                  (async () => {
+                        setLoading(true);
+                        setError(null);
+                        const t = await getValidTokens(); // load/refresh from Keychain
+                        setAccessToken(t?.accessToken ?? null);
+                        if (!alive) return;
+                        if (!t) {
+                              navigate.replace("ConnectDevice"); // not connected → go connect
+                              return;
+                        }
+                        try {
+                              const goals = await getfitBitSleepgoal(t.accessToken);
+                              const [b_hrs, b_mins] = goals?.goal?.bedtime.split(":").map(Number);
+                              setBed({
+                                    h: to12(b_hrs).h,
+                                    m: b_mins,
+                                    am: to12(b_hrs).am,
+                              });
+                              const [w_hrs, w_mins] = goals?.goal?.wakeupTime.split(":").map(Number);
+                              setWake({
+                                    h: to12(w_hrs).h,
+                                    m: w_mins,
+                                    am: to12(w_hrs).am,
+                              })
+                              if (!alive) return;
+                        } catch (e: any) {
+                              if (!alive) return;
+                              setError(e?.message ?? "Failed to load steps");
+                        } finally {
+                              if (alive) setLoading(false);
+                        }
+                  })();
+                  return () => { alive = false; };
+            }, [navigate])
+      );
       const submit = () => {
             const h = Math.max(1, Math.min(12, parseInt(hDraft || "0", 10) || 12));
             const mNum = Math.max(0, Math.min(59, parseInt(mDraft || "0", 10) || 0));
             const next: Clock = { h, m: mNum, am: amDraft };
-            if (open === "bed") setBed(next);
-            if (open === "wake") setWake(next);
+            // convert to ms
+            let bedtime = fmt24(bed);
+            let wakeupTime = fmt24(wake);
+            if (open === "bed") {
+                  setBed(next);
+                  bedtime = fmt24(next);
+            }
+            if (open === "wake") {
+                  setWake(next);
+                  wakeupTime = fmt24(next);
+            }
+            let minDuration = diffMinutes(bedtime, wakeupTime);
+            const minutes = minDuration.hrs * 60 + minDuration.mins;
+            const res = setfitBitSleepgoal(accessToken, bedtime, wakeupTime, minutes);
+            console.log("res", res);
             setOpen(null);
       };
 
@@ -97,21 +164,16 @@ export default function SleepTrackerScreen() {
                               </View>
                         </View>
 
-
                         {/* Illustration placeholder */}
-
-
-
-
                         <View>
                               {/* Summary */}
                               <Text style={styles.summary}>
                                     Sleep Hours {total.hrs} hr {total.mins} m
                               </Text>
                               {/* CTA */}
-                              <Pressable style={styles.cta} onPress={() => setOpen("bed")}>
+                              {/* <Pressable style={styles.cta} onPress={() => setOpen("bed")}>
                                     <Text style={styles.ctaText}>Update Sleep Data    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} /></Text>
-                              </Pressable>
+                              </Pressable> */}
                         </View>
 
                         {/* Modal */}
@@ -180,7 +242,20 @@ export default function SleepTrackerScreen() {
             </SafeAreaView>
       );
 }
+function diffMinutes(start: string, end: string) {
+      const [sh, sm] = start.split(":").map(Number);
+      const [eh, em] = end.split(":").map(Number);
 
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+
+      let diff = endMin - startMin;
+      if (diff < 0) diff += 24 * 60; // cross midnight
+
+      const hrs = Math.floor(diff / 60);
+      const mins = diff % 60;
+      return { hrs, mins };
+}
 const styles = StyleSheet.create({
       container: { paddingHorizontal: SPACING, display: "flex", flexDirection: "column", gap: 100 },
       header: {

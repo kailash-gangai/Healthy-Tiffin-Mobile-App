@@ -17,11 +17,11 @@ export default function TermsOfServiceScreen({ navigation }: any) {
                         showsVerticalScrollIndicator={false}
                   >
                         {/* Illustration */}
-                        {/* <Image
-                              source={require('../../assets/icons/privacy.png')}
+                        <Image
+                              source={require('../../assets/icons/terms-and-conditions.png')}
                               style={s.img}
                               resizeMode="contain"
-                        /> */}
+                        />
 
                         {/* Body text */}
                         <Text style={s.txt}>

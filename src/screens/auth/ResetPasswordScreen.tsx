@@ -125,7 +125,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Save</Text>
-            <FontAwesome5  iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+            <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
           </LinearGradient>
         </TouchableOpacity>
       </View>
