@@ -13,12 +13,25 @@ export const callShopifyApi = async (query: string) => {
     body: JSON.stringify({ query }),
   });
   const data = await response.json();
+  let errors: any[] = [];
   if (response.ok) {
-    return data;
+    if (data.errors) {
+      data.errors.forEach((error: any) => {
+        throw new Error(error.message || 'An error occurred');
+      });
+    }
+    if (data.data.customerCreate?.userErrors?.length > 0) {
+      const errors = data.data.customerCreate.userErrors;
+      errors.forEach((error: any) => {
+        throw new Error(error.message || 'An error occurred');
+      });
+    }
+    return data.data;
   } else {
     throw new Error(data?.errors?.[0]?.message || 'An error occurred');
   }
 };
+
 // Helper function to escape user input
 export const escapeString = (str: string | undefined | null) => {
   if (!str) {

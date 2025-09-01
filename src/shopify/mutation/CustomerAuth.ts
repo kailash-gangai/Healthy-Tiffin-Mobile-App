@@ -33,7 +33,6 @@ export async function customerUpsert(
       }
     }
   `;
-
   return await callShopifyApi(query);
 }
 export async function loginCustomer(customer: any) {
@@ -48,7 +47,7 @@ export async function loginCustomer(customer: any) {
           accessToken
           expiresAt
         }
-        userErrors {
+        customerUserErrors {
           field
           message
         }

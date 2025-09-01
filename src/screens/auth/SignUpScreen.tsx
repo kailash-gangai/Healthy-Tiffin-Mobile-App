@@ -21,15 +21,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { customerUpsert } from '../../shopify/mutation/CustomerAuth';
-
-const COLORS = {
-    green: '#0B5733',
-    greenLight: '#0E6C40',
-    white: '#FFFFFF',
-    text: '#232323',
-    subText: '#8e8e8e',
-    divider: '#e7e7e7',
-} as const;
+import { COLORS } from '../../ui/theme';
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
@@ -63,38 +55,48 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         const [firstName, lastName] = name.trim().split(" ");
         return firstName && lastName; // Ensure both first and last name are present
     };
-    const onSubmit = useCallback((_: GestureResponderEvent) => {
-
+    const onSubmit = useCallback(async (_: GestureResponderEvent) => {
+        setErrors({});
         if (!name || !email || !pass) {
-            setErrors({ name: 'Is required', email: 'Is required', pass: 'Is required' });
+            setErrors({ name: name ? '' : 'Is required', email: email ? '' : 'Is required', pass: pass ? '' : 'Is required' });
+            return;
         }
         if (!validateEmail(email)) {
-            return Alert.alert("Error", "Please enter a valid email.");
+            setErrors({ email: 'Please enter a valid email address.' });
+            return;
         }
         if (!validateName(name)) {
-            return Alert.alert("Error", "Please enter both first and last name.");
+            setErrors({ name: 'Please enter your full name.' });
+            return;
+
         }
         if (!validatePassword(pass)) {
-            return Alert.alert("Error", "Password must be at least 6 characters.");
+            setErrors({ pass: 'Password must be at least 6 characters.' });
+            return;
         }
 
-        const [firstName, lastName] = name.trim().split(" "); // Split name into first and last
+        const [firstName, lastName] = name.trim().split(" ");
 
-        // Prepare user data for customerUpsert
         const userData = {
             email,
             password: pass,
             firstName,
             lastName,
         };
-
         try {
-            const response = customerUpsert(userData);
-            console.log(response);  // Log the response from the API
-            Alert.alert("Success", "Customer registration successful.");
+            const response = await customerUpsert(userData);
+            console.log('response', response);
+            if (response?.customerCreate?.customer?.id) {
+                Alert.alert("Success", "Customer registration successful.");
+                navigation.navigate('SignIn');
+            }
+
         } catch (error) {
-            console.error(error);
-            Alert.alert("Error", (error as Error).message);
+            if (error instanceof Error) {
+                Alert.alert("Error", error.message);
+            } else {
+                Alert.alert("Error", "An error occurred.");
+            }
         }
         // navigation.navigate('SelectPreferences');
     }, [name, email, pass]);
@@ -107,9 +109,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         >
             <ScrollView
                 keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ flexGrow: 1 }} //paddingBottom: insets.bottom + 0 
+                contentContainerStyle={{ flexGrow: 1 }}
                 bounces={false} >
-                {/* HERO with image + logo + titles */}
+
                 <View style={styles.heroWrap}>
                     <ImageBackground
                         source={require('../../assets/banners/chana.jpg')}
@@ -143,7 +145,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         autoCapitalize="words"
                         returnKeyType="next"
                     />
-
+                    {errors.name && (
+                        <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.name}</Text>
+                    )}
 
                     <FormInput
                         label="Password"
@@ -154,6 +158,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         onChangeText={setPass}
                         returnKeyType="next"
                     />
+                    {errors.pass && (
+                        <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.pass}</Text>
+                    )}
 
                     <FormInput
                         label="Email Address"
@@ -165,6 +172,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         onChangeText={setEmail}
                         returnKeyType="done"
                     />
+                    {errors.email && (
+                        <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.email}</Text>
+                    )}
 
                     {/* CTA */}
                     <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn} onPress={onSubmit}>
