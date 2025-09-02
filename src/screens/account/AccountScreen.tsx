@@ -6,6 +6,10 @@ import StatsCard from '../../components/StatChips';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { logout } from 'react-native-app-auth';
+import { useDispatch } from 'react-redux';
+import { clearUser } from '../../store/slice/userSlice';
+import { clearCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -13,6 +17,8 @@ type Props = {
       navigation: AboutScreenNavigationProp;
 };
 const AccountScreen: React.FC<Props> = ({ navigation }) => {
+      const dispatch = useDispatch();
+
       const Row = ({
             icon, label, danger, onPress,
       }: { icon: React.ReactNode; label: string; danger?: boolean; onPress?: () => void }) => (
@@ -22,12 +28,18 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
       );
 
+
       const Badge = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
             <View style={s.badge}>
                   <Text>{icon}</Text>
                   <Text style={s.badgeTxt}>{text}</Text>
             </View>
       );
+      const onLogout = () => {
+            dispatch(clearUser());
+            clearCustomerTokens();
+            navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] });
+      };
       return (
             <View style={{ flex: 1, backgroundColor: COLORS.white }}>
                   <ScrollView bounces={false}>
@@ -104,9 +116,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                                           icon={<FontAwesome5 iconStyle="solid" name="sign-out-alt" size={24} color={COLORS.red} />}
                                           label="Log Out"
                                           danger
-                                          onPress={() => {
-                                                console.log('Log out');
-                                          }}
+                                          onPress={() => onLogout()}
                                     />
                               </View>
 

@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MainTabs from './MainTabs';
-
 import SplashScreen from '../../components/SplashScreen';
 import ResetPasswordScreen from '../auth/ResetPasswordScreen';
 import AboutScreen from "../../screens/AboutScreen";
@@ -37,13 +36,35 @@ import CaloriesScreen from '../trackers/CaloriesScreen';
 import StepsTrackerScreen from '../trackers/StepsTrackerScreen';
 import WeightTrackerScreen from '../trackers/WeightTrackerScreen';
 import SleepTrackerScreen from '../trackers/SleepTrackerScreen';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
+import { clearUser, setUser } from '../../store/slice/userSlice';
 const Stack = createNativeStackNavigator();
-
 export default function Root() {
       const [loading, setLoading] = useState(true);
+      const [hasToken, setHasToken] = useState(false);
       const fadeAnim = useRef(new Animated.Value(1)).current;
-
+      const dispatch = useDispatch();
+      const user = useSelector((state: RootState) => state.user);
       useEffect(() => {
+            //check the user is logged in
+            if (!user.customerToken) {
+                  let customerdetails = checkCustomerTokens();
+                  if (!customerdetails) {
+                        dispatch(clearUser());
+
+                  }
+                  customerdetails.then((result) => {
+                        console.log('result', result);
+                        if (result) {
+                              dispatch(setUser(result));
+                              setHasToken(true);
+                        }
+                  })    
+            } else {
+                  setHasToken(false);
+            }
             const timer = setTimeout(() => {
                   // Fade out splash
                   Animated.timing(fadeAnim, {
@@ -64,13 +85,16 @@ export default function Root() {
                   headerShown: false,
                   animation: 'slide_from_bottom',
             }}>
+
                   <Stack.Screen name="About" component={AboutScreen} />
+                  {/* Add preference screens here */}
+
                   <Stack.Screen name="SignUp" component={SignUpScreen} />
                   <Stack.Screen name="SignIn" component={SignInScreen} />
                   <Stack.Screen name="ForgetPassword" component={ForgetPasswordScreen} />
                   <Stack.Screen name="CodeVerification" component={CodeVerificationScreen} />
                   <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-                  {/* Add preference screens here */}
+
                   <Stack.Screen name="MedicalPreferences" component={MedicalPreferencesScreen} />
                   <Stack.Screen name="SelectPreferences" component={SelectPreferencesScreen} />
                   <Stack.Screen name="DietaryPreferences" component={DietaryPreferencesScreen} />
@@ -92,27 +116,17 @@ export default function Root() {
                   <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
                   <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
 
-                  {/* deep screens without bar (pushed over tabs) */}
-                  {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
-
                   <Stack.Screen name="DishDetail" component={SignInScreen} />
                   <Stack.Screen name="Cart" component={CartScreen} />
                   <Stack.Screen name="OrderTrack" component={TrackOrderScreen} />
                   <Stack.Screen name="Notifications" component={NotificationsScreen} />
                   <Stack.Screen name="HealthFeed" component={HealthFeedScreen} />
-
-
                   <Stack.Screen name="WaterTracker" component={WaterTrackerScreen} />
                   <Stack.Screen name="SleepTracker" component={SleepTrackerScreen} />
                   <Stack.Screen name="WeightTracker" component={WeightTrackerScreen} />
                   <Stack.Screen name="StepsTracker" component={StepsTrackerScreen} />
                   <Stack.Screen name="CaloriesTracker" component={CaloriesScreen} />
                   <Stack.Screen name="ConnectDevice" component={ConnectDevicesScreen} />
-
-
-
-
-
-            </Stack.Navigator>
+            </Stack.Navigator >
       );
 }

@@ -26,6 +26,7 @@ export const callShopifyApi = async (query: string) => {
         throw new Error(error.message || 'An error occurred');
       });
     }
+
     return data.data;
   } else {
     throw new Error(data?.errors?.[0]?.message || 'An error occurred');

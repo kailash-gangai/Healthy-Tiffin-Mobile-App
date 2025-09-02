@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { COLORS } from '../ui/theme';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../screens/navigation/types';
 
 type Props = {
       title: string;
@@ -10,6 +15,13 @@ type Props = {
 };
 
 export default function AppHeader({ title, onBack, right }: Props) {
+      const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+      const user = useSelector((state: RootState) => state.user);
+      useEffect(() => {
+            if (!user || !user.name) {
+                  navigation.navigate('SignIn');
+            }
+      }, [user, navigation]);
       return (
             <View style={s.topbar}>
                   {/* Back button */}
