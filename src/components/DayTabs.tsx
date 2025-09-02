@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Text, TouchableOpacity, View, StyleSheet, Dimensions } from 'react-native';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { COLORS } from '../ui/theme';
+import { setSelectedDay } from '../store/slice/daySlice';
+import { useAppDispatch } from '../store/hooks';
 
 type Props = {
       days: string[];                 // ['Sunday','Monday',...,'Saturday']

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5'
 import DishDetailModal from './DishDetailModal';
 
@@ -25,7 +25,7 @@ const COLORS = {
       white: '#FFFFFF',
 };
 
-export default function DishCard({ item, onChange }: { item: Dish; onChange?: (d: Dish) => void }) {
+export default function DishCard({ item, onChange,isLoading }: { item: Dish; onChange?: (d: Dish) => void , isLoading?:boolean }) {
       const [checked, setChecked] = React.useState(!!item.selected);
       const [liked, setLiked] = React.useState(!!item.liked);
       const [open, setOpen] = React.useState(false);
@@ -46,6 +46,8 @@ export default function DishCard({ item, onChange }: { item: Dish; onChange?: (d
             onChange?.({ ...item, selected: checked, liked: next });
       };
 
+      if(isLoading) return  <ActivityIndicator size="large" color="#0000ff" />
+      
       return (
             <>
                   {/* Row: tap anywhere (except icons) to open modal */}
@@ -64,7 +66,7 @@ export default function DishCard({ item, onChange }: { item: Dish; onChange?: (d
                               {active ? <FontAwesome5 iconStyle='solid' name="check" size={12} color="#fff" /> : null}
                         </TouchableOpacity>
 
-                        <Image source={item.image} style={[s.thumb, !enabled && { opacity: 0.35 }]} />
+                        <Image source={{uri:item.image}} style={[s.thumb, !enabled && { opacity: 0.35 }]} />
 
                         <Text style={[s.title, !enabled && s.titleDim]} numberOfLines={1}>
                               {item.title}

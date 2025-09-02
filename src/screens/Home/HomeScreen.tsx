@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, View, StyleSheet, Text } from 'react-native';
 import { COLORS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
@@ -13,20 +13,67 @@ import CTAButton from '../../components/CTAButton';
 import FitnessCarousel from '../../components/FitnessCarousel';
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { addItem, decreaseItem, setQty, removeItem, selectSubtotal, selectLines } from "../../store/slice/cartSlice";
+import { getAllMetaobjects, getMetaObjectByHandle } from '../../shopify/queries/getMetaObject';
+import { getProductsByIds } from '../../shopify/queries/getProducts';
 
-const DISHES = [
-      { id: '1', title: 'Kalmi Kabab', image: require('../../assets/banners/chana.jpg'), selected: true },
-      { id: '2', title: 'Fish Fry', image: require('../../assets/banners/chana.jpg') },
-      { id: '3', title: 'Chicken Wings', image: require('../../assets/banners/chana.jpg') },
-];
-
-
+interface CategoriesProps{
+      key:string,
+      value:{
+            id:string;
+            title:string;
+            description:string;
+            tags:string[];
+            image:string
+      }[]
+}
+interface SingleMetaObjectProps{     
+            key:string,
+            value:string 
+}
+const DAYS=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const HomeScreen: React.FC = () => {
-      const [dayIndex, setDayIndex] = React.useState(0);
-      const [tab, setTab] = useState<0 | 1>(0);
-      const dispatch = useAppDispatch();
+     const  [dayIndex, setDayIndex] = React.useState(0),
+       [tab, setTab] = useState<0 | 1>(0),
+       dispatch = useAppDispatch(),
+       [categories,setCategories]= useState<CategoriesProps[]>([]),
+       [days,setDays]= useState<any[]>([]),
+       [isLoading,setLoading]= useState(false),
+       currentDay = DAYS[dayIndex],
+       currentDayMetaObjectId = days.find(day=>day.handle.toLowerCase()===currentDay?.toLowerCase())?.id
+      
+      useEffect(() => {
+            const fetchMetaObjects = async () => {
+                  setLoading(true)
+              try {
+                const listOfMetaobjects = await getAllMetaobjects(); 
+                  setDays(listOfMetaobjects && listOfMetaobjects)
+                const singleMetaObject:SingleMetaObjectProps[] = await getMetaObjectByHandle(currentDayMetaObjectId); 
+                const updatedMetaObjects:any = await Promise.all(
+                  singleMetaObject
+                    .filter((d) => d.value.startsWith("[") && d.value.endsWith("]"))
+                    .map(async (d) => {
+                
+                      const products = await getProductsByIds(d.value);
+                
+                      d.value = products;
+                
+                      return d; 
+                    })
+                );
 
+                console.log(updatedMetaObjects,"updated meta")
+                setCategories(updatedMetaObjects);
 
+              } catch (error) {
+                  setLoading(false)
+                console.error("Error fetching metaobjects:", error);
+              }
+              setLoading(false);
+            };
+        
+            fetchMetaObjects(); 
+          }, [currentDayMetaObjectId]);
+ console.log(categories,"categoreis")
       return (
             <View style={{ flex: 1, backgroundColor: COLORS.white }}>
                   <ScrollView bounces={false}>
@@ -37,23 +84,19 @@ const HomeScreen: React.FC = () => {
                         {tab === 0 && (
                               <View style={{ marginTop: 20, backgroundColor: COLORS.white }}>
                                     <DayTabs
-                                          days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']} onChange={setDayIndex}
+                                          days={DAYS} 
+                                          onChange={setDayIndex}
                                     />
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="PROTEINS" note="Select from 4 options" collapsed={false}>
-                                          {DISHES.map(d => (
-                                                <DishCard key={d.id} item={d} />
-                                          ))}
-                                    </Section>
 
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="VEGGIES" note="Select 2 from 6 options"
-                                          collapsed={false}>
-                                          {DISHES.map(d => (
-                                                <DishCard key={d.id} item={d} />
-                                          ))}
-                                    </Section>
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="SIDES" note="Select from 4 options" />
-                                    <Section hero={require('../../assets/banners/chana.jpg')} title="PROBIOTIC" note="Select from 2 options" />
-
+                                    {categories?.map(cat=>(
+                                       <Section key={cat.key} hero={require('../../assets/banners/chana.jpg')} title={cat.key.toUpperCase()} note={`Select from ${cat.value.length} options`} collapsed={false}>
+                                         
+                                       {cat.value.map(d => (
+                                             <DishCard isLoading={isLoading} key={d.id} item={d} />
+                                       ))}
+                                 </Section>   
+                                    ))}
+                                  
 
                               </View>
 

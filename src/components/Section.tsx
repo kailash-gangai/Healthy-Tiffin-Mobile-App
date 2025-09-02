@@ -32,6 +32,7 @@ export default function Section({
             setOpen(next);
             onToggle?.(next);
       };
+      
 
       return (
             <View style={s.wrap}>

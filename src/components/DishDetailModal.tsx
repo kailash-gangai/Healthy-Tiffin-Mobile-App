@@ -52,7 +52,7 @@ export default function DishDetailModal({
                               </TouchableOpacity>
                               {/* image with white frame + shadow */}
                               <View style={s.imgFrame}>
-                                    <Image source={dish.image} style={s.img} />
+                                    <Image source={{uri:dish.image}} style={s.img} />
                               </View>
 
                               {/* title row with share + like */}
