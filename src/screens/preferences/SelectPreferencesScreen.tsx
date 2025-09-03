@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
       View,
       Text,
@@ -9,6 +9,7 @@ import {
       FlatList,
 
       Platform,
+      Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
@@ -16,17 +17,21 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../ui/theme';
+import AppHeader from '../../components/AppHeader';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { customerMetafieldUpdate } from '../../shopify/mutation/CustomerAuth';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
-
-
 
 const ages = Array.from({ length: 83 }, (_, i) => `${i + 18}`); // 18..100
 const genders = ['Male', 'Female', 'Other'];
 const levels = ['Beginner', 'Intermediate', 'Advanced'];
 
 const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
+      const user = useSelector((state: RootState) => state.user);
+      console.log('user', user);
       const [gender, setGender] = useState<string>('');
       const [age, setAge] = useState<string>('');
       const [level, setLevel] = useState<string>('');
@@ -49,16 +54,47 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             parseFloat(goalWeight) > 0 &&
             (parseFloat(feet) > 0 || parseFloat(inches) > 0);
 
+      const onsubmit = () => {
+
+            try {
+                  let response = customerMetafieldUpdate([
+                        { key: 'gender', value: gender, type: 'single_line_text_field' },
+                        { key: 'age', value: age, type: 'single_line_text_field' },
+                        { key: 'fitness_level', value: level, type: 'single_line_text_field' },
+                        { key: 'cur_weight', value: curWeight, type: 'single_line_text_field' },
+                        { key: 'goal_weight', value: goalWeight, type: 'single_line_text_field' },
+                        { key: 'height', value: `${feet}'${inches}`, type: 'single_line_text_field' },
+                        { key: 'bmi', value: `${bmi}`, type: 'single_line_text_field' },
+                  ], user?.id ?? '');
+                  response.then(res => {
+                        if (res.metafieldsSet.metafields.length > 0) {
+                              navigation.navigate('MedicalPreferences');
+                        }
+                  });
+            } catch (error) {
+                  if (error instanceof Error) {
+                        Alert.alert("Error", error.message);
+                  } else {
+                        Alert.alert("Error", "An error occurred.");
+                  }
+            }
+
+      }
+
       return (
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                   {/* Top bar */}
-                  <View style={styles.topbar}>
+                  <AppHeader
+                        title="Select Preferences"
+                        onBack={() => navigation.goBack()}
+                  />
+                  {/* <View style={styles.topbar}>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
                               <FontAwesome5 iconStyle='solid' name="chevron-left" size={16} color={COLORS.white} />
                         </TouchableOpacity>
                         <Text style={styles.topTitle}>Select Preferences</Text>
                         <View style={{ width: 24 }} />
-                  </View>
+                  </View> */}
 
                   <View style={styles.container}>
                         {/* Gender */}
@@ -142,7 +178,9 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                               activeOpacity={0.9}
                               disabled={!canContinue}
                               style={[styles.ctaBtn, !canContinue && { opacity: 0.5 }]}
-                              onPress={() => navigation.navigate('MedicalPreferences')}
+                              onPress={() => {
+                                    onsubmit();
+                              }}
                         >
                               <LinearGradient
                                     colors={[COLORS.green, COLORS.greenLight]}

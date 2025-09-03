@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { clear } from 'react-native/types_generated/Libraries/LogBox/Data/LogBoxData';
 
 type UserState = {
   id: string | null;
@@ -7,6 +6,8 @@ type UserState = {
   email: string | null;
   customerToken: string | null;
   tokenExpire: string | null;
+  phone: string | null;
+  avatar: string | null;
 };
 
 const initialState: UserState = {
@@ -15,6 +16,8 @@ const initialState: UserState = {
   email: null,
   customerToken: null,
   tokenExpire: null,
+  phone: null,
+  avatar: null,
 };
 
 const userSlice = createSlice({
@@ -27,23 +30,20 @@ const userSlice = createSlice({
       state.email = action.payload.email;
       state.customerToken = action.payload.customerToken;
       state.tokenExpire = action.payload.tokenExpire;
+      state.phone = action.payload.phone;
+      state.avatar = action.payload.avatar;
     },
-    setUserId: (state, action: PayloadAction<string>) => {
-      state.id = action.payload;
-    },
-    clearUserId: (state, action: PayloadAction<string>) => {
-      state.id = null;
-    },
-
     clearUser: state => {
       state.id = null;
       state.name = null;
       state.email = null;
       state.customerToken = null;
       state.tokenExpire = null;
+      state.phone = null;
+      state.avatar = null;
     },
   },
 });
 
-export const { setUser, clearUser, setUserId, clearUserId } = userSlice.actions;
+export const { setUser, clearUser } = userSlice.actions;
 export default userSlice.reducer;

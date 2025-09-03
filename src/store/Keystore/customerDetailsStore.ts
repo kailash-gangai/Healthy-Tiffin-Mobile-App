@@ -76,6 +76,8 @@ export async function checkCustomerTokens() {
       id: customerDetails.customer.id,
       customerToken: customerToken,
       tokenExpire: tokenExpire,
+      phone: customerDetails.customer.phone || '',
+      avatar: customerDetails.customer?.metafields[0]?.value || '',
     };
     return details;
   } catch (error) {

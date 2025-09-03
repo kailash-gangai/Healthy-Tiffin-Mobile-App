@@ -20,10 +20,11 @@ import FormInput from '../../components/FormInput';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { customerUpsert } from '../../shopify/mutation/CustomerAuth';
+import { customerUpsert, loginCustomer } from '../../shopify/mutation/CustomerAuth';
 import { COLORS } from '../../ui/theme';
 import { useDispatch } from 'react-redux';
-import { setUserId } from '../../store/slice/userSlice';
+import { setUser } from '../../store/slice/userSlice';
+import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
@@ -32,7 +33,7 @@ type Props = {
     navigation: AboutScreenNavigationProp;
 };
 const SignUpScreen: React.FC<Props> = ({ navigation }) => {
-    const dispach = useDispatch();
+    const dispatch = useDispatch();
     const insets = useSafeAreaInsets();
     const kbOffset = Platform.select({
         ios: insets.top + 12,   // so content lifts above the iOS keyboard
@@ -86,10 +87,21 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             const response = await customerUpsert(userData);
             console.log('response', response);
             if (response?.customerCreate?.customer?.id) {
-                dispach(setUserId(response.customerCreate.customer.id));
-                Alert.alert("Success", "Customer registration successful.");
-                navigation.navigate('SelectPreferences');
-                // navigation.navigate('SignIn');
+                const login = await loginCustomer(userData);
+                if (login?.customerAccessTokenCreate?.customerAccessToken?.accessToken) {
+                    const customerToken = login.customerAccessTokenCreate.customerAccessToken.accessToken;
+                    const tokenExpire = login.customerAccessTokenCreate.customerAccessToken.expiresAt;
+                    saveCustomerTokens({ customerToken, tokenExpire });
+                    let customerdetails = checkCustomerTokens();
+                    customerdetails.then(async (result) => {
+                        console.log('result', result);
+                        if (result) {
+                            await dispatch(setUser(result));
+                        }
+                    });
+                    Alert.alert("Success", "Customer registration successful.");
+                    navigation.navigate('SelectPreferences');
+                }
             }
         } catch (error) {
             if (error instanceof Error) {
