@@ -22,6 +22,8 @@ import { RootStackParamList } from "../navigation/types";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { customerUpsert } from '../../shopify/mutation/CustomerAuth';
 import { COLORS } from '../../ui/theme';
+import { useDispatch } from 'react-redux';
+import { setUserId } from '../../store/slice/userSlice';
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
@@ -30,14 +32,12 @@ type Props = {
     navigation: AboutScreenNavigationProp;
 };
 const SignUpScreen: React.FC<Props> = ({ navigation }) => {
-
-
+    const dispach = useDispatch();
     const insets = useSafeAreaInsets();
     const kbOffset = Platform.select({
         ios: insets.top + 12,   // so content lifts above the iOS keyboard
         android: 0,
     }) as number;
-
     const [name, setName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [pass, setPass] = useState<string>('');
@@ -68,7 +68,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         if (!validateName(name)) {
             setErrors({ name: 'Please enter your full name.' });
             return;
-
         }
         if (!validatePassword(pass)) {
             setErrors({ pass: 'Password must be at least 6 characters.' });
@@ -87,10 +86,11 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             const response = await customerUpsert(userData);
             console.log('response', response);
             if (response?.customerCreate?.customer?.id) {
+                dispach(setUserId(response.customerCreate.customer.id));
                 Alert.alert("Success", "Customer registration successful.");
-                navigation.navigate('SignIn');
+                navigation.navigate('SelectPreferences');
+                // navigation.navigate('SignIn');
             }
-
         } catch (error) {
             if (error instanceof Error) {
                 Alert.alert("Error", error.message);
@@ -98,7 +98,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                 Alert.alert("Error", "An error occurred.");
             }
         }
-        // navigation.navigate('SelectPreferences');
     }, [name, email, pass]);
 
     return (
@@ -137,9 +136,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
 
                 <View style={styles.card}>
                     <FormInput
-                        label="Name"
+                        label="Full Name"
                         icon="person"
-                        placeholder="Enter name"
+                        placeholder="Enter full name"
                         value={name}
                         onChangeText={setName}
                         autoCapitalize="words"

@@ -9,6 +9,7 @@ import {
     ScrollView,
     Platform,
     GestureResponderEvent,
+    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -17,15 +18,11 @@ import { Dimensions } from 'react-native';
 import FormInput from '../../components/FormInput';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-const COLORS = {
-    green: '#0B5733',
-    greenLight: '#0E6C40',
-    white: '#FFFFFF',
-    text: '#232323',
-    subText: '#8e8e8e',
-    divider: '#e7e7e7',
-} as const;
-
+import { COLORS } from '../../ui/theme';
+import { loginCustomer } from '../../shopify/mutation/CustomerAuth';
+import { useDispatch } from 'react-redux';
+import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
+import { setUser } from '../../store/slice/userSlice';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
     navigation: NavigationProp;
@@ -34,15 +31,60 @@ const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
 const SignInScreen: React.FC<Props> = ({ navigation }) => {
-    const [name, setName] = useState<string>('');
+    const dispatch = useDispatch();
     const [email, setEmail] = useState<string>('');
     const [pass, setPass] = useState<string>('');
-
-    const onSubmit = useCallback((_: GestureResponderEvent) => {
-        // TODO: form validation + submit
-        console.log({ name, email, pass });
-        navigation.navigate('Home');
-    }, [name, email, pass]);
+    const [errors, setErrors] = useState<any>({});
+    const [isloading, setIsloading] = useState(false);
+    const validateEmail = (email: string) => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    };
+    const validatePassword = (password: string) => {
+        return password.length >= 6;
+    };
+    const onSubmit = useCallback(async (_: GestureResponderEvent) => {
+        setErrors({});
+        if (!email || !pass) {
+            setErrors({ email: email ? '' : 'Is required', pass: pass ? '' : 'Is required' });
+            return;
+        }
+        if (!validateEmail(email)) {
+            setErrors({ email: 'Please enter a valid email address.' });
+            return;
+        }
+        if (!validatePassword(pass)) {
+            setErrors({ pass: 'Password must be at least 6 characters.' });
+            return;
+        }
+        const userData = {
+            email,
+            password: pass,
+        };
+        try {
+            const response = await loginCustomer(userData);
+            if (response?.customerAccessTokenCreate?.customerAccessToken?.accessToken) {
+                const customerToken = response.customerAccessTokenCreate.customerAccessToken.accessToken;
+                const tokenExpire = response.customerAccessTokenCreate.customerAccessToken.expiresAt;
+                saveCustomerTokens({ customerToken, tokenExpire });
+                let customerdetails = checkCustomerTokens();
+                customerdetails.then((result) => {
+                    console.log('result', result);
+                    if (result) {
+                        dispatch(setUser(result));
+                    }
+                })
+                Alert.alert("Success", "Login successful!");
+                navigation.navigate('Home');
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                Alert.alert("Error", error.message);
+            } else {
+                Alert.alert("Error", "An error occurred.");
+            }
+        }
+    }, [email, pass]);
 
     return (
         <ScrollView bounces={false} contentContainerStyle={{ flexGrow: 1 }}>
@@ -70,14 +112,18 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
             {/* CARD */}
             <View style={styles.card}>
                 <FormInput
-                    label="Name"
-                    icon="person"
-                    placeholder="Enter name"
-                    value={name}
-                    onChangeText={setName}
-                    autoCapitalize="words"
-                    returnKeyType="next"
+                    label="Email Address"
+                    icon="email"
+                    placeholder="Enter email address"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
+                    returnKeyType="done"
                 />
+                {errors.email && (
+                    <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.email}</Text>
+                )}
 
                 <FormInput
                     label="Password"
@@ -88,7 +134,9 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                     onChangeText={setPass}
                     returnKeyType="next"
                 />
-
+                {errors.pass && (
+                    <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.pass}</Text>
+                )}
                 <View style={styles.forgetWrap}>
                     <TouchableOpacity onPress={() => { navigation.navigate("ForgetPassword") }}>
                         <Text style={styles.forgetpassword}>Forget Password?</Text>
@@ -134,12 +182,11 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                         onPress={() => { }}
                     />
                 </View>
-
                 {/* Footer */}
                 <View style={styles.footerRow}>
                     <Text style={styles.footerText}>Don't have an account?</Text>
                     <TouchableOpacity onPress={() => { navigation.navigate("SignUp") }}>
-                        <Text style={styles.footerLink}> Sign In</Text>
+                        <Text style={styles.footerLink}> Sign Up</Text>
                     </TouchableOpacity>
                 </View>
             </View>

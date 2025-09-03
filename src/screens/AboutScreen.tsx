@@ -11,6 +11,9 @@ type Props = {
 };
 
 const AboutScreen: React.FC<Props> = ({ navigation }) => {
+    const handlePress = () => {
+        navigation.navigate("Home");
+    }
     return (
         <SafeAreaView style={styles.container}>
             {/* 1. Header Image */}
@@ -76,7 +79,7 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
             {/* 5. CTA Button */}
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("SignUp")}
+            <TouchableOpacity style={styles.button} onPress={() => { handlePress() }}
             >
                 <Text style={styles.buttonText}>TRY IT TODAY</Text>
             </TouchableOpacity>

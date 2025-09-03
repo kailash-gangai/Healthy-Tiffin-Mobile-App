@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 
@@ -6,20 +6,27 @@ import { COLORS, RADIUS, SPACING, SHADOW } from '../ui/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../screens/navigation/types';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCount } from '../store/slice/cartSlice';
+import { RootState } from '../store';
 
 export default function HeaderGreeting({ name }: { name: string }) {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
       const cartCount = useSelector(selectCount);
-
+      const dispatch = useDispatch();
+      const user = useSelector((state: RootState) => state.user);
+      useEffect(() => {
+            if (!user || !user.name) {
+                  navigation.navigate('SignIn');
+            }
+      }, [user, navigation]);
       return (
             <View>
                   <View style={s.orange}>
                         <View style={s.row}>
                               <View style={s.left}>
-                                    <Image source={{ uri: 'https://i.pravatar.cc/80' }} style={s.avatar} />
-                                    <Text style={s.hello}>Hello, {name}!</Text>
+                                    <Image source={{ uri: user?.avatar || 'https://i.pravatar.cc/80' }} style={s.avatar} />
+                                    <Text style={s.hello}>Hello, {user.name}!</Text>
                               </View>
 
                               <View style={s.right}>
