@@ -3,24 +3,59 @@ export const STOREFRONT_API_VERSION = '2025-07';
 export const STOREFRONT_PUBLIC_TOKEN = '3e0af6cbb93e01a174a52f8e1db6226e';
 export const STORE_API_URL = `https://${STORE_DOMAIN}/api/${STOREFRONT_API_VERSION}/graphql.json`;
 
-export const callShopifyApi = async (query: string) => {
+// export const callShopifyApi = async (query: string) => {
+//   const response = await fetch(STORE_API_URL, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'X-Shopify-Storefront-Access-Token': STOREFRONT_PUBLIC_TOKEN,
+//     },
+//     body: JSON.stringify({ query }),
+//   });
+//   const data = await response.json();
+//   let errors: any[] = [];
+//   if (response.ok) {
+//     if (data.errors) {
+//       data.errors.forEach((error: any) => {
+//         throw new Error(error.message || 'An error occurred');
+//       });
+//     }
+//     if (data.data.customerCreate?.userErrors?.length > 0) {
+//       const errors = data.data.customerCreate.userErrors;
+//       errors.forEach((error: any) => {
+//         throw new Error(error.message || 'An error occurred');
+//       });
+//     }
+
+//     return data.data;
+//   } else {
+//     throw new Error(data?.errors?.[0]?.message || 'An error occurred');
+//   }
+// };
+
+export const callShopifyApi = async (query: string, variables: any = null) => {
+  // Prepare the body for the request, including variables if provided
+  const body = variables ? { query, variables } : { query };
+
   const response = await fetch(STORE_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Shopify-Storefront-Access-Token': STOREFRONT_PUBLIC_TOKEN,
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify(body),
   });
+
   const data = await response.json();
-  let errors: any[] = [];
   if (response.ok) {
+    // Check if there are errors in the response
     if (data.errors) {
       data.errors.forEach((error: any) => {
         throw new Error(error.message || 'An error occurred');
       });
     }
-    if (data.data.customerCreate?.userErrors?.length > 0) {
+    // Check if there are user errors from a customerCreate mutation or other user-related errors
+    if (data.data?.customerCreate?.userErrors?.length > 0) {
       const errors = data.data.customerCreate.userErrors;
       errors.forEach((error: any) => {
         throw new Error(error.message || 'An error occurred');

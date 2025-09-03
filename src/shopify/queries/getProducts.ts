@@ -1,7 +1,7 @@
-import { callShopifyApi } from "../ShopifyConfig";
+import { callShopifyApi } from '../ShopifyConfig';
 
-export const getProductsByIds = async (productIds:string) => {
-    const query = `
+export const getProductsByIds = async (productIds: string) => {
+  const query = `
       query {
         nodes(ids: ${productIds}) {
           ... on Product {
@@ -9,19 +9,11 @@ export const getProductsByIds = async (productIds:string) => {
             title
             tags
             description
-            priceRange {
-                minVariantPrice {
-                  amount
-                  currencyCode
-                }
-                maxVariantPrice {
-                  amount
-                  currencyCode
-                }
-              }
+           
               variants(first: 1) {
                 edges {
                   node {
+                  id
                     priceV2 {
                       amount
                       currencyCode
@@ -41,28 +33,29 @@ export const getProductsByIds = async (productIds:string) => {
         }
       }
     `;
-  
-    try {
-      // Call Shopify API with the direct query
-      const data = await callShopifyApi(query);
-      if (data && data.nodes) {
-        // Map over the products to get the title, description, and image
-        return data.nodes.map((product: any) => ({
-          id: product.id,
-          title: product.title,
-          description: product.description,
-          tags: product.tags,
-          image: product.images.edges[0]?.node.src || null,
-          price:product.priceRange,
-          variants:product.variants // Get the image URL (if available)
-        }));
-      } else {
-        console.log("No products found.");
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
+
+  try {
+    const data = await callShopifyApi(query);
+
+    if (data && data.nodes) {
+      const filteredData = data.nodes.filter(
+        (product: any) => product !== null,
+      );
+      return filteredData.map((product: any) => ({
+        id: product.id,
+        variantId: product.variants.edges?.[0]?.node.id || null,
+        title: product.title,
+        description: product.description,
+        tags: product.tags,
+        image: product.images.edges[0]?.node.src || null,
+        price: product.variants.edges?.[0]?.node.priceV2?.amount || 'N/A',
+      }));
+    } else {
+      console.log('No products found.');
       return [];
     }
-  };
-  
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+};
