@@ -1,4 +1,4 @@
-import { callShopifyApi } from '../ShopifyConfig';
+import { callShopifyApiWithVariable } from '../ShopifyConfig';
 
 export const createCart = async (input: any) => {
   const mutation = `
@@ -28,7 +28,7 @@ export const createCart = async (input: any) => {
 
   try {
     // Call Shopify API with the mutation query and variables
-    const data = await callShopifyApi(mutation, variables);
+    const data = await callShopifyApiWithVariable(mutation, variables);
 
     if (data?.cartCreate?.cart) {
       console.log('Cart created successfully:', data.cartCreate.cart);

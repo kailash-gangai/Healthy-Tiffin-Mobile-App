@@ -32,29 +32,26 @@ export const callShopifyApi = async (query: string, isAdmin = false) => {
     throw new Error(data?.errors?.[0]?.message || 'An error occurred');
   }
 };
+
 export const callShopifyApiWithVariable = async (
   query: string,
   variables: any = null,
-  isAdmin = false,
 ) => {
-  const apiKey = isAdmin ? STORE_ADMIN_API_KEY : STOREFRONT_PUBLIC_TOKEN;
-  const access_token_head = isAdmin
-    ? 'X-Shopify-Access-Token'
-    : 'X-Shopify-Storefront-Access-Token';
-  const url = isAdmin ? STORE_ADMIN_API_URL : STORE_API_URL;
+  // Prepare the body for the request, including variables if provided
   const body = variables ? { query, variables } : { query };
-  const response = await fetch(url, {
+
+  const response = await fetch(STORE_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      [access_token_head]: apiKey,
+      'X-Shopify-Storefront-Access-Token': STOREFRONT_PUBLIC_TOKEN,
     },
-    body: JSON.stringify({ body }),
+    body: JSON.stringify(body),
   });
+
   const data = await response.json();
-  console.log('data', data);
-  let errors: any[] = [];
   if (response.ok) {
+    // Check if there are errors in the response
     if (data.errors) {
       data.errors.forEach((error: any) => {
         throw new Error(error.message || 'An error occurred');

@@ -15,6 +15,7 @@ import { COLORS as C, SHADOW, SPACING } from '../../ui/theme';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { createCart } from '../../shopify/mutation/cart';
 import { clearCart } from '../../store/slice/cartSlice';
+import { useShopifyCheckoutSheet } from '@shopify/checkout-sheet-kit';
 
 const STEPS = [
   {
@@ -49,12 +50,16 @@ const STEPS = [
 
 export default function TrackOrderScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
+  const shopifyCheckout = useShopifyCheckoutSheet();
+
   console.log(lines, 'orde');
   const dispatch = useAppDispatch();
   const cart = async () => {
     try {
       const createdCart = await createCart(lines);
       console.log(createdCart, 'cart');
+      shopifyCheckout.present(createdCart.checkoutUrl);
+
       if (createdCart && createdCart.id) {
         dispatch(clearCart());
       }
