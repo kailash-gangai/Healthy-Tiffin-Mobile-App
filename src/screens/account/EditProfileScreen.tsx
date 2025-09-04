@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View, Text, Image, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
@@ -7,9 +7,17 @@ import FormInput from '../../components/FormInput';
 import LinearGradient from 'react-native-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { launchImageLibrary, launchCamera, ImageLibraryOptions, CameraOptions } from "react-native-image-picker";
-
+import { readFile } from 'react-native-fs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { getCustomerDetails } from '../../shopify/query/CustomerQuery';
+import { customerUpsert } from '../../shopify/mutation/CustomerAuth';
+import { setUser } from '../../store/slice/userSlice';
+import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
+import { stagedUploadsCreate } from '../../shopify/mutation/FileUpload';
+import { STORE_ADMIN_API_KEY, STORE_ADMIN_API_URL } from '../../shopify/ShopifyConfig';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -17,9 +25,15 @@ type Props = {
       navigation: AboutScreenNavigationProp;
 };
 export default function EditProfile({ navigation }: Props) {
-      const [avatar, setAvatar] = useState<string | undefined>();
-
+      const dispatch = useDispatch();
+      const user = useSelector((state: RootState) => state.user);
+      const [file, setFile] = useState<any>(null);
+      const [avatar, setAvatar] = useState<string | undefined>(user?.avatar || undefined);
+      const [name, setName] = useState<string | undefined>(user?.name || undefined);
+      const [email, setEmail] = useState<string | undefined>(user?.email || undefined);
+      const [phone, setPhone] = useState<string | undefined>(user?.phone || undefined);
       const openGallery = async () => {
+
             const opts: ImageLibraryOptions = {
                   mediaType: "photo",
                   selectionLimit: 1,
@@ -27,11 +41,13 @@ export default function EditProfile({ navigation }: Props) {
                   quality: 0.9,
             };
             const res = await launchImageLibrary(opts);
+            setFile(res);
             if (res.didCancel) return;
-            console.log(res);
+            console.log('res', res);
             if (res.errorCode) return Alert.alert("Error", res.errorMessage || res.errorCode);
             const uri = res.assets?.[0]?.uri;
             if (uri) setAvatar(uri);
+
       };
 
       const openCamera = async () => {
@@ -48,6 +64,7 @@ export default function EditProfile({ navigation }: Props) {
             const uri = res.assets?.[0]?.uri;
             if (uri) setAvatar(uri);
       };
+
 
       const pickImage = () => {
             if (Platform.OS === "ios") {
@@ -72,6 +89,69 @@ export default function EditProfile({ navigation }: Props) {
       };
 
 
+      const onSubmit = async () => {
+            let [firstName, lastName] = (name?.split(' ') ?? []);
+            let userData = {
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                  phone: phone
+            }
+
+            if (avatar) {
+                  const base64Image = await readFile(avatar, 'base64');
+                  console.log('base64Image', file);
+                  const res = await stagedUploadsCreate({
+                        fileName: file.assets?.[0]?.fileName,
+                        mimeType: file.assets?.[0]?.type,
+                        fileSize: file.assets?.[0]?.fileSize,
+                  });
+                  const target = res.stagedUploadsCreate.stagedTargets[0];
+                  const params = target.parameters;
+                  const url = target.url;
+                  const resourceUrl = target.resourceUrl;
+
+                  const form = new FormData();
+                  params.forEach(({ name, value }: any) => {
+                        form.append(name, value);
+                  });
+                  form.append("image", base64Image);
+                  console.log('form', form);
+                  const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                              'Content-Type': 'application/json',
+                              'X-Shopify-Resource': STORE_ADMIN_API_KEY
+                        },
+                        body: form
+                  });
+                  console.log('response', response);
+                  const data = await response.json();
+                  console.log('data2', data);
+
+            }
+            return;
+            try {
+                  const res = await customerUpsert(userData, user?.customerToken || '');
+                  if (res?.customerUpdate?.customer?.id) {
+                        let customerdetails = checkCustomerTokens();
+                        customerdetails.then((result) => {
+                              if (result) {
+                                    dispatch(setUser(result));
+                              }
+                        })
+                        Alert.alert("Success", "Profile updated successfully.");
+                  }
+                  console.log('onSubmit', avatar, name, email, phone, res);
+            } catch (error) {
+                  if (error instanceof Error) {
+                        Alert.alert("Error", error.message);
+                  } else {
+                        Alert.alert("Error", "An error occurred.");
+                  }
+            }
+      }
+
       return (
 
             <SafeAreaView style={styles.safe}>
@@ -91,8 +171,8 @@ export default function EditProfile({ navigation }: Props) {
                         <FormInput label="Name"
                               icon="person"
                               placeholder="Enter name"
-                              // value={pass}
-                              // onChangeText={setPass}
+                              value={name}
+                              onChangeText={setName}
                               returnKeyType="next" />
                         <FormInput
                               label="Email Address"
@@ -100,8 +180,8 @@ export default function EditProfile({ navigation }: Props) {
                               placeholder="Enter email address"
                               keyboardType="email-address"
                               autoCapitalize="none"
-                              // value={email}
-                              // onChangeText={setEmail}
+                              value={email}
+                              onChangeText={setEmail}
                               returnKeyType="next"
                         />
                         <FormInput
@@ -110,13 +190,13 @@ export default function EditProfile({ navigation }: Props) {
                               placeholder="Enter phone number"
                               keyboardType="phone-pad"
                               autoCapitalize="none"
-                              // value={email}
-                              // onChangeText={setEmail}
+                              value={phone}
+                              onChangeText={setPhone}
                               returnKeyType="done"
                         />
 
                         <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn} onPress={() => {
-                              console.log('Sign Up');
+                              onSubmit();
                         }}>
                               <LinearGradient
                                     start={{ x: 0, y: 0 }}
@@ -130,7 +210,7 @@ export default function EditProfile({ navigation }: Props) {
                         </TouchableOpacity>
 
                   </View>
-            </SafeAreaView>
+            </SafeAreaView >
 
       );
 }

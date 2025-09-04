@@ -4,12 +4,17 @@ import {
       Text,
       StyleSheet,
       TouchableOpacity,
+      Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { customerMetafieldUpdate } from '../../shopify/mutation/CustomerAuth';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import AppHeader from '../../components/AppHeader';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -37,6 +42,7 @@ const CONDITIONS = [
 ];
 
 const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
+      const user = useSelector((state: RootState) => state.user);
       const [hasCondition, setHasCondition] = useState<boolean | null>(true);
       const [selected, setSelected] = useState<Record<string, boolean>>({
             'Acid Reflux': true,
@@ -57,17 +63,42 @@ const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             setHasCondition(val);
             if (!val) setSelected({});
       };
+      const onsubmit = () => {
+
+            try {
+                  const jsonData = JSON.stringify(selected);
+                  let response = customerMetafieldUpdate([
+                        { key: 'has_condition', value: hasCondition, type: 'boolean' },
+                        { key: 'condition', value: jsonData.replace(/"/g, '\\"'), type: 'multi_line_text_field' },
+                  ], user?.id ?? '');
+
+                  response.then(res => {
+                        if (res.metafieldsSet.metafields.length > 0) {
+                              navigation.navigate('DietaryPreferences');
+                        }
+                  });
+            } catch (error) {
+                  if (error instanceof Error) {
+                        Alert.alert("Error", error.message);
+                  } else {
+                        Alert.alert("Error", "An error occurred.");
+                  }
+            }
+
+      }
+
 
       return (
             <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
                   {/* Top bar */}
-                  <View style={styles.topbar}>
+                  <AppHeader title="Medical Preferences" onBack={() => navigation.goBack()} />
+                  {/* <View style={styles.topbar}>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
                               <FontAwesome5 iconStyle='solid' name="chevron-left" size={16} color={COLORS.white} />
                         </TouchableOpacity>
                         <Text style={styles.topTitle}>Medical Preferences</Text>
                         <View style={{ width: 24 }} />
-                  </View>
+                  </View> */}
 
                   <View style={styles.container}>
                         <Text style={styles.sectionTitle}>Any existing health conditions or injuries</Text>
@@ -120,7 +151,9 @@ const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                               activeOpacity={0.9}
                               disabled={!canContinue}
                               style={[styles.ctaBtn, !canContinue && { opacity: 0.5 }]}
-                              onPress={() => navigation.navigate('DietaryPreferences')}
+                              onPress={() => {
+                                    onsubmit();
+                              }}
                         >
                               <LinearGradient
                                     colors={[COLORS.green, COLORS.greenLight]}

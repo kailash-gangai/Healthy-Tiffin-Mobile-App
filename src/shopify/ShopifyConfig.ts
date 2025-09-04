@@ -1,18 +1,26 @@
 export const STORE_DOMAIN = 'healthytiffin-dev.myshopify.com';
 export const STOREFRONT_API_VERSION = '2025-07';
 export const STOREFRONT_PUBLIC_TOKEN = '3e0af6cbb93e01a174a52f8e1db6226e';
+export const STORE_ADMIN_API_KEY = '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';
 export const STORE_API_URL = `https://${STORE_DOMAIN}/api/${STOREFRONT_API_VERSION}/graphql.json`;
+export const STORE_ADMIN_API_URL = `https://${STORE_DOMAIN}/admin/api/${STOREFRONT_API_VERSION}/graphql.json`;
 
-export const callShopifyApi = async (query: string) => {
-  const response = await fetch(STORE_API_URL, {
+export const callShopifyApi = async (query: string, isAdmin = false) => {
+  const apiKey = isAdmin ? STORE_ADMIN_API_KEY : STOREFRONT_PUBLIC_TOKEN;
+  const access_token_head = isAdmin
+    ? 'X-Shopify-Access-Token'
+    : 'X-Shopify-Storefront-Access-Token';
+  const url = isAdmin ? STORE_ADMIN_API_URL : STORE_API_URL;
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': STOREFRONT_PUBLIC_TOKEN,
+      [access_token_head]: apiKey,
     },
     body: JSON.stringify({ query }),
   });
   const data = await response.json();
+  console.log('data', data);
   let errors: any[] = [];
   if (response.ok) {
     if (data.errors) {
@@ -20,13 +28,6 @@ export const callShopifyApi = async (query: string) => {
         throw new Error(error.message || 'An error occurred');
       });
     }
-    if (data.data.customerCreate?.userErrors?.length > 0) {
-      const errors = data.data.customerCreate.userErrors;
-      errors.forEach((error: any) => {
-        throw new Error(error.message || 'An error occurred');
-      });
-    }
-
     return data.data;
   } else {
     throw new Error(data?.errors?.[0]?.message || 'An error occurred');

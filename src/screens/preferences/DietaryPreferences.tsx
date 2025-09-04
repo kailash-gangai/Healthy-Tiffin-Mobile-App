@@ -6,12 +6,17 @@ import {
       TouchableOpacity,
       FlatList,
       Image,
+      Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { customerMetafieldUpdate } from '../../shopify/mutation/CustomerAuth';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import AppHeader from '../../components/AppHeader';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -45,6 +50,7 @@ const OPTIONS: Item[] = [
 ];
 
 const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
+      const user = useSelector((state: RootState) => state.user);
       const [selected, setSelected] = useState<Record<string, boolean>>({
             vegan: true,
             jain: true,
@@ -61,17 +67,40 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             () => Object.values(selected).some(Boolean),
             [selected]
       );
+      const onsubmit = () => {
+
+            try {
+                  const jsonData = JSON.stringify(selected);
+                  let response = customerMetafieldUpdate([
+                        { key: 'dietary', value: jsonData.replace(/"/g, '\\"'), type: 'multi_line_text_field' },
+                  ], user?.id ?? '');
+                  response.then(res => {
+
+                        if (res.metafieldsSet.metafields.length > 0) {
+                              navigation.navigate('Home');
+                        }
+                  });
+            } catch (error) {
+                  if (error instanceof Error) {
+                        Alert.alert("Error", error.message);
+                  } else {
+                        Alert.alert("Error", "An error occurred.");
+                  }
+            }
+
+      }
 
       return (
             <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
                   {/* Top bar */}
-                  <View style={styles.topbar}>
+                  <AppHeader title="Dietary Preferences" onBack={() => navigation.goBack()} />
+                  {/* <View style={styles.topbar}>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
                               <FontAwesome5 iconStyle='solid' name="chevron-left" size={16} color={COLORS.white} />
                         </TouchableOpacity>
                         <Text style={styles.topTitle}>Dietary preferences</Text>
                         <View style={{ width: 24 }} />
-                  </View>
+                  </View> */}
 
                   <View style={styles.container}>
                         <Text style={styles.hint}>You can select multiple options</Text>
@@ -124,7 +153,9 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                               activeOpacity={0.9}
                               disabled={!canContinue}
                               style={[styles.ctaBtn, !canContinue && { opacity: 0.5 }]}
-                              onPress={() => navigation.navigate('Home')}
+                              onPress={() => {
+                                    onsubmit();
+                              }}
                         >
                               <LinearGradient
                                     colors={[COLORS.green, COLORS.greenLight]}

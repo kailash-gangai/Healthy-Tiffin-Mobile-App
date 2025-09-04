@@ -95,8 +95,8 @@ export default function Root() {
                   <Stack.Screen name="CodeVerification" component={CodeVerificationScreen} />
                   <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
 
-                  <Stack.Screen name="MedicalPreferences" component={MedicalPreferencesScreen} />
                   <Stack.Screen name="SelectPreferences" component={SelectPreferencesScreen} />
+                  <Stack.Screen name="MedicalPreferences" component={MedicalPreferencesScreen} />
                   <Stack.Screen name="DietaryPreferences" component={DietaryPreferencesScreen} />
 
                   {/* group WITH bottom bar */}

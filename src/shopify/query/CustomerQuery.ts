@@ -7,6 +7,11 @@ export async function getCustomerDetails(customerAccessToken: string) {
       displayName
       email
       phone
+        metafields(identifiers: [{namespace: "custom", key: "image"}]) {
+        value
+        key
+        namespace
+      }
     }
   } `;
   return await callShopifyApi(query);

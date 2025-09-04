@@ -71,7 +71,6 @@ const s = StyleSheet.create({
             height: 44,
             borderRadius: 10,
             paddingHorizontal: 12,
-
             alignItems: 'center',
             flexDirection: 'row',
             justifyContent: 'space-between',

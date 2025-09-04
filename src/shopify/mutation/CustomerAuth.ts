@@ -14,7 +14,9 @@ export async function customerUpsert(
   query +=
     queryPart +
     `   email: "${escapeString(customer.email)}",
-        password: "${escapeString(customer.password)}",
+       ` +
+    (customer.password ? `password: "${customer.password}",` : '') +
+    `
         firstName: "${escapeString(customer.firstName)}",
         lastName: "${escapeString(customer.lastName)}",
         ` +
@@ -33,7 +35,20 @@ export async function customerUpsert(
       }
     }
   `;
-  return await callShopifyApi(query);
+  let res = await callShopifyApi(query);
+  if (res.customerCreate?.userErrors?.length > 0) {
+    const errors = res.customerCreate.userErrors;
+    errors.forEach((error: any) => {
+      throw new Error(error.message || 'An error occurred');
+    });
+  }
+  if (res.customerUpdate?.userErrors?.length > 0) {
+    const errors = res.customerUpdate.userErrors;
+    errors.forEach((error: any) => {
+      throw new Error(error.message || 'An error occurred');
+    });
+  }
+  return res;
 }
 export async function loginCustomer(customer: any) {
   // customerAccessTokenCreate
@@ -151,4 +166,38 @@ export async function customerAddressCreate(address: any) {
   `;
 
   return await callShopifyApi(query);
+}
+export async function customerMetafieldUpdate(
+  metafields: any,
+  customerId: string,
+) {
+  const parts = metafields.map((metafield: any) => {
+    return `
+      {
+        ownerId: "${customerId}",
+        namespace: "custom",
+        key: "${metafield.key}",
+        value: "${metafield.value}",
+        type: "${metafield.type}"
+      }
+    `;
+  });
+  const query = `
+      mutation {
+        metafieldsSet(metafields:[ ${parts.join(', ')} ]) {
+          metafields {
+            id
+            namespace
+            key
+            value
+          }
+            userErrors {
+              field
+              message
+            }
+        }
+      }
+    `;
+  console.log('query', query);
+  return await callShopifyApi(query, true);
 }
