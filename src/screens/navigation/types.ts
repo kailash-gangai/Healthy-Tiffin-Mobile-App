@@ -1,5 +1,5 @@
 export type RootStackParamList = {
-  Home: undefined;
+  home: undefined;
   About: undefined;
   SignIn: undefined;
   SignUp: undefined;
@@ -11,7 +11,7 @@ export type RootStackParamList = {
   DietaryPreferences: undefined;
   MedicalPreferences: undefined;
 
-  OrderDetail: { orderId: string };
+  OrderDetail: { items: any };
   Order: undefined;
   Account: undefined;
   Subscription: undefined;
@@ -26,7 +26,7 @@ export type RootStackParamList = {
   Cart: undefined;
   OrderTrack: undefined;
   Notifications: undefined;
-  HealthFeed: undefined;  
+  HealthFeed: undefined;
   // tracker
   WaterTracker: undefined;
   SleepTracker: undefined;

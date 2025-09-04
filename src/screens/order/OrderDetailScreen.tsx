@@ -1,164 +1,208 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../navigation/types';
+import { COLORS, SHADOW } from '../../ui/theme';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5'
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/types";
-import { COLORS } from '../../ui/theme';
-type Item = { name: string; qty: number };
-type Nav = NativeStackNavigationProp<RootStackParamList>;
+type R = RouteProp<RootStackParamList, 'OrderDetail'>;
 
-type Props = {
-      orderId?: string;
-      plan?: 'Weekly' | 'One Day';
-      placedAt?: string;
-      deliveredAt?: string;
-      items?: Item[];
-      total?: string;
-      cardLast4?: string;
-      addressLines?: string[];
-      receipt?: { label: string; value: string }[];
-      navigation: Nav
-};
+function fmt(iso: string) {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
 
+export default function OrderDetailScreen({ navigation }: any) {
+  const { params } = useRoute<R>();
+  const { items: order } = params;
 
-const defaultItems: Item[] = [
-      { name: 'Berry Bliss Salad', qty: 2 },
-      { name: 'Tangy Ceaser Salad', qty: 2 },
-];
+  // Calculate total price
+  const totalPrice = order.items.reduce((total: any, item: any) => {
+    const itemPrice = parseFloat(item.price || '0');
+    return total + itemPrice * item.quantity;
+  }, 0);
 
-export default function OrderDetailScreen({
-      orderId = '#BE12345',
-      plan = 'Weekly',
-      placedAt = '17/12/2023 | 12:45 PM',
-      deliveredAt = '17/12/2023 | 02:00 PM',
-      items = defaultItems,
-      total = '$ 384',
-      cardLast4 = '436',
-      addressLines = ['Banu Elson', 'Altenauer Str., 35', 'Clausthal-Zellerfeld, Germany'],
-      receipt = [
-            { label: 'Total', value: '$80.45' },
-            { label: 'Tax', value: '$5' },
-            { label: 'Subtotal', value: '$80.45' },
-      ],
-      navigation,
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+      {/* Top bar */}
+      <View style={s.topbar}>
+        <Text onPress={() => navigation.goBack()} style={s.back}>
+          {'‹'}
+        </Text>
+        <Text style={s.title}>Order {order.name}</Text>
+        <View style={{ width: 24 }} />
+      </View>
 
-}: Props) {
-      return (
-            <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
-                  {/* Top bar */}
-                  <View style={s.topbar}>
-                        <TouchableOpacity style={s.back} onPress={() => navigation.goBack()} activeOpacity={0.8}>
-                              <FontAwesome5 iconStyle='solid' name="chevron-left" size={18} color={COLORS.white} />
-                        </TouchableOpacity>
-                        <Text style={s.title}>Order Details</Text>
-                        <View style={{ width: 24 }} />
-                  </View>
+      <FlatList
+        contentContainerStyle={s.body}
+        data={order.items}
+        keyExtractor={(_, i) => String(i)}
+        ListHeaderComponent={
+          <View>
+            {/* Meta */}
+            <View style={s.metaCard}>
+              <Row k="Order #" v={String(order.orderNumber)} />
+              <Row k="Placed" v={fmt(order.processedAt)} />
+              <Row k="Payment" v={order.financialStatus} />
+              <Row k="Fulfillment" v={order.fulfillmentStatus} />
+            </View>
 
-                  <View style={s.container}>
-                        {/* Order meta */}
-                        <Text style={s.id}>Order ID : <Text style={{ fontWeight: '800' }}>{orderId}</Text></Text>
+            {/* Ship-to */}
+            <Text style={s.sectionHd}>Delivery address</Text>
+            <View style={s.addrCard}>
+              <Text style={s.addrLine}>{order.address.address1}</Text>
+              {order.address.address2 ? (
+                <Text style={s.addrLine}>{order.address.address2}</Text>
+              ) : null}
+              <Text style={s.addrLine}>
+                {order.address.city}, {order.address.country}
+              </Text>
+            </View>
 
-                        <Text style={s.plan}>{plan}</Text>
+            {/* Items */}
+            <Text style={s.sectionHd}>Items</Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={s.itemRow}>
+            <Image source={{ uri: item.imageUrl ?? '' }} style={s.itemImg} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.itemTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
+              <Text style={s.itemSub}>
+                SKU {item.sku ?? '—'} -
+                <Text style={s.price}>
+                  ${parseFloat(item.price || '0').toFixed(2)}
+                </Text>
+              </Text>
+            </View>
+            <Text style={s.qty}>×{item.quantity}</Text>
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ListFooterComponent={
+          <View style={s.totalRow}>
+            <Text style={s.totalText}>Total:</Text>
+            <Text style={s.totalPrice}>${totalPrice.toFixed(2)}</Text>
+          </View>
+        }
+      />
+    </SafeAreaView>
+  );
+}
 
-                        <Text style={s.meta}>Time placed: <Text style={s.metaStrong}>{placedAt}</Text></Text>
-                        <Text style={s.meta}>Time delivered: <Text style={s.metaStrong}>{deliveredAt}</Text></Text>
-
-                        <View style={{ marginTop: 10 }}>
-                              {items.map((it, i) => (
-                                    <Text key={i} style={s.itemLine}>
-                                          <Text style={s.link}>{it.qty}x {it.name}</Text>
-                                    </Text>
-                              ))}
-                        </View>
-
-                        <Text style={[s.meta, { marginTop: 8 }]}>
-                              <Text style={{ fontWeight: '800' }}>Total : </Text>
-                              <Text style={{ color: '#000', fontWeight: '800' }}>{total}</Text>
-                        </Text>
-
-                        {/* Payment */}
-                        <Text style={s.sectionHd}>Payment</Text>
-                        <View style={s.panel}>
-                              <Text style={s.cardLabel}>Card</Text>
-                              <View style={s.cardRow}>
-                                    <FontAwesome5 iconStyle='solid' name="credit-card" size={20} color="#FFB000" />
-                                    <Text style={s.cardNum}> ************ {cardLast4}</Text>
-                              </View>
-                        </View>
-
-                        {/* Address */}
-                        <Text style={s.sectionHd}>Address</Text>
-                        <View style={s.panel}>
-                              {addressLines.map((l, i) => (
-                                    <Text key={i} style={s.addr}>{l}</Text>
-                              ))}
-                        </View>
-
-                        {/* Receipt */}
-                        <Text style={s.sectionHd}>Receipt</Text>
-                        <View style={s.receipt}>
-                              {receipt.map((r, i) => (
-                                    <View key={r.label} style={[s.rRow, i < receipt.length - 1 && s.rDiv]}>
-                                          <Text style={[s.rKey, r.label === 'Total' && s.rKeyBold]}>{r.label}</Text>
-                                          <Text style={[s.rVal, r.label === 'Total' && s.rValBold]}>{r.value}</Text>
-                                    </View>
-                              ))}
-                        </View>
-                  </View>
-            </SafeAreaView>
-      );
+function Row({ k, v }: { k: string; v: string }) {
+  return (
+    <View style={s.row}>
+      <Text style={s.k}>{k}</Text>
+      <Text style={s.v}>{v}</Text>
+    </View>
+  );
 }
 
 const s = StyleSheet.create({
-      topbar: {
-            height: 48, backgroundColor: COLORS.green, flexDirection: 'row',
-            alignItems: 'center', paddingHorizontal: 12,
-      },
-      back: {
-            width: 32,
-            height: 32,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: COLORS.chip,
-            opacity: 0.4,
-            borderRadius: 16
-      },
-      title: { flex: 1, textAlign: 'center', color: COLORS.white, fontWeight: '800', fontSize: 16 },
+  topbar: {
+    height: 48,
+    backgroundColor: COLORS.green,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  back: {
+    width: 32,
+    height: 32,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    color: COLORS.white,
+    fontSize: 22,
+    backgroundColor: COLORS.chip,
+    opacity: 0.4,
+    borderRadius: 16,
+  },
+  title: {
+    flex: 1,
+    textAlign: 'center',
+    color: COLORS.white,
+    fontWeight: '800',
+    fontSize: 16,
+  },
 
-      container: { flex: 1, paddingHorizontal: 16, paddingTop: 14 },
-      id: { color: COLORS.black, marginBottom: 8 },
-      plan: { color: COLORS.black, fontWeight: '800', marginTop: 4, marginBottom: 6 },
-      meta: { color: COLORS.black, marginTop: 2 },
-      metaStrong: { color: COLORS.black, fontWeight: '700' },
-      link: { color: COLORS.link, textDecorationLine: 'underline', fontWeight: '700' },
-      itemLine: { marginTop: 2 },
+  body: { padding: 16, paddingBottom: 24 },
 
-      sectionHd: { marginTop: 16, marginBottom: 8, color: COLORS.black, fontWeight: '800' },
+  sectionHd: {
+    marginTop: 16,
+    marginBottom: 8,
+    color: COLORS.black,
+    fontWeight: '800',
+  },
 
-      panel: {
-            backgroundColor: '#F3F4F6',
-            borderRadius: 14,
-            padding: 14,
-      },
-      cardLabel: { color: COLORS.black, fontWeight: '800', marginBottom: 8 },
-      cardRow: { flexDirection: 'row', alignItems: 'center' },
-      cardNum: { color: COLORS.black, fontWeight: '700' },
+  metaCard: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    padding: 14,
+    ...SHADOW,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  k: { color: COLORS.sub, fontWeight: '700' },
+  v: { color: COLORS.black, fontWeight: '800' },
 
-      addr: { color: COLORS.black, marginTop: 2 },
+  addrCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    padding: 14,
+    ...SHADOW,
+  },
+  addrLine: { color: COLORS.black, marginTop: 2 },
 
-      receipt: {
-            backgroundColor: '#EFEFEF',
-            borderRadius: 12,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            marginBottom: 16,
-      },
-      rRow: { minHeight: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-      rDiv: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: COLORS.divider },
-      rKey: { color: COLORS.black },
-      rVal: { color: COLORS.black },
-      rKeyBold: { fontWeight: '800' },
-      rValBold: { fontWeight: '800' },
+  itemRow: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...SHADOW,
+  },
+  itemImg: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    marginRight: 10,
+    backgroundColor: '#EEE',
+  },
+  itemTitle: { color: COLORS.black, fontWeight: '800' },
+  itemSub: {
+    color: COLORS.sub,
+    marginTop: 2,
+    fontSize: 12,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+  },
+  price: { color: 'red', fontWeight: '700' },
+  qty: { color: COLORS.black, fontWeight: '800', marginLeft: 8 },
+
+  totalRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.sub,
+    paddingTop: 12,
+  },
+  totalText: { color: COLORS.black, fontWeight: '800' },
+  totalPrice: { color: COLORS.green, fontWeight: '800' },
 });

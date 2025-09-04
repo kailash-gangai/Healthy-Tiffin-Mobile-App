@@ -19,7 +19,6 @@ export const callShopifyApi = async (query: string, isAdmin = false) => {
     body: JSON.stringify({ query }),
   });
   const data = await response.json();
-  console.log('data', data);
   let errors: any[] = [];
   if (response.ok) {
     if (data.errors) {

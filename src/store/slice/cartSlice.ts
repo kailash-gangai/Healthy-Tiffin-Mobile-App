@@ -29,9 +29,9 @@ export type CartLine = {
   image?: string;
 };
 
-type CartState = { lines: CartLine[] };
+type CartState = { isCartCleared: boolean; lines: CartLine[] };
 
-const initialState: CartState = { lines: [] };
+const initialState: CartState = { isCartCleared: false, lines: [] };
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -55,7 +55,7 @@ const cartSlice = createSlice({
           const existing = s.lines.find(
             line => line.id === id && line.variantId === variantId,
           );
-
+          s.isCartCleared = false;
           if (existing) {
             // If the item already exists, increase the quantity
             existing.qty += qty;
@@ -95,7 +95,7 @@ const cartSlice = createSlice({
       const existing = s.lines.find(
         line => line.id === id && line.variantId === variantId,
       );
-
+      s.isCartCleared = false;
       if (existing) {
         existing.qty += qty;
       } else {
@@ -173,6 +173,7 @@ const cartSlice = createSlice({
     // Clear all items from the cart
     clearCart: s => {
       s.lines = [];
+      s.isCartCleared = true;
     },
   },
 });

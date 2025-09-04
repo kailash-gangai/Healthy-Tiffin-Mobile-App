@@ -60,7 +60,7 @@ export const getAllMetaobjects = async (
 export const getMetaObjectByHandle = async (id: string) => {
   const query = `
     query {
-      metaobject(id:"gid://shopify/Metaobject/132788584690") {
+      metaobject(id:"${id}") {
         id
         handle
         type
@@ -74,14 +74,13 @@ export const getMetaObjectByHandle = async (id: string) => {
   try {
     // Call Shopify API with query and variables
     const data = await callShopifyApi(query);
-
     if (!data?.metaobject) {
       console.log('No data found');
       return [];
     }
-    return data.metaobject;
+    return data.metaobject.fields;
   } catch (error: any) {
-    console.log(error?.message);
+    console.log('Error', error?.message);
     return [];
   }
 };

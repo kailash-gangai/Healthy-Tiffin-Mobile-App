@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-
 import {
   View,
   Text,
@@ -11,9 +10,11 @@ import {
 } from 'react-native';
 import AppHeader from '../../components/AppHeader';
 import { COLORS as C, SHADOW, SPACING } from '../../ui/theme';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   clearCart,
@@ -24,9 +25,6 @@ import {
 
 export default function CartScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
-
-  console.log(lines, 'cart lines from cpage');
-  //   const [items, setItems] = useState<Item[]>(lines);
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
   const [addr, setAddr] = useState('2118 Thornridge Cir, Syracuse');
@@ -34,196 +32,244 @@ export default function CartScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
 
   const mealCost = lines
-    .filter(item => item.type === 'main')
+    .filter(i => i.type === 'main')
     .reduce((s, x) => s + +x.price * x.qty, 0);
   const addons = lines
-    .filter(item => item.type === 'addon')
+    .filter(i => i.type === 'addon')
     .reduce((s, x) => s + +x.price * x.qty, 0);
   const nonMember = 5;
   const subtotal = mealCost + addons + nonMember;
 
+  const isEmpty = lines.length === 0;
+  const contentBottomPad = isEmpty ? 24 + insets.bottom : 180 + insets.bottom;
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
       <AppHeader title="My Cart" onBack={() => navigation.goBack()} />
-      <ScrollView
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: 180 + insets.bottom,
-        }}
-        showsVerticalScrollIndicator={true}
-      >
-        {lines.length === 0 && (
-          <Text style={s.emptyCartText}>No items in cart</Text>
-        )}
 
-        {lines &&
-          lines.map(it => (
-            <View key={it.id} style={s.card}>
-              <TouchableOpacity
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: contentBottomPad }}
+        showsVerticalScrollIndicator
+      >
+        {isEmpty ? (
+          <View
+            style={{
+              backgroundColor: '#FAFAFA',
+              padding: 16,
+              borderRadius: 16,
+            }}
+          >
+            <View style={{ alignItems: 'center', paddingVertical: 28 }}>
+              <View
                 style={{
-                  position: 'absolute',
-                  right: 12,
-                  top: 15,
-                  cursor: 'pointer',
-                  zIndex: 2,
+                  width: 72,
+                  height: 72,
+                  borderRadius: 36,
+                  backgroundColor: '#E8F5EE',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 12,
                 }}
-                onPress={() =>
-                  dispatch(removeItem({ id: it.id, variantId: it.variantId }))
-                }
               >
                 <FontAwesome5
                   iconStyle="solid"
-                  name="trash"
-                  size={16}
-                  color={C.red}
+                  name="shopping-bag"
+                  size={28}
+                  color="#0B5733"
                 />
-              </TouchableOpacity>
-              {/* Image of the dish */}
-              <Image source={{ uri: it.image }} style={s.img} />
+              </View>
+              <Text
+                style={{ fontSize: 20, fontWeight: '800', color: '#0B5733' }}
+              >
+                Your cart is empty
+              </Text>
+              <Text style={{ marginTop: 6, color: '#5E6D62' }}>
+                No items in cart
+              </Text>
+            </View>
 
-              <View style={s.cardContent}>
-                <Text style={s.itemTitle} numberOfLines={2}>
-                  {it.title}
-                </Text>
-                <Text style={s.price}>${it.price}</Text>
+            <TouchableOpacity
+              style={{
+                height: 48,
+                borderRadius: 12,
+                backgroundColor: '#0B5733',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() => navigation.navigate('Home')}
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>
+                Start ordering
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {lines.map(it => (
+              <View key={`${it.id}-${it.variantId}`} style={s.card}>
+                <TouchableOpacity
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: 15,
+                    zIndex: 2,
+                  }}
+                  onPress={() =>
+                    dispatch(removeItem({ id: it.id, variantId: it.variantId }))
+                  }
+                >
+                  <FontAwesome5
+                    iconStyle="solid"
+                    name="trash"
+                    size={16}
+                    color={C.red}
+                  />
+                </TouchableOpacity>
 
-                <View style={s.detailsRow}>
-                  {/* Type of dish */}
-                  <Text style={s.detailText}>
-                    <Text style={s.detailLabel}>Type: </Text>
-                    {it.type}
-                  </Text>
-                  {/* Category of the dish */}
-                  <Text style={s.detailText}>
-                    <Text style={s.detailLabel}>Category: </Text>
-                    {it.category}
-                  </Text>
-                </View>
+                <Image source={{ uri: it.image }} style={s.img} />
 
-                <View style={s.detailsRow}>
-                  {/* Date and Day */}
-                  <Text style={s.detailText}>
-                    <Text style={s.detailLabel}>Date: </Text>
-                    {it.date}
+                <View style={s.cardContent}>
+                  <Text style={s.itemTitle} numberOfLines={2}>
+                    {it.title}
                   </Text>
-                  <Text style={s.detailText}>
-                    <Text style={s.detailLabel}>Day: </Text>
-                    {it.day}
-                  </Text>
-                </View>
+                  <Text style={s.price}>${it.price}</Text>
 
-                {/* Quantity control */}
-                <View style={s.qtyRow}>
-                  <Round
-                    onPress={() => {
-                      dispatch(
-                        decreaseItem({ id: it.id, variantId: it.variantId }),
-                      );
-                    }}
-                  >
-                    <Text style={s.sign}>−</Text>
-                  </Round>
-                  <Text style={s.qty}>{it.qty}</Text>
-                  <Round
-                    onPress={() => {
-                      dispatch(
-                        increaseItem({ id: it.id, variantId: it.variantId }),
-                      );
-                    }}
-                  >
-                    <Text style={s.sign}>＋</Text>
-                  </Round>
+                  <View style={s.detailsRow}>
+                    <Text style={s.detailText}>
+                      <Text style={s.detailLabel}>Type: </Text>
+                      {it.type}
+                    </Text>
+                    <Text style={s.detailText}>
+                      <Text style={s.detailLabel}>Category: </Text>
+                      {it.category}
+                    </Text>
+                  </View>
+
+                  <View style={s.detailsRow}>
+                    <Text style={s.detailText}>
+                      <Text style={s.detailLabel}>Date: </Text>
+                      {it.date}
+                    </Text>
+                    <Text style={s.detailText}>
+                      <Text style={s.detailLabel}>Day: </Text>
+                      {it.day}
+                    </Text>
+                  </View>
+
+                  <View style={s.qtyRow}>
+                    <Round
+                      onPress={() => {
+                        if (it.qty === 1) return;
+                        dispatch(
+                          decreaseItem({ id: it.id, variantId: it.variantId }),
+                        );
+                      }}
+                    >
+                      <Text style={s.sign}>−</Text>
+                    </Round>
+                    <Text style={s.qty}>{it.qty}</Text>
+                    <Round
+                      onPress={() =>
+                        dispatch(
+                          increaseItem({ id: it.id, variantId: it.variantId }),
+                        )
+                      }
+                    >
+                      <Text style={s.sign}>＋</Text>
+                    </Round>
+                  </View>
                 </View>
               </View>
+            ))}
+
+            <TouchableOpacity
+              onPress={() => dispatch(clearCart())}
+              activeOpacity={0.9}
+              style={s.clearCartBtn}
+            >
+              <Text style={s.clearCart}>Clear cart</Text>
+            </TouchableOpacity>
+
+            {/* notes */}
+            <Text style={s.caption}>Add delivery instructions</Text>
+            <TextInput
+              style={s.note}
+              value={note}
+              onChangeText={setNote}
+              multiline
+              placeholder="Add a note"
+              placeholderTextColor={C.sub}
+            />
+
+            {/* price summary */}
+            <View style={s.summary}>
+              <Row k="Meal box price" v={`$${mealCost}`} />
+              <Row k="Add on's" v={`$${addons}`} />
+              <Row k="Non member shipping" v={`$${nonMember}`} />
+              <Row k="Total" v={`$${subtotal}`} bold />
             </View>
-          ))}
-        {lines?.length !== 0 && (
-          <TouchableOpacity
-            onPress={() => dispatch(clearCart())}
-            activeOpacity={0.9}
-            style={s.clearCartBtn}
-          >
-            <Text style={s.clearCart}>Clear cart</Text>
-          </TouchableOpacity>
+
+            {/* upsell */}
+            <Text style={s.upsellText}>
+              Subscribe and save delivery charges &{'\n'}get many more features.
+            </Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Subscription')}
+              activeOpacity={0.9}
+              style={s.subBtn}
+            >
+              <Text style={s.subBtnTxt}>Subscribe Premium</Text>
+            </TouchableOpacity>
+          </>
         )}
-
-        {/* notes */}
-        <Text style={s.caption}>Add delivery instructions</Text>
-        <TextInput
-          style={s.note}
-          value={note}
-          onChangeText={setNote}
-          multiline
-          placeholder="Add a note"
-          placeholderTextColor={C.sub}
-        />
-
-        {/* price summary */}
-        <View style={s.summary}>
-          <Row k="Meal box price" v={`$${mealCost}`} />
-          <Row k="Add on's" v={`$${addons}`} />
-          <Row k="Non member shipping" v={`$${nonMember}`} />
-          <Row k="Total" v={`$${subtotal}`} bold />
-        </View>
-
-        {/* upsell */}
-        <Text style={s.upsellText}>
-          Subscribe and save delivery charges &{'\n'}get many more features.
-        </Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Subscription')}
-          activeOpacity={0.9}
-          style={s.subBtn}
-        >
-          <Text style={s.subBtnTxt}>Subscribe Premium</Text>
-        </TouchableOpacity>
       </ScrollView>
 
-      <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <View style={s.segment}>
+      {!isEmpty && (
+        <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
+          <View style={s.segment}>
+            <TouchableOpacity
+              style={[s.segBtn, mode === 'delivery' && s.segOn]}
+              onPress={() => setMode('delivery')}
+            >
+              <Text style={[s.segTxt, mode === 'delivery' && s.segTxtOn]}>
+                DELIVERY
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.segBtn, mode === 'pickup' && s.segOn]}
+              onPress={() => setMode('pickup')}
+            >
+              <Text style={[s.segTxt, mode === 'pickup' && s.segTxtOn]}>
+                PICKUP
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {mode === 'pickup' && (
+            <Text style={s.saveNote}>Save extra 5% when you pickup orders</Text>
+          )}
+
+          <View style={s.totalRow}>
+            <Text style={s.totalK}>TOTAL:</Text>
+            <Text style={s.totalV}>${subtotal}</Text>
+          </View>
+
           <TouchableOpacity
-            style={[s.segBtn, mode === 'delivery' && s.segOn]}
-            onPress={() => setMode('delivery')}
+            style={s.payBtn}
+            disabled={isEmpty}
+            onPress={() => navigation.navigate('OrderTrack')}
           >
-            <Text style={[s.segTxt, mode === 'delivery' && s.segTxtOn]}>
-              DELIVERY
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.segBtn, mode === 'pickup' && s.segOn]}
-            onPress={() => setMode('pickup')}
-          >
-            <Text style={[s.segTxt, mode === 'pickup' && s.segTxtOn]}>
-              PICKUP
+            <Text style={s.payTxt}>
+              To Payment{' '}
+              <FontAwesome5
+                iconStyle="solid"
+                name="arrow-right"
+                size={16}
+                color={C.white}
+              />
             </Text>
           </TouchableOpacity>
         </View>
-
-        {mode === 'pickup' && (
-          <Text style={s.saveNote}>Save extra 5% when you pickup orders</Text>
-        )}
-
-        <View style={s.totalRow}>
-          <Text style={s.totalK}>TOTAL:</Text>
-          <Text style={s.totalV}>${subtotal}</Text>
-        </View>
-
-        <TouchableOpacity
-          style={s.payBtn}
-          disabled={lines.length === 0}
-          onPress={() => navigation.navigate('OrderTrack')}
-        >
-          <Text style={s.payTxt}>
-            To Payment{' '}
-            <FontAwesome5
-              iconStyle="solid"
-              name="arrow-right"
-              size={16}
-              color={C.white}
-            />
-          </Text>
-        </TouchableOpacity>
-      </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -255,7 +301,6 @@ function Round({ children, onPress }: any) {
 }
 
 /* styles */
-
 const s = StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 24 },
   footer: {
@@ -275,24 +320,8 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  detailText: {
-    color: C.sub,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  detailLabel: {
-    fontWeight: '700',
-    color: C.black,
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    padding: 5,
-    backgroundColor: '#f00',
-    borderRadius: 20,
-    zIndex: 1, // Ensure the button stays on top
-  },
+  detailText: { color: C.sub, fontSize: 14, marginTop: 4 },
+  detailLabel: { fontWeight: '700', color: C.black },
   card: {
     flexDirection: 'row',
     backgroundColor: C.white,
@@ -414,6 +443,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   emptyCartText: {
     textAlign: 'center',
     fontSize: 18,
@@ -421,10 +451,6 @@ const s = StyleSheet.create({
     color: C.sub,
     marginTop: 20,
   },
-  cardContent: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-
+  cardContent: { flex: 1, justifyContent: 'space-between' },
   payTxt: { fontWeight: '800', color: C.white, fontSize: 20 },
 });
