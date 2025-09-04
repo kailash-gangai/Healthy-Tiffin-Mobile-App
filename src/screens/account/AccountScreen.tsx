@@ -7,9 +7,10 @@ import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { logout } from 'react-native-app-auth';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { clearUser } from '../../store/slice/userSlice';
 import { clearCustomerTokens } from '../../store/Keystore/customerDetailsStore';
+import { RootState } from '../../store';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -18,7 +19,7 @@ type Props = {
 };
 const AccountScreen: React.FC<Props> = ({ navigation }) => {
       const dispatch = useDispatch();
-
+      const user = useSelector((state: RootState) => state.user);
       const Row = ({
             icon, label, danger, onPress,
       }: { icon: React.ReactNode; label: string; danger?: boolean; onPress?: () => void }) => (
@@ -55,9 +56,9 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                         />
                         <View style={s.wrap}>
                               <View style={s.header}>
-                                    <Image source={{ uri: 'https://i.pravatar.cc/120' }} style={s.avatar} />
+                                    <Image source={{ uri: user?.avatar || 'https://i.pravatar.cc/120' }} style={s.avatar} />
                                     <View style={{ flex: 1 }}>
-                                          <Text style={s.name}>Sam Smith</Text>
+                                          <Text style={s.name}>{user.name}</Text>
                                           <TouchableOpacity onPress={() => {
                                                 navigation.navigate('EditProfile');
                                           }}>

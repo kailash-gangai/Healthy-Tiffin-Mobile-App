@@ -71,17 +71,16 @@ export async function checkCustomerTokens() {
       return null;
     }
     let details = {
-      email: customerDetails.customer.email,
-      name: customerDetails.customer.displayName,
-      id: customerDetails.customer.id,
-      customerToken: customerToken,
-      tokenExpire: tokenExpire,
+      email: customerDetails.customer.email || '',
+      name: customerDetails.customer.displayName || '',
+      id: customerDetails.customer.id || '',
+      customerToken: customerToken || '',
+      tokenExpire: tokenExpire || '',
       phone: customerDetails.customer.phone || '',
       avatar: customerDetails.customer?.metafields[0]?.value || '',
     };
     return details;
   } catch (error) {
-    console.error('Error checking customer tokens:', error);
     return null;
   }
 }

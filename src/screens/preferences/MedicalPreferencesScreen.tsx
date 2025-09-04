@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
       View,
       Text,
@@ -15,6 +15,7 @@ import { customerMetafieldUpdate } from '../../shopify/mutation/CustomerAuth';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import AppHeader from '../../components/AppHeader';
+import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -63,6 +64,19 @@ const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             setHasCondition(val);
             if (!val) setSelected({});
       };
+      useEffect(() => {
+            const fetchdata = async () => {
+                  if (user?.customerToken) {
+                        const hasCondition = await getCustomerMetaField(user?.customerToken, 'has_condition');
+                        setHasCondition(hasCondition === 'true' ? true : false);
+                        // setSelected(await getCustomerMetaField(user?.customerToken, 'condition'));
+                  }
+
+            };
+
+            fetchdata();
+      }, []);
+
       const onsubmit = () => {
 
             try {

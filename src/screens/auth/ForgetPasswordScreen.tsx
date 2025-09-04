@@ -9,6 +9,7 @@ import {
     ScrollView,
     Platform,
     GestureResponderEvent,
+    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -17,14 +18,9 @@ import { Dimensions } from 'react-native';
 import FormInput from '../../components/FormInput';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-const COLORS = {
-    green: '#0B5733',
-    greenLight: '#0E6C40',
-    white: '#FFFFFF',
-    text: '#232323',
-    subText: '#8e8e8e',
-    divider: '#e7e7e7',
-} as const;
+import { customerRecover } from '../../shopify/mutation/CustomerAuth';
+import { COLORS } from '../../ui/theme';
+
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
@@ -34,14 +30,31 @@ const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.4)));
 
 const ForgetPasswordScreen: React.FC<Props> = ({ navigation }) => {
-    const [name, setName] = useState<string>('');
-    const [email, setEmail] = useState<string>('');
-    const [pass, setPass] = useState<string>('');
 
-    const onSubmit = useCallback((_: GestureResponderEvent) => {
+    const [email, setEmail] = useState<string>('');
+    const [errors, setErrors] = useState<any>({});
+
+    const onSubmit = () => {
         // TODO: form validation + submit
-        console.log({ name, email, pass });
-    }, [name, email, pass]);
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email)) {
+            setErrors({ email: 'Please enter a valid email address.' });
+            return;
+        }
+        try {
+            const response = customerRecover(email);
+            console.log(response);
+        } catch (error) {
+            if (error instanceof Error) {
+                Alert.alert("Error", error.message);
+            } else {
+                Alert.alert("Error", "An error occurred.");
+
+            }
+        }
+        // navigation.navigate('CodeVerification');
+
+    };
 
     return (
         <ScrollView bounces={false} contentContainerStyle={{ flexGrow: 1 }}>
@@ -81,8 +94,11 @@ const ForgetPasswordScreen: React.FC<Props> = ({ navigation }) => {
                     returnKeyType="next"
                 />
 
-                <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn} onPress={()=>{
-                    navigation.navigate("CodeVerification");
+                {errors.email && <Text style={{ color: COLORS.red }}>{errors.email}</Text>}
+
+                <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn} onPress={() => {
+                    onSubmit();
+                    // navigation.navigate("CodeVerification");
                 }}>
                     <LinearGradient
                         start={{ x: 0, y: 0 }}
@@ -134,7 +150,7 @@ const styles = StyleSheet.create({
     },
     message: {
         fontSize: 18,
-        color: COLORS.text,
+        color: COLORS.black,
         paddingHorizontal: 4,
         marginTop: 10,
 

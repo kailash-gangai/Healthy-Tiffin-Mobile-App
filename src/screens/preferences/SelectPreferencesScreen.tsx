@@ -21,6 +21,8 @@ import AppHeader from '../../components/AppHeader';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { customerMetafieldUpdate } from '../../shopify/mutation/CustomerAuth';
+import { getCustomerMetaField, getCustomerMetafields } from '../../shopify/query/CustomerQuery';
+import { getMetaObjectByHandle } from '../../shopify/queries/getMetaObject';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -29,9 +31,9 @@ const ages = Array.from({ length: 83 }, (_, i) => `${i + 18}`); // 18..100
 const genders = ['Male', 'Female', 'Other'];
 const levels = ['Beginner', 'Intermediate', 'Advanced'];
 
+
 const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
       const user = useSelector((state: RootState) => state.user);
-      console.log('user', user);
       const [gender, setGender] = useState<string>('');
       const [age, setAge] = useState<string>('');
       const [level, setLevel] = useState<string>('');
@@ -40,6 +42,25 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
       const [goalWeight, setGoalWeight] = useState<string>(''); // lbs
       const [feet, setFeet] = useState<string>(''); // ft
       const [inches, setInches] = useState<string>(''); // in
+
+      useEffect(() => {
+            const fetchdata = async () => {
+                  if (user?.customerToken) {
+                        setGender(await getCustomerMetaField(user?.customerToken, 'gender'));
+                        setAge(await getCustomerMetaField(user?.customerToken, 'age'));
+                        setLevel(await getCustomerMetaField(user?.customerToken, 'fitness_level'));
+                        setCurWeight(await getCustomerMetaField(user?.customerToken, 'cur_weight'));
+                        setGoalWeight(await getCustomerMetaField(user?.customerToken, 'goal_weight'));
+                        let height = await getCustomerMetaField(user?.customerToken, 'height');
+                        height = height.replace("'", '-');
+                        setFeet(height.split('-')[0]);
+                        setInches(height.split('-')[1]);
+                  }
+
+            };
+
+            fetchdata(); // call the function
+      }, []);
 
       const bmi = useMemo(() => {
             const w = parseFloat(curWeight);
@@ -55,7 +76,6 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             (parseFloat(feet) > 0 || parseFloat(inches) > 0);
 
       const onsubmit = () => {
-
             try {
                   let response = customerMetafieldUpdate([
                         { key: 'gender', value: gender, type: 'single_line_text_field' },
@@ -198,6 +218,7 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 export default SelectPreferencesScreen;
+
 
 /* ---------- SelectField (modal dropdown) ---------- */
 const SelectField = ({

@@ -3,38 +3,44 @@ export async function customerUpsert(
   customer: any,
   customerAccessToken?: string,
 ) {
-  let queryPart = 'customerCreate(input: {';
-  if (customerAccessToken) {
-    queryPart =
-      'customerUpdate(customerAccessToken: "' +
-      customerAccessToken +
-      '", customer: {';
+  const op = customerAccessToken ? 'customerUpdate' : 'customerCreate';
+  const head = customerAccessToken
+    ? `customerAccessToken: "${customerAccessToken}", customer: {`
+    : `input: {`;
+
+  let body = '';
+  if (customer.email) {
+    body += `email: "${escapeString(customer.email)}",\n`;
   }
-  let query = `mutation {`;
-  query +=
-    queryPart +
-    `   email: "${escapeString(customer.email)}",
-       ` +
-    (customer.password ? `password: "${customer.password}",` : '') +
-    `
-        firstName: "${escapeString(customer.firstName)}",
-        lastName: "${escapeString(customer.lastName)}",
-        ` +
-    (customer.phone ? `phone: "${customer.phone}",` : '') +
-    `
-        acceptsMarketing: true
-      }) {
-        customer {
-          id
-          email
-        }
-        userErrors {
-          field
-          message
-        }
-      }
+  if (customer.password) {
+    body += `password: "${customer.password}",\n`;
+  }
+  if (customer.firstName) {
+    body += `firstName: "${escapeString(customer.firstName)}",\n`;
+  }
+  if (customer.lastName) {
+    body += `lastName: "${escapeString(customer.lastName)}",\n`;
+  }
+  if (customer.phone) {
+    body += `phone: "${customer.phone}",\n`;
+  }
+  body += `acceptsMarketing: true`;
+
+  const query = `
+mutation {
+  ${op}(${head}
+    ${body}
+  }) {
+    customer { id displayName phone email }
+    ${
+      customerAccessToken ? 'customerAccessToken { accessToken expiresAt }' : ''
     }
-  `;
+    userErrors { field message }
+    
+  }
+}
+`;
+  // return;
   let res = await callShopifyApi(query);
   if (res.customerCreate?.userErrors?.length > 0) {
     const errors = res.customerCreate.userErrors;
@@ -75,10 +81,11 @@ export async function customerRecover(email: string) {
   const query = `
     mutation {
       customerRecover(email: "${email}") {
-        userErrors {
-          field
+      customerUserErrors {
+        code
+           field
           message
-        }
+      }
       }
     }
   `;
@@ -198,6 +205,5 @@ export async function customerMetafieldUpdate(
         }
       }
     `;
-  console.log('query', query);
   return await callShopifyApi(query, true);
 }

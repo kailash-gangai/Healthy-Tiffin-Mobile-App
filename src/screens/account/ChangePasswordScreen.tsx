@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinkRow from '../../components/LinkRow';
 import AppHeader from '../../components/AppHeader';
@@ -9,6 +9,11 @@ import { COLORS } from '../../ui/theme';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { customerUpsert, loginCustomer } from '../../shopify/mutation/CustomerAuth';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
+import { setUser } from '../../store/slice/userSlice';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -16,6 +21,54 @@ type Props = {
       navigation: AboutScreenNavigationProp;
 };
 export default function ChangePassword({ navigation }: Props) {
+      const dispatch = useDispatch();
+      const user = useSelector((state: RootState) => state.user);
+      const [currentPass, setCurrentPass] = React.useState('');
+      const [pass, setPass] = React.useState('');
+      const [confirmPass, setConfirmPass] = React.useState('');
+      const [errors, setErrors] = useState<any>({});
+
+      const onSubmit = async () => {
+            setErrors({});
+            if (!currentPass || !pass || !confirmPass) {
+                  setErrors({
+                        pass: pass ? '' : 'is required',
+                        confirmPass: confirmPass ? '' : 'is required',
+                        currentPass: currentPass ? '' : 'is required'
+                  });
+            }
+            if (pass !== confirmPass) {
+                  setErrors({ pass: 'Password does not match' });
+            }
+
+            try {
+
+                  const response = await customerUpsert({ password: pass }, user.customerToken || '');
+
+                  if (response?.customerUpdate?.customerAccessToken?.accessToken) {
+                        const customerToken = response.customerUpdate.customerAccessToken.accessToken;
+                        const tokenExpire = response.customerUpdate.customerAccessToken.expiresAt;
+                        saveCustomerTokens({ customerToken, tokenExpire });
+                        let customerdetails = checkCustomerTokens();
+                        customerdetails.then(async (result) => {
+
+                              if (result) {
+                                    dispatch(setUser(result));
+                              }
+                        });
+                        Alert.alert("Success", "Password changed successfully.");
+                  }
+
+            } catch (error) {
+                  if (error instanceof Error) {
+                        Alert.alert("Error", error.message);
+                  } else {
+                        Alert.alert("Error", "An error occurred.");
+
+                  }
+            }
+
+      }
       return (
 
             <SafeAreaView style={styles.safe}>
@@ -25,26 +78,41 @@ export default function ChangePassword({ navigation }: Props) {
                               icon="unlocked"
                               placeholder="Enter password"
                               secure
-                              // value={pass}
-                              // onChangeText={setPass}
+                              value={currentPass}
+                              onChangeText={setCurrentPass}
                               returnKeyType="next" />
+                        {errors.currentPass && (
+                              <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.currentPass}</Text>
+                        )}
+
                         <FormInput label="New Password"
                               icon="unlocked"
                               placeholder="Enter password"
                               secure
-                              // value={pass}
-                              // onChangeText={setPass}
+                              value={pass}
+                              onChangeText={setPass}
                               returnKeyType="next" />
+                        {errors.pass && (
+                              <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.pass}</Text>
+                        )}
+
                         <FormInput label="Confirm New Password"
                               icon="unlocked"
                               placeholder="Enter password"
                               secure
-                              // value={pass}
-                              // onChangeText={setPass}
+                              value={confirmPass}
+                              onChangeText={setConfirmPass}
                               returnKeyType="next" />
-                        <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn} onPress={() => {
-                              console.log('Sign Up');
-                        }}>
+                        {errors.confirmPass && (
+                              <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>{errors.confirmPass}</Text>
+                        )}
+                        <Pressable
+                              onPress={onSubmit}
+                              style={({ pressed }) => [
+                                    styles.ctaBtn,
+                                    pressed && { opacity: 0.5 }
+                              ]}
+                        >
                               <LinearGradient
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
@@ -52,9 +120,16 @@ export default function ChangePassword({ navigation }: Props) {
                                     style={styles.ctaGradient}
                               >
                                     <Text style={styles.ctaText}>Save</Text>
-                                    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                                    <FontAwesome5
+                                          iconStyle="solid"
+                                          name="sign-in-alt"
+                                          size={18}
+                                          color={COLORS.white}
+                                          style={{ marginLeft: 8 }}
+                                    />
                               </LinearGradient>
-                        </TouchableOpacity>
+                        </Pressable>
+
 
                   </View>
             </SafeAreaView>

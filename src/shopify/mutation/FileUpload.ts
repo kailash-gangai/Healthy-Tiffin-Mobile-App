@@ -25,12 +25,12 @@ export async function stagedUploadsCreate(file: any) {
 
   return await callShopifyApi(query, true);
 }
-export async function createFile(file: any) {
+export async function createFile(originalSource: any) {
   const query = `mutation {
       fileCreate(files: [
          {
           contentType: IMAGE,
-          originalSource: "${file.originalSource}",
+          originalSource: "${originalSource}",
         }
 ]) {
         files {
@@ -45,5 +45,21 @@ export async function createFile(file: any) {
       }
     }`;
 
+  return await callShopifyApi(query, true);
+}
+
+export async function previewImage(id: string) {
+  const query = ` query {
+      nodes(ids:"${id}" ) {
+        ... on File {
+          fileStatus
+          preview {
+            image {
+              url
+            }
+          }
+        }
+      }
+    }`;
   return await callShopifyApi(query, true);
 }

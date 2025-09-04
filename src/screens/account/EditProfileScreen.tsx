@@ -16,7 +16,7 @@ import { getCustomerDetails } from '../../shopify/query/CustomerQuery';
 import { customerUpsert } from '../../shopify/mutation/CustomerAuth';
 import { setUser } from '../../store/slice/userSlice';
 import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
-import { stagedUploadsCreate } from '../../shopify/mutation/FileUpload';
+import { createFile, previewImage, stagedUploadsCreate } from '../../shopify/mutation/FileUpload';
 import { STORE_ADMIN_API_KEY, STORE_ADMIN_API_URL } from '../../shopify/ShopifyConfig';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -100,37 +100,64 @@ export default function EditProfile({ navigation }: Props) {
 
             if (avatar) {
                   const base64Image = await readFile(avatar, 'base64');
-                  console.log('base64Image', file);
-                  const res = await stagedUploadsCreate({
-                        fileName: file.assets?.[0]?.fileName,
-                        mimeType: file.assets?.[0]?.type,
-                        fileSize: file.assets?.[0]?.fileSize,
+                  const asset = file.assets?.[0];
+                  const staged = await stagedUploadsCreate({
+                        fileName: asset.fileName ?? 'upload.jpg',
+                        mimeType: asset.type ?? 'image/jpeg',
+                        fileSize: asset.fileSize ?? 0,
                   });
-                  const target = res.stagedUploadsCreate.stagedTargets[0];
-                  const params = target.parameters;
-                  const url = target.url;
-                  const resourceUrl = target.resourceUrl;
+                  const target = staged.stagedUploadsCreate.stagedTargets[0];
+                  const { url, parameters, resourceUrl } = target;
 
+                  // 3) POST the form to S3 — NO Shopify headers
+                  // Important: keep `file://` prefix on iOS for RN FormData
+                  const fileUri = asset.uri;
                   const form = new FormData();
-                  params.forEach(({ name, value }: any) => {
-                        form.append(name, value);
-                  });
-                  form.append("image", base64Image);
-                  console.log('form', form);
-                  const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                              'Content-Type': 'application/json',
-                              'X-Shopify-Resource': STORE_ADMIN_API_KEY
-                        },
-                        body: form
-                  });
-                  console.log('response', response);
-                  const data = await response.json();
-                  console.log('data2', data);
+
+                  // append all returned fields first, exactly as given
+                  parameters.forEach(p => form.append(p.name, p.value));
+                  form.append('file', { uri: fileUri, type: asset.type, name } as any);
+
+                  // append file last, with correct type and name
+                  // form.append('file', {
+                  //       uri: fileUri,
+                  //       type: asset.type ?? 'image/jpeg',
+                  //       name: asset.fileName ?? 'upload.jpg',
+                  // } as any);
+
+                  try {
+                        console.log('url', url);
+                        const response = await fetch(url, {
+                              method: 'PUT',
+                              body: form
+                        });
+                        console.log('response', response);
+                        if (!response.ok) {
+                              const errorText = await response.text();
+                              throw new Error(`Staging upload failed: ${response.status} - ${errorText}`);
+                        }
+
+                        setTimeout(async () => {
+                              const createfile = await createFile(resourceUrl);
+                              let mediaId = createfile.fileCreate.files[0].id;
+                              console.log('createfile', createfile);
+                              setTimeout(async () => {
+                                    const res = await previewImage(mediaId);
+                                    console.log('previewImage', res);
+                              }, 10000);
+                        }, 10000);
+                        //step 3
+
+
+                        //WAIT FOR 5 SECOND 
+
+
+                  } catch (error) {
+                        console.log('error', error);
+                  }
 
             }
-            return;
+            // return;
             try {
                   const res = await customerUpsert(userData, user?.customerToken || '');
                   if (res?.customerUpdate?.customer?.id) {
