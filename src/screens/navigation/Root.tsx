@@ -61,7 +61,7 @@ export default function Root() {
                               dispatch(setUser(result));
                               setHasToken(true);
                         }
-                  })    
+                  })
             } else {
                   setHasToken(false);
             }

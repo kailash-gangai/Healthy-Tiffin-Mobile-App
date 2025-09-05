@@ -11,6 +11,7 @@ import { clearUser } from '../../store/slice/userSlice';
 import { clearCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { RootState } from '../../store';
 import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
+import { previewImage } from '../../shopify/mutation/FileUpload';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -20,6 +21,7 @@ type Props = {
 const AccountScreen: React.FC<Props> = ({ navigation }) => {
       const dispatch = useDispatch();
       const user = useSelector((state: RootState) => state.user);
+      const [image, setImage] = useState('');
       const [gender, setGender] = useState<string>('');
       const [age, setAge] = useState<string>('');
       const Row = ({
@@ -36,9 +38,15 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                   return metafield
             }
       };
+      const media = async (user: any) => {
+            const medias = await previewImage(user.avatar);
+            setImage(medias.nodes[0]?.preview.image.url);
+      }; s
+
       useEffect(() => {
             fetchdata('gender').then(res => setGender(res));
             fetchdata('age').then(res => setAge(res));
+            media(user);
       }, []);
 
       const Badge = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
@@ -60,7 +68,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                         <StatsCard />
                         <View style={s.wrap}>
                               <View style={s.header}>
-                                    <Image source={{ uri: user?.avatar || 'https://i.pravatar.cc/120' }} style={s.avatar} />
+                                    <Image source={{ uri: image || 'https://i.pravatar.cc/120' }} style={s.avatar} />
                                     <View style={{ flex: 1 }}>
                                           <Text style={s.name}>{user.name}</Text>
                                           <TouchableOpacity onPress={() => {

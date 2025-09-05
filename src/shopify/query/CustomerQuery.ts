@@ -7,7 +7,7 @@ export async function getCustomerDetails(customerAccessToken: string) {
       displayName
       email
       phone
-        metafields(identifiers: [{namespace: "custom", key: "image"}]) {
+        metafield(namespace: "custom", key: "image") {
         value
         key
         namespace
