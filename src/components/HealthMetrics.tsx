@@ -1,6 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../screens/navigation/types';
 type Metric = {
       id: string;
       label: string;          // Steps, Sleep, Calories, Water
@@ -17,30 +20,28 @@ const SHADOW = {
       shadowOffset: { width: 0, height: 6 },
       elevation: 3,
 };
-
-export default function HealthMetrics({
-      items = [
-            { id: 'steps', label: 'Steps', value: '1215623', tint: '#E8F2EB', color: '#1E8E5A', image: require('../assets/icons/running.png') },
-            { id: 'sleep', label: 'Sleep', value: '6 H 36 M', tint: '#F0E7FA', color: '#7B57C5', image: require('../assets/icons/moon.webp') },
-            { id: 'cal', label: 'Calories', value: '12532', tint: '#FDF2E3', color: '#F4A300', image: require('../assets/icons/fire.png') },
-            { id: 'water', label: 'Water', value: '8 Glasses', tint: '#EAF3FB', color: '#2C85D8', image: require('../assets/icons/water-drops.png') },
-      ],
-}: { items?: Metric[] }) {
+export default function HealthMetrics({ items = [] }: { items?: Metric[] }) {
+      const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+      const onPress = (nav: string) => {
+            navigation.navigate(nav);
+      };
       return (
             <View style={{ gap: 12 }}>
                   {items.map(m => (
-                        <View key={m.id} style={s.card}>
-                              <View style={[s.row, { backgroundColor: m.tint }]}>
-                                    {/* <FontAwesome5 iconStyle="solid" name={m.icon} size={46} color={m.color} /> */}
-                                    <Image source={m.image} style={{ width: 46, height: 46 }} />
-                                    <Text style={[s.value, { color: m.color }]} numberOfLines={1}>
-                                          {m.value}
-                                    </Text>
-                                    <Text style={s.label} numberOfLines={1}>
-                                          {m.label}
-                                    </Text>
+                        <TouchableOpacity activeOpacity={0.85} key={m.id} onPress={() => onPress(m.navigate)}>
+                              <View key={m.id} style={s.card}>
+                                    <View style={[s.row, { backgroundColor: m.tint }]}>
+                                          {/* <FontAwesome5 iconStyle="solid" name={m.icon} size={46} color={m.color} /> */}
+                                          <Image source={m.image} style={{ width: 46, height: 46 }} />
+                                          <Text style={[s.value, { color: m.color }]} numberOfLines={1}>
+                                                {m.value}
+                                          </Text>
+                                          <Text style={s.label} numberOfLines={1}>
+                                                {m.label}
+                                          </Text>
+                                    </View>
                               </View>
-                        </View>
+                        </TouchableOpacity>
                   ))}
             </View>
       );

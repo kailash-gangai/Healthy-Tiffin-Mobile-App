@@ -54,7 +54,7 @@ export default function StepsTrackerScreen() {
             }
             try {
                   setSaving(true);
-                  setActivityGoal(accessToken, "daily", "steps", n);
+                  setActivityGoal(accessToken as string, "daily", "steps", n);
                   setGoal(n);
                   setOpen(false);
                   Alert.alert("Goal updated", `Daily steps goal set to ${n.toLocaleString()} steps.`);
