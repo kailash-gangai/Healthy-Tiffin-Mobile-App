@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../store/hooks';
 import { getCustomerOrder } from '../../shopify/queries/getCustomerOrder';
 import { OrdersResponse } from '../../shopify/queries/types';
+import SkeletonLoading from '../../components/SkeletonLoading';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
@@ -24,24 +25,28 @@ type Props = {
 
 const OrderScreen: React.FC<Props> = ({ navigation }) => {
   const customer = useAppSelector(state => state.user);
-  const [orders, setOrders] = useState<OrdersResponse>();
+  const [orders, setOrders] = useState<OrdersResponse>(),
+    [isLoading, setIsLoading] = useState<boolean>(false);
 
   const fetchCustomerOrder = async () => {
+    setIsLoading(true);
     try {
       if (customer && customer?.customerToken) {
         const data: any = await getCustomerOrder(customer?.customerToken, 50);
         if (data) {
           setOrders(data);
+          setIsLoading(false);
         }
       }
     } catch (error) {
       console.log(error);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchCustomerOrder();
-  }, [orders]);
+  }, [customer]);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -49,8 +54,9 @@ const OrderScreen: React.FC<Props> = ({ navigation }) => {
         <HeaderGreeting name="Sam" />
 
         <View style={[CARTWRAP]}>
-          {/* Orders List */}
-          {orders?.orders?.length ? (
+          {isLoading ? (
+            <SkeletonLoading />
+          ) : orders?.orders?.length ? (
             <View style={s.list}>
               {orders.orders.map((item, i) => (
                 <View key={i} style={{ marginBottom: 12 }}>
