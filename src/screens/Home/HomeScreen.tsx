@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { ScrollView, View, StyleSheet, Text } from 'react-native';
 import { COLORS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
@@ -7,11 +7,10 @@ import OrderToggle from '../../components/OrderToggle';
 import DayTabs from '../../components/DayTabs';
 import Section from '../../components/Section';
 import DishCard from '../../components/DishCard';
-import AddonRow from '../../components/AddonRow';
 import PriceSummary from '../../components/PriceSummary';
 import CTAButton from '../../components/CTAButton';
 import FitnessCarousel from '../../components/FitnessCarousel';
-import { useAppDispatch } from '../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 import {
   getAllMetaobjects,
@@ -19,6 +18,8 @@ import {
 } from '../../shopify/queries/getMetaObject';
 import { getProductsByIds } from '../../shopify/queries/getProducts';
 import { addItems } from '../../store/slice/cartSlice';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import Toast from 'react-native-toast-message';
 
 interface CategoriesProps {
   key: string;
@@ -30,10 +31,7 @@ interface CategoriesProps {
     image: string;
   }[];
 }
-interface SingleMetaObjectProps {
-  key: string;
-  value: string;
-}
+
 export type Item = {
   id: string;
   variantId: string;
@@ -45,7 +43,8 @@ export type Item = {
   qty?: number;
   price: string | number;
 };
-const DAYS = [
+
+const ALL_DAYS = [
   'Monday',
   'Tuesday',
   'Wednesday',
@@ -54,101 +53,123 @@ const DAYS = [
   'Saturday',
   'Sunday',
 ];
+
 const HomeScreen: React.FC = () => {
-  const [dayIndex, setDayIndex] = React.useState(0),
-    [tab, setTab] = useState<0 | 1>(0),
-    dispatch = useAppDispatch(),
-    [categories, setCategories] = useState<CategoriesProps[]>([]),
-    [addonCategories, setAddonCategories] = useState<CategoriesProps[]>([]),
-    [days, setDays] = useState<any[]>([]),
-    [isLoading, setLoading] = useState(false),
-    [selectedItemsToAddOnCart, setSelectedItemsToAddOnCart] = useState<Item[]>(
-      [],
-    ),
-    [addons, setAddons] = useState<any>([]),
-    currentDay = DAYS[dayIndex],
-    currentDayMetaObjectId = days.find(
-      day => day.handle.toLowerCase() === currentDay?.toLowerCase(),
-    )?.id,
-    addonsMetaObjectId = addons.find(
-      (day: any) => day.handle.toLowerCase() === currentDay?.toLowerCase(),
-    )?.id;
+  const dispatch = useAppDispatch();
+  const { isCartCleared } = useAppSelector(state => state.cart);
+
+  const [tab, setTab] = useState<0 | 1>(0);
+  const [categories, setCategories] = useState<CategoriesProps[]>([]);
+  const [addonCategories, setAddonCategories] = useState<CategoriesProps[]>([]);
+  const [daysMeta, setDaysMeta] = useState<any[]>([]);
+  const [addonsMeta, setAddonsMeta] = useState<any[]>([]);
+  const [isLoading, setLoading] = useState(false);
+  const [selectedItemsToAddOnCart, setSelectedItemsToAddOnCart] = useState<
+    Item[]
+  >([]);
+  const [filteredIndex, setFilteredIndex] = useState(0); // index within filtered list
+
+  // map JS day to ALL_DAYS index (Mon..Sun)
+  const absoluteTodayIndex = useMemo(() => {
+    const js = new Date().getDay(); // 0=Sun..6=Sat
+    const week = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    return ALL_DAYS.indexOf(week[js]); // 0..6
+  }, []);
+
+  // Only show today and future days
+  const FILTERED_DAYS = useMemo(() => {
+    if (absoluteTodayIndex < 0) return ALL_DAYS;
+    return ALL_DAYS.slice(absoluteTodayIndex); // e.g. ['Thursday','Friday','Saturday','Sunday']
+  }, [absoluteTodayIndex]);
+
+  // Convert filtered index -> absolute index in ALL_DAYS
+  const absoluteDayIndex = useMemo(
+    () => Math.min(ALL_DAYS.length - 1, absoluteTodayIndex + filteredIndex),
+    [absoluteTodayIndex, filteredIndex],
+  );
+
+  const currentDay = ALL_DAYS[absoluteDayIndex];
+
+  const currentDayMetaObjectId = daysMeta.find(
+    d => d.handle.toLowerCase() === currentDay.toLowerCase(),
+  )?.id;
+
+  const addonsMetaObjectId = addonsMeta.find(
+    (d: any) => d.handle.toLowerCase() === currentDay.toLowerCase(),
+  )?.id;
+  const mealCost = selectedItemsToAddOnCart
+    .filter(item => item.type === 'main')
+    .reduce((total, item) => total + parseFloat(String(item.price)), 0);
+
+  const addonCost = selectedItemsToAddOnCart
+    .filter(item => item.type === 'addon')
+    .reduce((total, item) => total + parseFloat(String(item.price)), 0);
 
   const fetchMetaObjects = async () => {
     setLoading(true);
     try {
-      // Fetch main menus and addon menus
       const listOfMetaobjects = await getAllMetaobjects('main_menus');
       const listOfAddons = await getAllMetaobjects('addon_menu');
-
-      if (!listOfMetaobjects || !listOfAddons) {
+      if (!listOfMetaobjects || !listOfAddons)
         throw new Error('Failed to fetch metaobjects.');
-      }
 
-      setDays(listOfMetaobjects);
-      setAddons(listOfAddons);
+      setDaysMeta(listOfMetaobjects);
+      setAddonsMeta(listOfAddons);
 
-      // Fetch data for both main menus and addons
-      const fetchCategoryData = async (metaObjectId: string, type: string) => {
+      const fetchCategoryData = async (metaObjectId: string) => {
         const singleMetaObject: any = await getMetaObjectByHandle(metaObjectId);
-
-        if (!singleMetaObject) {
-          throw new Error(`Meta object for ${type} not found.`);
-        }
-
-        const updatedMetaObjects: any = await Promise.all(
-          singleMetaObject?.fields
-            .filter(d => d.value.startsWith('[') && d.value.endsWith(']')) // Check if it's a valid array
-            .map(async d => {
+        const expanded: any = await Promise.all(
+          singleMetaObject
+            .filter(
+              (d: any) => d.value?.startsWith('[') && d.value?.endsWith(']'),
+            )
+            .map(async (d: any) => {
               if (d?.value) {
                 const products = await getProductsByIds(d.value);
-                if (!products) {
-                  console.error('No products found for:', d.value);
-                  // return null; // Avoid adding invalid entries
-                }
-                d.value = products;
+                d.value = products ?? [];
               }
               return d;
             }),
         );
-        return updatedMetaObjects.filter((item: any) => item !== null);
+        return expanded.filter((x: any) => x);
       };
 
-      // Only fetch products for valid meta object ids
-      if (currentDayMetaObjectId && addonsMetaObjectId) {
+      if (currentDayMetaObjectId) {
         const mainCategoryData = await fetchCategoryData(
           currentDayMetaObjectId,
-          'main',
         );
         setCategories(mainCategoryData);
-
-        const addonCategoryData = await fetchCategoryData(
-          addonsMetaObjectId,
-          'addon',
-        );
-        setAddonCategories(addonCategoryData);
+      } else {
+        setCategories([]);
       }
-    } catch (error) {
-      console.error('Error fetching metaobjects:', error);
+
+      if (addonsMetaObjectId) {
+        const addonCategoryData = await fetchCategoryData(addonsMetaObjectId);
+        setAddonCategories(addonCategoryData);
+      } else {
+        setAddonCategories([]);
+      }
+    } catch (e) {
+      console.error('Error fetching metaobjects:', e);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    setSelectedItemsToAddOnCart([]);
-
+    if (isCartCleared) {
+      setSelectedItemsToAddOnCart([]);
+    }
     fetchMetaObjects();
-  }, [currentDayMetaObjectId]);
-  //   console.log(categories, 'categoreis');
-  //   console.log(selectedItemsToAddOnCart, 'selectedItemsToAddOnCart');
-  const mealCost = selectedItemsToAddOnCart
-    .filter(item => item.type === 'main')
-    .reduce((total, item) => total + parseFloat(item.price), 0);
-
-  const addonCost = selectedItemsToAddOnCart
-    .filter(item => item.type === 'addon')
-    .reduce((total, item) => total + parseFloat(item.price), 0);
+  }, [currentDayMetaObjectId, addonsMetaObjectId, isCartCleared]);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -156,10 +177,108 @@ const HomeScreen: React.FC = () => {
         <HeaderGreeting name="Sam" />
         <StatChips />
 
-        <OrderToggle index={tab} onChange={setTab} />
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 7,
+            padding: 4,
+          }}
+        >
+          <DayTabs days={FILTERED_DAYS} onChange={setFilteredIndex} />
+          <OrderToggle index={tab} onChange={setTab} />
+        </View>
+
+        {/* Tab 0: Daily order */}
         {tab === 0 && (
-          <View style={{ marginTop: 20, backgroundColor: COLORS.white }}>
-            <DayTabs days={DAYS} onChange={setDayIndex} />
+          <View style={{ backgroundColor: COLORS.white }}>
+            <View style={styles.container}>
+              <Text style={styles.heading}>Main</Text>
+            </View>
+            {!categories.length && (
+              <View
+                style={{
+                  marginHorizontal: 16,
+                  marginTop: 12,
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor: '#F4FBF6',
+                  borderWidth: 1,
+                  borderColor: '#D8F0DF',
+                  shadowColor: '#000',
+                  shadowOpacity: 0.08,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowRadius: 12,
+                  elevation: 3,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <FontAwesome5
+                    name="calendar-times"
+                    size={20}
+                    color="#2E7D32"
+                  />
+                  <Text
+                    style={{
+                      marginLeft: 8,
+                      fontSize: 16,
+                      fontWeight: '700',
+                      color: '#1B5E20',
+                    }}
+                  >
+                    No menu for {currentDay}
+                  </Text>
+                </View>
+
+                <Text
+                  style={{ fontSize: 13, color: '#2E7D32', lineHeight: 18 }}
+                >
+                  Please check our weekday menu. Available Monday to Friday.
+                </Text>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    marginTop: 10,
+                  }}
+                >
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(
+                    d => (
+                      <View
+                        key={d}
+                        style={{
+                          paddingVertical: 6,
+                          paddingHorizontal: 10,
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: '#B7E1C0',
+                          backgroundColor: '#FFFFFF',
+                          marginRight: 8,
+                          marginBottom: 8,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: '700',
+                            color: '#2E7D32',
+                          }}
+                        >
+                          {d}
+                        </Text>
+                      </View>
+                    ),
+                  )}
+                </View>
+              </View>
+            )}
 
             {categories?.map(cat => (
               <Section
@@ -183,43 +302,43 @@ const HomeScreen: React.FC = () => {
                 ))}
               </Section>
             ))}
-          </View>
-        )}
-        <View style={styles.container}>
-          <Text style={styles.heading}>Addons</Text>
-        </View>
 
-        {addonCategories?.map(cat => (
-          <Section
-            key={cat.key}
-            hero={require('../../assets/banners/chana.jpg')}
-            title={cat.key.toUpperCase()}
-            note={`Select from ${cat.value.length} options`}
-            collapsed={false}
-          >
-            {cat.value.map(d => (
-              <DishCard
-                category={cat.key.toUpperCase()}
-                day={currentDay}
-                type="addon"
-                setSelectedItemsToAddOnCart={setSelectedItemsToAddOnCart}
-                selectedItemsToAddOnCart={selectedItemsToAddOnCart}
-                isLoading={isLoading}
-                key={d.id}
-                item={d}
-              />
-            ))}
-          </Section>
-        ))}
-        {/* One Week Order */}
-        {tab === 1 && (
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700' }}>
-              One Week Order Section
-            </Text>
-            {/* put your components here */}
+            {/* Move OrderToggle directly below categories.map */}
           </View>
         )}
+
+        {/* Addons are shown regardless of tab selection per original layout */}
+        {tab === 1 && (
+          <>
+            <View style={styles.container}>
+              <Text style={styles.heading}>Addons</Text>
+            </View>
+
+            {addonCategories?.map(cat => (
+              <Section
+                key={cat.key}
+                hero={require('../../assets/banners/chana.jpg')}
+                title={cat.key.toUpperCase()}
+                note={`Select from ${cat.value.length} options`}
+                collapsed={false}
+              >
+                {cat.value.map(d => (
+                  <DishCard
+                    category={cat.key.toUpperCase()}
+                    day={currentDay}
+                    type="addon"
+                    setSelectedItemsToAddOnCart={setSelectedItemsToAddOnCart}
+                    selectedItemsToAddOnCart={selectedItemsToAddOnCart}
+                    isLoading={isLoading}
+                    key={d.id}
+                    item={d}
+                  />
+                ))}
+              </Section>
+            ))}
+          </>
+        )}
+
         <View
           style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}
         >
@@ -232,8 +351,15 @@ const HomeScreen: React.FC = () => {
           />
           <CTAButton
             label="Add to cart"
+            isDisabled={!selectedItemsToAddOnCart?.length}
             iconName="shopping-bag"
             onPress={() => dispatch(addItems(selectedItemsToAddOnCart))}
+            toast={{
+              type: 'success',
+              title: 'Added',
+              message: 'Items added to cart',
+              position: 'bottom',
+            }}
           />
         </View>
 
@@ -257,15 +383,13 @@ const HomeScreen: React.FC = () => {
 };
 
 export default HomeScreen;
+
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: SPACING, marginTop: -34 },
-  container: {
-    padding: 20,
-  },
+  container: { padding: 10, marginLeft: 10, paddingTop: 15 },
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
     color: '#333',
   },
 });

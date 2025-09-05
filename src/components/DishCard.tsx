@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
+  Animated,
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import DishDetailModal from './DishDetailModal';
@@ -18,6 +18,7 @@ type Dish = {
   description?: string;
   calories?: number;
   enabled?: boolean;
+  day?: string;
   selected?: boolean;
   variantId: string;
   liked?: boolean;
@@ -33,6 +34,53 @@ const COLORS = {
   accent: '#F6A868',
   white: '#FFFFFF',
 };
+
+function SkeletonDishRow() {
+  const anim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [anim]);
+
+  const opacity = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.45, 1],
+  });
+
+  return (
+    <View style={[s.row, { backgroundColor: COLORS.white }]}>
+      <Animated.View style={[s.skelBox, s.skelCheckbox, { opacity }]} />
+      <Animated.View style={[s.skelBox, s.skelThumb, { opacity }]} />
+      <View style={s.textContainer}>
+        <Animated.View
+          style={[
+            s.skelBox,
+            { height: 14, width: '60%', marginBottom: 8, opacity },
+          ]}
+        />
+        <Animated.View
+          style={[s.skelBox, { height: 12, width: '35%', opacity }]}
+        />
+      </View>
+      <Animated.View style={[s.skelBox, s.skelHeart, { opacity }]} />
+    </View>
+  );
+}
 
 export default function DishCard({
   day,
@@ -53,31 +101,51 @@ export default function DishCard({
   selectedItemsToAddOnCart: Dish[];
   isLoading?: boolean;
 }) {
-  const [checked, setChecked] = React.useState(
-    selectedItemsToAddOnCart.some(
-      it => it.id === item.id && it.variantId === item.variantId,
-    ),
+  const checked = React.useMemo(
+    () =>
+      selectedItemsToAddOnCart.some(
+        (it: any) =>
+          it.id === item.id &&
+          it.variantId === item.variantId &&
+          it.day === day &&
+          it.category === category,
+      ),
+    [selectedItemsToAddOnCart, item.id, item.variantId, day, category],
   );
-  const [liked, setLiked] = React.useState(!!item.liked);
-  const [open, setOpen] = React.useState(false);
+  const [liked, setLiked] = useState(!!item.liked);
+  const [open, setOpen] = useState(false);
   const enabled = item.enabled !== false;
   const active = enabled && checked;
 
   const toggleSelection = () => {
-    if (!enabled) return;
+    if (item.enabled === false) return;
+
     const currentDate = new Date();
     const formattedDate = new Intl.DateTimeFormat('en-US').format(currentDate);
-    const itemWithType = { ...item, type, category, day, date: formattedDate };
+    const itemWithType: any = {
+      ...item,
+      type,
+      category,
+      day,
+      date: formattedDate,
+    };
     const nextChecked = !checked;
-    setChecked(nextChecked);
 
-    // Update selected items
     if (nextChecked) {
+      // add this day+category instance
       setSelectedItemsToAddOnCart(prev => [...prev, itemWithType]);
     } else {
-      setSelectedItemsToAddOnCart(
-        prev =>
-          prev.filter(i => i.id !== item.id || i.variantId !== item.variantId), // Remove item without type
+      // remove only this day+category instance
+      setSelectedItemsToAddOnCart(prev =>
+        prev.filter(
+          (i: any) =>
+            !(
+              i.id === item.id &&
+              i.variantId === item.variantId &&
+              i.day === day &&
+              i.category === category
+            ),
+        ),
       );
     }
 
@@ -91,11 +159,10 @@ export default function DishCard({
     onChange?.({ ...item, selected: checked, liked: next });
   };
 
-  if (isLoading) return <ActivityIndicator size="large" color="#0000ff" />;
+  if (isLoading) return <SkeletonDishRow />;
 
   return (
     <>
-      {/* Row: tap anywhere (except icons) to open modal */}
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() => setOpen(true)}
@@ -148,7 +215,6 @@ export default function DishCard({
         </TouchableOpacity>
       </TouchableOpacity>
 
-      {/* Modal */}
       <DishDetailModal
         visible={open}
         onClose={() => setOpen(false)}
@@ -174,9 +240,7 @@ const s = StyleSheet.create({
     borderColor: '#EEF1EE',
     backgroundColor: COLORS.white,
   },
-  textContainer: {
-    flex: 1,
-  },
+  textContainer: { flex: 1 },
   checkbox: {
     width: 20,
     height: 20,
@@ -205,6 +269,13 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  price: { fontSize: 14, color: 'gray', marginTop: 4 },
+
+  // skeleton
+  skelBox: { backgroundColor: '#E8F2EC', borderRadius: 8 },
+  skelCheckbox: { width: 20, height: 20, borderRadius: 4, marginRight: 10 },
+  skelThumb: { width: 44, height: 44, borderRadius: 8, marginRight: 10 },
+  skelHeart: { width: 30, height: 30, borderRadius: 15 },
 
   // modal
   backdrop: {
@@ -246,12 +317,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  price: {
-    fontSize: 14,
-    color: 'gray',
-    marginTop: 4,
-  },
-
   sectionHd: {
     fontWeight: '800',
     color: COLORS.text,
@@ -259,7 +324,6 @@ const s = StyleSheet.create({
     marginBottom: 6,
   },
   desc: { color: COLORS.text, lineHeight: 20 },
-
   actions: {
     flexDirection: 'row',
     gap: 10,
