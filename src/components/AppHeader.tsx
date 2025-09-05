@@ -18,11 +18,11 @@ export default function AppHeader({ title, onBack, right }: Props) {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const user = useSelector((state: RootState) => state.user);
-  useEffect(() => {
-    if (!user || !user.name) {
-      navigation.navigate('SignIn');
-    }
-  }, [user, navigation]);
+  // useEffect(() => {
+  //   if (!user || !user.name) {
+  //     navigation.navigate('SignIn');
+  //   }
+  // }, [user, navigation]);
   return (
     <View style={s.topbar}>
       {/* Back button */}

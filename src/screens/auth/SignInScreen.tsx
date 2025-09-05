@@ -75,14 +75,13 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                     }
                 })
                 Alert.alert("Success", "Login successful!");
-                navigation.navigate('Home');
+                setTimeout(() => {
+                    navigation.navigate('Home');
+                }, 3000);
+                // navigation.navigate('home');s
             }
         } catch (error) {
-            if (error instanceof Error) {
-                Alert.alert("Error", error.message);
-            } else {
-                Alert.alert("Error", "An error occurred.");
-            }
+            Alert.alert("Error", error instanceof Error ? error.message : "An error occurred.");
         }
     }, [email, pass]);
 

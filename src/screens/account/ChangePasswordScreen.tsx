@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { setUser } from '../../store/slice/userSlice';
+import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -56,16 +57,12 @@ export default function ChangePassword({ navigation }: Props) {
                                     dispatch(setUser(result));
                               }
                         });
-                        Alert.alert("Success", "Password changed successfully.");
+
+                        showToastSuccess('Password changed successfully.');
                   }
 
             } catch (error) {
-                  if (error instanceof Error) {
-                        Alert.alert("Error", error.message);
-                  } else {
-                        Alert.alert("Error", "An error occurred.");
-
-                  }
+                  showToastError(error instanceof Error ? error.message : "An error occurred.");
             }
 
       }

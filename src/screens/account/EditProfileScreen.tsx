@@ -18,6 +18,7 @@ import { setUser } from '../../store/slice/userSlice';
 import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { createFile, previewImage, stagedUploadsCreate } from '../../shopify/mutation/FileUpload';
 import { STORE_ADMIN_API_KEY, STORE_ADMIN_API_URL } from '../../shopify/ShopifyConfig';
+import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -153,7 +154,7 @@ export default function EditProfile({ navigation }: Props) {
 
 
                   } catch (error) {
-                        console.log('error', error);
+                        showToastError(error instanceof Error ? error.message : "An error occurred.");
                   }
 
             }
@@ -167,15 +168,11 @@ export default function EditProfile({ navigation }: Props) {
                                     dispatch(setUser(result));
                               }
                         })
-                        Alert.alert("Success", "Profile updated successfully.");
+
+                        showToastSuccess('Profile updated successfully.');
                   }
-                  console.log('onSubmit', avatar, name, email, phone, res);
             } catch (error) {
-                  if (error instanceof Error) {
-                        Alert.alert("Error", error.message);
-                  } else {
-                        Alert.alert("Error", "An error occurred.");
-                  }
+                  showToastError(error instanceof Error ? error.message : "An error occurred.");
             }
       }
 

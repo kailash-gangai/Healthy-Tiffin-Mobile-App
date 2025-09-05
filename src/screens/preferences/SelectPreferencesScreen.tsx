@@ -23,6 +23,7 @@ import { RootState } from '../../store';
 import { customerMetafieldUpdate } from '../../shopify/mutation/CustomerAuth';
 import { getCustomerMetaField, getCustomerMetafields } from '../../shopify/query/CustomerQuery';
 import { getMetaObjectByHandle } from '../../shopify/queries/getMetaObject';
+import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -88,15 +89,12 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                   ], user?.id ?? '');
                   response.then(res => {
                         if (res.metafieldsSet.metafields.length > 0) {
+                              showToastSuccess('Preferences updated successfully.');
                               navigation.navigate('MedicalPreferences');
                         }
                   });
             } catch (error) {
-                  if (error instanceof Error) {
-                        Alert.alert("Error", error.message);
-                  } else {
-                        Alert.alert("Error", "An error occurred.");
-                  }
+                  showToastError(error instanceof Error ? error.message : "An error occurred.");
             }
 
       }

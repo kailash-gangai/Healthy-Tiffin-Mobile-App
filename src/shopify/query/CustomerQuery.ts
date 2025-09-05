@@ -38,7 +38,6 @@ export async function getCustomerMetaField(accessToken: string, key: string) {
     const metafields = await getCustomerMetafields(accessToken, 'custom', key);
     return metafields.customer.metafield.value ?? ''; // assume metafields contain the data we need
   } catch (error) {
-    console.error('Error fetching metafields:', error);
     return ''; // return empty string in case of an error
   }
 }

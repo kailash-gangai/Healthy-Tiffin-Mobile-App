@@ -15,11 +15,11 @@ export default function HeaderGreeting({ name }: { name: string }) {
       const cartCount = useSelector(selectCount);
       const dispatch = useDispatch();
       const user = useSelector((state: RootState) => state.user);
-      useEffect(() => {
-            if (!user || !user.name) {
-                  navigation.navigate('SignIn');
-            }
-      }, [user, navigation]);
+      // useEffect(() => {
+      //       if (!user || !user.name) {
+      //             navigation.navigate('SignIn');
+      //       }
+      // }, [user, navigation]);
       return (
             <View>
                   <View style={s.orange}>

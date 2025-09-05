@@ -20,6 +20,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { customerRecover } from '../../shopify/mutation/CustomerAuth';
 import { COLORS } from '../../ui/theme';
+import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -43,16 +44,11 @@ const ForgetPasswordScreen: React.FC<Props> = ({ navigation }) => {
         }
         try {
             const response = customerRecover(email);
-            console.log(response);
+            showToastSuccess('Email sent successfully.');
+            navigation.navigate('SignIn');
         } catch (error) {
-            if (error instanceof Error) {
-                Alert.alert("Error", error.message);
-            } else {
-                Alert.alert("Error", "An error occurred.");
-
-            }
+            showToastError(error instanceof Error ? error.message : "An error occurred.");
         }
-        // navigation.navigate('CodeVerification');
 
     };
 

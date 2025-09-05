@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
       View,
       Text,
@@ -17,6 +17,8 @@ import { customerMetafieldUpdate } from '../../shopify/mutation/CustomerAuth';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import AppHeader from '../../components/AppHeader';
+import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
+import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -67,6 +69,15 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             () => Object.values(selected).some(Boolean),
             [selected]
       );
+      const fetchdata = async () => {
+            if (user?.customerToken) {
+                  const selectedConditions = await getCustomerMetaField(user?.customerToken, 'dietary');
+                  setSelected(JSON.parse(selectedConditions));
+            }
+      };
+      useEffect(() => {
+            fetchdata();
+      }, []);
       const onsubmit = () => {
 
             try {
@@ -75,17 +86,13 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                         { key: 'dietary', value: jsonData.replace(/"/g, '\\"'), type: 'multi_line_text_field' },
                   ], user?.id ?? '');
                   response.then(res => {
-
                         if (res.metafieldsSet.metafields.length > 0) {
+                              showToastSuccess('Preferences updated successfully.');
                               navigation.navigate('Home');
                         }
                   });
             } catch (error) {
-                  if (error instanceof Error) {
-                        Alert.alert("Error", error.message);
-                  } else {
-                        Alert.alert("Error", "An error occurred.");
-                  }
+                  showToastError(error instanceof Error ? error.message : "An error occurred.");
             }
 
       }
@@ -94,13 +101,7 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
                   {/* Top bar */}
                   <AppHeader title="Dietary Preferences" onBack={() => navigation.goBack()} />
-                  {/* <View style={styles.topbar}>
-                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-                              <FontAwesome5 iconStyle='solid' name="chevron-left" size={16} color={COLORS.white} />
-                        </TouchableOpacity>
-                        <Text style={styles.topTitle}>Dietary preferences</Text>
-                        <View style={{ width: 24 }} />
-                  </View> */}
+
 
                   <View style={styles.container}>
                         <Text style={styles.hint}>You can select multiple options</Text>
@@ -176,15 +177,7 @@ export default DietaryPreferencesScreen;
 
 /* ----------------------- styles ----------------------- */
 const styles = StyleSheet.create({
-      topbar: {
-            height: 48,
-            backgroundColor: COLORS.green,
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 12,
-      },
-      back: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-      topTitle: { flex: 1, textAlign: 'center', color: COLORS.white, fontWeight: '700', fontSize: 16 },
+
 
       container: { flex: 1, padding: 16, backgroundColor: COLORS.white },
       hint: { color: COLORS.text, marginBottom: 12, fontWeight: '600' },

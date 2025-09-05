@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 import { COLORS, RADIUS, SHADOW, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
@@ -6,11 +6,11 @@ import StatsCard from '../../components/StatChips';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-import { logout } from 'react-native-app-auth';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearUser } from '../../store/slice/userSlice';
 import { clearCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { RootState } from '../../store';
+import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -20,6 +20,8 @@ type Props = {
 const AccountScreen: React.FC<Props> = ({ navigation }) => {
       const dispatch = useDispatch();
       const user = useSelector((state: RootState) => state.user);
+      const [gender, setGender] = useState<string>('');
+      const [age, setAge] = useState<string>('');
       const Row = ({
             icon, label, danger, onPress,
       }: { icon: React.ReactNode; label: string; danger?: boolean; onPress?: () => void }) => (
@@ -28,12 +30,22 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                   <Text style={[s.rowText, danger && { color: COLORS.red }]}>{label}</Text>
             </TouchableOpacity>
       );
-
+      const fetchdata = async (key: string) => {
+            if (user?.customerToken) {
+                  const metafield = await getCustomerMetaField(user?.customerToken, key);
+                  return metafield
+            }
+      };
+      useEffect(() => {
+            fetchdata('gender').then(res => setGender(res));
+            fetchdata('age').then(res => setAge(res));
+      }, []);
 
       const Badge = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
+
             <View style={s.badge}>
                   <Text>{icon}</Text>
-                  <Text style={s.badgeTxt}>{text}</Text>
+                  <Text style={s.badgeTxt}> {text}</Text>
             </View>
       );
       const onLogout = () => {
@@ -45,15 +57,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
             <View style={{ flex: 1, backgroundColor: COLORS.white }}>
                   <ScrollView bounces={false}>
                         <HeaderGreeting name="Sam" />
-                        <StatsCard
-                              items={[
-                                    { value: '70', unit: 'kg', type: 'Weight', bgColor: '#DDE3F6', color: '#3B49DF' },
-                                    { value: '120', unit: '', type: 'Steps', bgColor: '#DDEEE2', color: '#0B5733' },
-                                    { value: '10', unit: 'hrs', type: 'Sleep', bgColor: '#EDE7FB', color: '#6A4CDB' },
-                                    { value: '8', unit: 'Glasses', type: 'Water', bgColor: '#EAF3FB', color: '#0B73B3' },
-                                    { value: '60', unit: 'Cal', type: 'Calories', bgColor: '#FDF1D9', color: '#D27C00' },
-                              ]}
-                        />
+                        <StatsCard />
                         <View style={s.wrap}>
                               <View style={s.header}>
                                     <Image source={{ uri: user?.avatar || 'https://i.pravatar.cc/120' }} style={s.avatar} />
@@ -68,11 +72,11 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                                     <View style={s.profile}>
                                           <Badge
                                                 icon={<FontAwesome5 name="calendar" size={22} color={COLORS.white} />}
-                                                text="22 yrs"
+                                                text={age + " years"}
                                           />
                                           <Badge
                                                 icon={<FontAwesome5 iconStyle="solid" name="mars" size={22} color={COLORS.white} />}
-                                                text="Male"
+                                                text={gender}
                                           />
                                     </View>
                               </View>

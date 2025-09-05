@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import AppHeader from '../../components/AppHeader';
 import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
+import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -45,10 +46,7 @@ const CONDITIONS = [
 const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
       const user = useSelector((state: RootState) => state.user);
       const [hasCondition, setHasCondition] = useState<boolean | null>(true);
-      const [selected, setSelected] = useState<Record<string, boolean>>({
-            'Acid Reflux': true,
-            Premenopause: true,
-      });
+      const [selected, setSelected] = useState<Record<string, boolean>>({});
 
       const toggleChip = (label: string) => {
             if (!hasCondition) return;
@@ -59,20 +57,24 @@ const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
             () => hasCondition !== null && (!hasCondition || Object.values(selected).some(Boolean)),
             [hasCondition, selected]
       );
+      const fetchdata = async () => {
+            if (user?.customerToken) {
+                  const hasCondition = await getCustomerMetaField(user?.customerToken, 'has_condition');
+                  setHasCondition(hasCondition === 'true' ? true : false);
+                  const selectedConditions = await getCustomerMetaField(user?.customerToken, 'condition');
+                  setSelected(JSON.parse(selectedConditions));
+                  // setSelected(await getCustomerMetaField(user?.customerToken, 'condition'));
+            }
 
+      };
       const onSelectYN = (val: boolean) => {
             setHasCondition(val);
             if (!val) setSelected({});
+            // if (val) {
+            //       fetchdata();
+            // }
       };
       useEffect(() => {
-            const fetchdata = async () => {
-                  if (user?.customerToken) {
-                        const hasCondition = await getCustomerMetaField(user?.customerToken, 'has_condition');
-                        setHasCondition(hasCondition === 'true' ? true : false);
-                        // setSelected(await getCustomerMetaField(user?.customerToken, 'condition'));
-                  }
-
-            };
 
             fetchdata();
       }, []);
@@ -88,15 +90,12 @@ const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
 
                   response.then(res => {
                         if (res.metafieldsSet.metafields.length > 0) {
+                              showToastSuccess('Preferences updated successfully.');
                               navigation.navigate('DietaryPreferences');
                         }
                   });
             } catch (error) {
-                  if (error instanceof Error) {
-                        Alert.alert("Error", error.message);
-                  } else {
-                        Alert.alert("Error", "An error occurred.");
-                  }
+                  showToastError(error instanceof Error ? error.message : "An error occurred.");
             }
 
       }
@@ -133,7 +132,7 @@ const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                         <View style={styles.chipsWrap}>
                               {CONDITIONS.map(label => {
                                     const isOn = !!selected[label];
-                                    const isWarn = ['Acid Reflux', 'Premenopause'].includes(label) && isOn;
+                                    const isWarn = CONDITIONS.includes(label) && isOn;
                                     return (
                                           <TouchableOpacity
                                                 key={label}

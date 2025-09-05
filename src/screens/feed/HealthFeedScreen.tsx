@@ -140,7 +140,7 @@ const s = StyleSheet.create({
       },
       thumbWrap: { width: 120, height: 120, borderRadius: 12, overflow: 'hidden' },
       thumb: { width: '100%', height: '100%' },
-      playBtn: {
+      playBtn: { 
             position: 'absolute', top: '50%', left: '50%', marginTop: -16, marginLeft: -16,
             width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.6)',
             alignItems: 'center', justifyContent: 'center',

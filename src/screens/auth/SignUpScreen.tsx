@@ -10,7 +10,6 @@ import {
     Platform,
     GestureResponderEvent,
     KeyboardAvoidingView,
-    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -25,6 +24,7 @@ import { COLORS } from '../../ui/theme';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/slice/userSlice';
 import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
+import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
@@ -96,19 +96,17 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                     customerdetails.then(async (result) => {
                         console.log('result', result);
                         if (result) {
-                            await dispatch(setUser(result));
+                            dispatch(setUser(result));
                         }
                     });
-                    Alert.alert("Success", "Customer registration successful.");
-                    navigation.navigate('SelectPreferences');
+                    showToastSuccess('Customer registration successful.');
+                    setTimeout(() => {
+                        navigation.navigate('SelectPreferences');
+                    }, 3000);
                 }
             }
         } catch (error) {
-            if (error instanceof Error) {
-                Alert.alert("Error", error.message);
-            } else {
-                Alert.alert("Error", "An error occurred.");
-            }
+            showToastError(error instanceof Error ? error.message : "An error occurred.");
         }
     }, [name, email, pass]);
 

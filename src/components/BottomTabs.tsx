@@ -4,7 +4,7 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Fontisto from '@react-native-vector-icons/fontisto';
 
-type TabKey = 'progress' | 'favorites' | 'home' | 'Order' | 'account';
+type TabKey = 'progress' | 'favorites' | 'Home' | 'Order' | 'account';
 
 type Props = {
       active: TabKey;
@@ -66,7 +66,7 @@ export default function BottomTabs({ active, onChange }: Props) {
                               label="Favorites"
                               icon={<FontAwesome5 name="heart" size={22} color={WHITE} />}
                         />
-                        <Item k="home" label="Home" icon={null} center />
+                        <Item k="Home" label="Home" icon={null} center />
                         <Item
                               k="Order"
                               label="Orders"
