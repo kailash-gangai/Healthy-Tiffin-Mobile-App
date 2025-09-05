@@ -19,7 +19,6 @@ import {
 import { getProductsByIds } from '../../shopify/queries/getProducts';
 import { addItems, cartFLag } from '../../store/slice/cartSlice';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import Toast from 'react-native-toast-message';
 
 interface CategoriesProps {
   key: string;
@@ -296,11 +295,13 @@ const HomeScreen: React.FC = () => {
                     category={cat.key.toUpperCase()}
                     day={currentDay}
                     type="main"
-                    setSelectedItemsToAddOnCart={setSelectedItemsToAddOnCart}
-                    selectedItemsToAddOnCart={selectedItemsToAddOnCart}
+                    setSelectedItemsToAddOnCart={
+                      setSelectedItemsToAddOnCart as any
+                    }
+                    selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
                     isLoading={isLoading}
                     key={d.id}
-                    item={d}
+                    item={d as any}
                   />
                 ))}
               </Section>
@@ -330,11 +331,13 @@ const HomeScreen: React.FC = () => {
                     category={cat.key.toUpperCase()}
                     day={currentDay}
                     type="addon"
-                    setSelectedItemsToAddOnCart={setSelectedItemsToAddOnCart}
-                    selectedItemsToAddOnCart={selectedItemsToAddOnCart}
+                    setSelectedItemsToAddOnCart={
+                      setSelectedItemsToAddOnCart as any
+                    }
+                    selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
                     isLoading={isLoading}
                     key={d.id}
-                    item={d}
+                    item={d as any}
                   />
                 ))}
               </Section>
@@ -356,7 +359,7 @@ const HomeScreen: React.FC = () => {
             label="Add to cart"
             isDisabled={!selectedItemsToAddOnCart?.length}
             iconName="shopping-bag"
-            onPress={() => dispatch(addItems(selectedItemsToAddOnCart))}
+            onPress={() => dispatch(addItems(selectedItemsToAddOnCart as any))}
             toast={{
               type: 'success',
               title: 'Added',

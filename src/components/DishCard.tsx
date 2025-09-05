@@ -54,8 +54,8 @@ export default function DishCard({
   type: 'main' | 'addon';
   item: Dish;
   onChange?: (d: Dish) => void;
-  setSelectedItemsToAddOnCart?: (items: Dish[]) => void;
-  selectedItemsToAddOnCart: Dish[];
+  setSelectedItemsToAddOnCart?: any;
+  selectedItemsToAddOnCart: any;
   isLoading?: boolean;
 }) {
   const dispatch = useAppDispatch();
@@ -176,7 +176,7 @@ export default function DishCard({
         onShare={() => {}}
         onToggleLike={() => {}}
         liked={isFav}
-        dish={item}
+        dish={item as any}
       />
     </>
   );
