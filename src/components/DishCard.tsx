@@ -9,21 +9,25 @@ import {
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import DishDetailModal from './DishDetailModal';
-
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  selectIsWishlisted,
+  toggleWishlist,
+} from '../store/slice/favoriteSlice';
+import SkeletonLoading from './SkeletonLoading';
 type Dish = {
   id: string;
   title: string;
-  price: string;
-  image: any;
+  price: string; // string per your data
+  image: string; // URL string per your data
   description?: string;
   calories?: number;
-  enabled?: boolean;
   day?: string;
   selected?: boolean;
   variantId: string;
+  tags?: string[];
   liked?: boolean;
 };
-
 const COLORS = {
   text: '#232323',
   sub: '#9E9E9E',
@@ -34,53 +38,6 @@ const COLORS = {
   accent: '#F6A868',
   white: '#FFFFFF',
 };
-
-function SkeletonDishRow() {
-  const anim = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(anim, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim, {
-          toValue: 0,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [anim]);
-
-  const opacity = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.45, 1],
-  });
-
-  return (
-    <View style={[s.row, { backgroundColor: COLORS.white }]}>
-      <Animated.View style={[s.skelBox, s.skelCheckbox, { opacity }]} />
-      <Animated.View style={[s.skelBox, s.skelThumb, { opacity }]} />
-      <View style={s.textContainer}>
-        <Animated.View
-          style={[
-            s.skelBox,
-            { height: 14, width: '60%', marginBottom: 8, opacity },
-          ]}
-        />
-        <Animated.View
-          style={[s.skelBox, { height: 12, width: '35%', opacity }]}
-        />
-      </View>
-      <Animated.View style={[s.skelBox, s.skelHeart, { opacity }]} />
-    </View>
-  );
-}
 
 export default function DishCard({
   day,
@@ -101,6 +58,8 @@ export default function DishCard({
   selectedItemsToAddOnCart: Dish[];
   isLoading?: boolean;
 }) {
+  const dispatch = useAppDispatch();
+
   const checked = React.useMemo(
     () =>
       selectedItemsToAddOnCart.some(
@@ -114,72 +73,68 @@ export default function DishCard({
   );
   const [liked, setLiked] = useState(!!item.liked);
   const [open, setOpen] = useState(false);
-  const enabled = item.enabled !== false;
-  const active = enabled && checked;
+
+  const isFav = useAppSelector(
+    selectIsWishlisted(item.id, item.variantId, category, day),
+  );
 
   const toggleSelection = () => {
-    if (item.enabled === false) return;
-
-    const currentDate = new Date();
-    const formattedDate = new Intl.DateTimeFormat('en-US').format(currentDate);
-    const itemWithType: any = {
-      ...item,
-      type,
-      category,
-      day,
-      date: formattedDate,
-    };
+    const date = new Intl.DateTimeFormat('en-US').format(new Date());
+    const itemWithMeta: any = { ...item, type, category, day, date };
     const nextChecked = !checked;
 
-    if (nextChecked) {
-      // add this day+category instance
-      setSelectedItemsToAddOnCart(prev => [...prev, itemWithType]);
-    } else {
-      // remove only this day+category instance
-      setSelectedItemsToAddOnCart(prev =>
-        prev.filter(
-          (i: any) =>
-            !(
-              i.id === item.id &&
-              i.variantId === item.variantId &&
-              i.day === day &&
-              i.category === category
-            ),
-        ),
-      );
-    }
+    setSelectedItemsToAddOnCart?.(prev =>
+      nextChecked
+        ? [...prev, itemWithMeta]
+        : prev.filter(
+            (i: any) =>
+              !(
+                i.id === item.id &&
+                i.variantId === item.variantId &&
+                i.day === day &&
+                i.category === category
+              ),
+          ),
+    );
 
-    onChange?.({ ...itemWithType, selected: nextChecked, liked });
+    onChange?.({ ...itemWithMeta, selected: nextChecked, liked: isFav });
   };
 
-  const toggleLike = () => {
-    if (!enabled) return;
-    const next = !liked;
-    setLiked(next);
-    onChange?.({ ...item, selected: checked, liked: next });
+  const onHeartPress = () => {
+    const date = new Intl.DateTimeFormat('en-US').format(new Date());
+    dispatch(
+      toggleWishlist({
+        id: item.id,
+        variantId: item.variantId,
+        category,
+        day,
+        title: item.title,
+        description: item.description,
+        image: item.image,
+        price: item.price,
+        type,
+        date,
+        tags: item.tags,
+      }),
+    );
+    onChange?.({ ...item, selected: checked, liked: !isFav });
   };
 
-  if (isLoading) return <SkeletonDishRow />;
+  if (isLoading) return <SkeletonLoading />;
 
   return (
     <>
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() => setOpen(true)}
-        style={[s.row, active && { backgroundColor: COLORS.rowBg }]}
-        disabled={!enabled}
+        style={[s.row, checked && { backgroundColor: COLORS.rowBg }]}
       >
         <TouchableOpacity
           onPress={toggleSelection}
-          disabled={!enabled}
-          style={[
-            s.checkbox,
-            active && s.checkboxOn,
-            !enabled && { opacity: 0.35 },
-          ]}
+          style={[s.checkbox, checked && s.checkboxOn]}
           activeOpacity={0.85}
         >
-          {active ? (
+          {checked ? (
             <FontAwesome5
               iconStyle="solid"
               name="check"
@@ -189,28 +144,28 @@ export default function DishCard({
           ) : null}
         </TouchableOpacity>
 
-        <Image
-          source={{ uri: item.image }}
-          style={[s.thumb, !enabled && { opacity: 0.35 }]}
-        />
+        <Image source={{ uri: item.image }} style={[s.thumb]} />
         <View style={s.textContainer}>
-          <Text style={[s.title, !enabled && s.titleDim]} numberOfLines={1}>
+          <Text style={s.title} numberOfLines={1}>
             {item.title}
           </Text>
-          <Text style={[s.price, !enabled && s.titleDim]}>${item?.price}</Text>
+          <Text style={s.price}>${item.price}</Text>
         </View>
 
         <TouchableOpacity
-          onPress={toggleLike}
-          disabled={!enabled}
-          style={[s.heartWrap, !enabled && { opacity: 0.35 }]}
+          onPress={onHeartPress}
+          style={[s.heartWrap]}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isFav ? 'Remove from favorites' : 'Add to favorites'
+          }
         >
           <FontAwesome5
             iconStyle="solid"
             name="heart"
             size={18}
-            color={COLORS.accent}
+            color={isFav ? COLORS.accent : COLORS.divider}
           />
         </TouchableOpacity>
       </TouchableOpacity>
@@ -220,7 +175,7 @@ export default function DishCard({
         onClose={() => setOpen(false)}
         onShare={() => {}}
         onToggleLike={() => {}}
-        liked={liked}
+        liked={isFav}
         dish={item}
       />
     </>

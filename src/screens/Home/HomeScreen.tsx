@@ -17,7 +17,7 @@ import {
   getMetaObjectByHandle,
 } from '../../shopify/queries/getMetaObject';
 import { getProductsByIds } from '../../shopify/queries/getProducts';
-import { addItems } from '../../store/slice/cartSlice';
+import { addItems, cartFLag } from '../../store/slice/cartSlice';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import Toast from 'react-native-toast-message';
 
@@ -164,10 +164,13 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  console.log(isCartCleared, 'is cart cleared');
+  console.log(selectedItemsToAddOnCart, 'sel');
   useEffect(() => {
     if (isCartCleared) {
       setSelectedItemsToAddOnCart([]);
     }
+    dispatch(cartFLag());
     fetchMetaObjects();
   }, [currentDayMetaObjectId, addonsMetaObjectId, isCartCleared]);
 

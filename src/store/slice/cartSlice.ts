@@ -175,6 +175,10 @@ const cartSlice = createSlice({
       s.lines = [];
       s.isCartCleared = true;
     },
+
+    cartFLag: s => {
+      s.isCartCleared = false;
+    },
   },
 });
 
@@ -187,6 +191,7 @@ export const {
   setQty,
   removeItem,
   clearCart,
+  cartFLag,
 } = cartSlice.actions;
 export default cartSlice.reducer;
 
