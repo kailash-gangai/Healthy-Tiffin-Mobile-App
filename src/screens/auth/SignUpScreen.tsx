@@ -100,9 +100,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         }
                     });
                     showToastSuccess('Customer registration successful.');
-                    setTimeout(() => {
-                        navigation.navigate('SelectPreferences');
-                    }, 3000);
+                    // setTimeout(() => {
+                    navigation.navigate('SelectPreferences');
+                    // }, 3000);
                 }
             }
         } catch (error) {

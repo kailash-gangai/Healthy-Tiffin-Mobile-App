@@ -75,9 +75,9 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                     }
                 })
                 Alert.alert("Success", "Login successful!");
-                setTimeout(() => {
-                    navigation.navigate('Home');
-                }, 3000);
+
+                navigation.navigate('Home');
+
                 // navigation.navigate('home');s
             }
         } catch (error) {
