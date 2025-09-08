@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@kingstinct/react-native-healthkit": "^10.1.0",
     "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "^8.4.4",
@@ -31,6 +32,7 @@
     "react-native-keychain": "^10.0.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal-datetime-picker": "^18.0.0",
+    "react-native-nitro-modules": "^0.29.3",
     "react-native-safe-area-context": "^5.6.1",
     "react-native-screens": "^4.14.1",
     "react-native-svg": "^15.12.1",
