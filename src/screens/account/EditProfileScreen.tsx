@@ -38,6 +38,7 @@ import {
 import {
   STORE_ADMIN_API_KEY,
   STORE_ADMIN_API_URL,
+  STORE_DOMAIN,
 } from '../../shopify/ShopifyConfig';
 import {
   showToastError,
@@ -155,8 +156,8 @@ export default function EditProfile({ navigation }: Props) {
     const a = file.assets[0];
     if (avatar) {
       const { fileId, previewUrl } = await uploadImageDirectFromRN(
-        'healthytiffin-dev.myshopify.com',
-        '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',
+        STORE_DOMAIN,
+        STORE_ADMIN_API_KEY,
         {
           uri: a.uri,
           name: a.fileName ?? 'upload.jpg',

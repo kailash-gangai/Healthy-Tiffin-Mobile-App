@@ -12,6 +12,7 @@ import SkeletonLoading from './src/components/SkeletonLoading';
 export default function App() {
   const isDarkMode = useColorScheme() === 'dark';
   console.log(isDarkMode);
+
   return (
     <Provider store={store}>
       <PersistGate persistor={persistor} loading={<SkeletonLoading />}>
