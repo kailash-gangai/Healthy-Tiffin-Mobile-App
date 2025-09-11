@@ -40,6 +40,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { clearUser, setUser } from '../../store/slice/userSlice';
+import { createNavigationContainerRef, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/types';
 const Stack = createNativeStackNavigator();
 export default function Root() {
       const [loading, setLoading] = useState(true);
@@ -47,19 +50,23 @@ export default function Root() {
       const fadeAnim = useRef(new Animated.Value(1)).current;
       const dispatch = useDispatch();
       const user = useSelector((state: RootState) => state.user);
+      const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
       useEffect(() => {
             //check the user is logged in
             if (!user.customerToken) {
-                  let customerdetails = checkCustomerTokens();
+                  const customerdetails = checkCustomerTokens();
+                  console.log('customerdetails', customerdetails);
                   if (!customerdetails) {
                         dispatch(clearUser());
-
                   }
                   customerdetails.then((result) => {
                         console.log('result', result);
                         if (result) {
                               dispatch(setUser(result));
                               setHasToken(true);
+                        } else {
+                              dispatch(clearUser());
+                              setHasToken(false);
                         }
                   })
             } else {
@@ -76,6 +83,9 @@ export default function Root() {
 
             return () => clearTimeout(timer);
       }, [fadeAnim]);
+      // if (!hasToken) {
+      //       navigation.navigate('SignIn');
+      // }
 
       if (loading) {
             return <SplashScreen fadeAnim={fadeAnim} />;

@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from "rea
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./navigation/types";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -11,8 +13,16 @@ type Props = {
 };
 
 const AboutScreen: React.FC<Props> = ({ navigation }) => {
+    const user = useSelector((state: RootState) => state.user);
+    console.log('user', user);
     const handlePress = () => {
-        navigation.navigate("Home");
+ 
+        if (!user || user.customerToken === null || user.customerToken === '') {
+
+            navigation.navigate("SignIn");
+        } else {
+            navigation.navigate("Home");
+        }
     }
     return (
         <SafeAreaView style={styles.container}>
