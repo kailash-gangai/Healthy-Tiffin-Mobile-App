@@ -29,7 +29,10 @@ import { showToastError, showToastSuccess } from '../../config/ShowToastMessages
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import auth from "@react-native-firebase/auth";
 import { GoogleAuthProvider, getAuth, signInWithCredential } from '@react-native-firebase/auth';
-
+GoogleSignin.configure({
+    // offlineAccess: true,
+    webClientId: "678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd.apps.googleusercontent.com",
+});
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
@@ -117,22 +120,19 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     }, [name, email, pass]);
 
     useEffect(() => {
-        GoogleSignin.configure({
-            offlineAccess: true,
-            webClientId: '541872006500-so95kn3c1v5hi6a110aqm5d0867b8hm7.apps.googleusercontent.com',
-        });
+
     }, []);
 
     async function onGoogleButtonPress() {
 
         try {
-            await GoogleSignin.hasPlayServices();
-            await GoogleSignin.signOut();
+            // await GoogleSignin.hasPlayServices();
+            // await GoogleSignin.signOut();
 
             await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
             // Obtain the user's ID token
             const data: any = await GoogleSignin.signIn();
-
+            console.log('data: ', data);
             // create a new firebase credential with the token
             const googleCredential = auth.GoogleAuthProvider.credential(
                 data?.data.idToken,
@@ -149,24 +149,30 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         }
     }
     const GoogleSingUp = async () => {
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        // Get the users ID token
-        const signInResult = await GoogleSignin.signIn();
-        console.log('signInResult', signInResult);
-        // Try the new style of google-sign in result, from v13+ of that module
-        let idToken = signInResult.data?.idToken;
-        if (!idToken) {
-            idToken = signInResult.idToken;
-        }
-        if (!idToken) {
-            throw new Error('No ID token found');
-        }
+        try {
+            console.log('GoogleSingUp');
+            await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+            await GoogleSignin.signOut();
+            // Get the users ID token
+            const signInResult = await GoogleSignin.signIn();
+            console.log('signInResult', signInResult);
+            // Try the new style of google-sign in result, from v13+ of that module
+            let idToken = signInResult.data?.idToken;
+            if (!idToken) {
+                idToken = signInResult.idToken;
+            }
+            if (!idToken) {
+                throw new Error('No ID token found');
+            }
 
-        // Create a Google credential with the token
-        const googleCredential = GoogleAuthProvider.credential(signInResult.data.idToken);
-        console.log('googleCredential', googleCredential);
-        // Sign-in the user with the credential
-        return signInWithCredential(getAuth(), googleCredential);
+            // Create a Google credential with the token
+            const googleCredential = GoogleAuthProvider.credential(signInResult.data.idToken);
+            console.log('googleCredential', googleCredential);
+            // Sign-in the user with the credential
+            return signInWithCredential(getAuth(), googleCredential);
+        } catch (error) {
+            console.log('error: ', error);
+        }
         // try {
         //     await GoogleSignin.hasPlayServices();
         //     const userInfo = await GoogleSignin.signIn();
@@ -318,7 +324,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                             bg="#EA4335"
                             icon={<Fontisto name="google" size={18} color={COLORS.white} />}
                             onPress={() => {
-                                onGoogleButtonPress().then(() => console.log('Signed in with Google!'))
+                                GoogleSingUp();
                             }}
                         />
                         <CircleBtn
