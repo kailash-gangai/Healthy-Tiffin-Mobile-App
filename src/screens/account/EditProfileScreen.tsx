@@ -134,6 +134,9 @@ export default function EditProfile({ navigation }: Props) {
     const a = file?.assets[0] ?? null;
     if (avatar && a) {
       const { fileId, previewUrl } = await uploadImageDirectFromRN(
+
+        STORE_DOMAIN,
+        STORE_ADMIN_API_KEY,
         {
           uri: a.uri,
           name: a.fileName ?? 'upload.jpg',

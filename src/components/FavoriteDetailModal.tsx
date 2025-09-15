@@ -12,6 +12,9 @@ import {
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { COLORS, SHADOW } from '../ui/theme';
 import { EMPTY_STATE_URL } from '../constants';
+import Toast from 'react-native-toast-message';
+import { addItem } from '../store/slice/cartSlice';
+import { useAppDispatch } from '../store/hooks';
 
 type Item = {
   id: string;
@@ -19,6 +22,7 @@ type Item = {
   price: string;
   image: string | null;
   description?: string;
+  calories?: string;
   category: string;
   type: 'main' | 'addon';
   day?: string;
@@ -42,6 +46,7 @@ export default function FavoriteDetailModal({
   liked?: boolean;
   item: Item;
 }) {
+  const dispatch = useAppDispatch();
   return (
     <Modal
       visible={visible}
@@ -102,6 +107,30 @@ export default function FavoriteDetailModal({
             <Text style={s.kcalNum}>{item.calories}</Text>
             <Text style={s.kcalUnit}> CALORIES</Text>
           </Text>
+          <TouchableOpacity
+            activeOpacity={0.6}
+            onPress={() => {
+              dispatch(addItem(item as any));
+              Toast.show({
+                text1: 'Added',
+                text2: 'item added to the cart',
+                visibilityTime: 2000,
+                position: 'bottom',
+                autoHide: true,
+              });
+            }}
+            style={{
+              alignSelf: 'flex-end',
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              backgroundColor: '#111010ff',
+              borderRadius: 5,
+            }}
+          >
+            <Text style={{ color: '#ffffffff', fontWeight: '700' }}>
+              Add to cart
+            </Text>
+          </TouchableOpacity>
 
           {/* tags */}
           <View style={s.tags}>
