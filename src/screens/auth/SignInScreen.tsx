@@ -10,6 +10,8 @@ import {
     Platform,
     GestureResponderEvent,
     Alert,
+    ActivityIndicator,
+    Pressable,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -44,17 +46,21 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
         return password.length >= 6;
     };
     const onSubmit = useCallback(async (_: GestureResponderEvent) => {
+        setIsloading(true);
         setErrors({});
         if (!email || !pass) {
             setErrors({ email: email ? '' : 'Is required', pass: pass ? '' : 'Is required' });
+            setIsloading(false);
             return;
         }
         if (!validateEmail(email)) {
             setErrors({ email: 'Please enter a valid email address.' });
+            setIsloading(false);
             return;
         }
         if (!validatePassword(pass)) {
             setErrors({ pass: 'Password must be at least 6 characters.' });
+            setIsloading(false);
             return;
         }
         const userData = {
@@ -63,11 +69,16 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
         };
         try {
             const response = await loginCustomer(userData);
+            if (response?.customerAccessTokenCreate?.customerUserErrors) {
+                setIsloading(false);
+                Alert.alert("Error", response.customerAccessTokenCreate.customerUserErrors[0]?.message);
+            }
             if (response?.customerAccessTokenCreate?.customerAccessToken?.accessToken) {
                 const customerToken = response.customerAccessTokenCreate.customerAccessToken.accessToken;
                 const tokenExpire = response.customerAccessTokenCreate.customerAccessToken.expiresAt;
                 saveCustomerTokens({ customerToken, tokenExpire });
                 let customerdetails = checkCustomerTokens();
+                console.log('customerdetails', customerdetails);
                 customerdetails.then((result) => {
                     console.log('result', result);
                     if (result) {
@@ -75,12 +86,12 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                     }
                 })
                 Alert.alert("Success", "Login successful!");
-
+                setIsloading(false);
                 navigation.navigate('Home');
-
                 // navigation.navigate('home');s
             }
         } catch (error) {
+            setIsloading(false);
             Alert.alert("Error", error instanceof Error ? error.message : "An error occurred.");
         }
     }, [email, pass]);
@@ -143,17 +154,22 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                 </View>
 
                 {/* CTA */}
-                <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn} onPress={onSubmit}>
+                <Pressable disabled={isloading} style={styles.ctaBtn} onPress={onSubmit}>
+
                     <LinearGradient
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         colors={[COLORS.green, COLORS.greenLight]}
                         style={styles.ctaGradient}
                     >
-                        <Text style={styles.ctaText}>Sign Up</Text>
-                        <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                        <Text style={styles.ctaText}>Sign In</Text>
+                        {isloading ? (
+                            <ActivityIndicator size="small" style={{ marginLeft: 8 }} color={COLORS.green} />
+                        ) : (
+                            <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                        )}
                     </LinearGradient>
-                </TouchableOpacity>
+                </Pressable>
 
                 {/* Divider */}
                 <View style={styles.dividerWrap}>

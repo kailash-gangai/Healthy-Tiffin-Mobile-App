@@ -8,6 +8,7 @@ import {
   Alert,
   ActionSheetIOS,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
@@ -52,6 +53,7 @@ export default function EditProfile({ navigation }: Props) {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user);
   const [file, setFile] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<string | undefined>(
     user?.avatar || undefined,
   );
@@ -124,6 +126,7 @@ export default function EditProfile({ navigation }: Props) {
     media(user);
   }, []);
   const onSubmit = async () => {
+    setLoading(true);
     let [firstName, lastName] = name?.split(' ') ?? [];
     let userData = {
       firstName: firstName,
@@ -134,9 +137,6 @@ export default function EditProfile({ navigation }: Props) {
     const a = file?.assets[0] ?? null;
     if (avatar && a) {
       const { fileId, previewUrl } = await uploadImageDirectFromRN(
-
-        STORE_DOMAIN,
-        STORE_ADMIN_API_KEY,
         {
           uri: a.uri,
           name: a.fileName ?? 'upload.jpg',
@@ -150,10 +150,6 @@ export default function EditProfile({ navigation }: Props) {
       ], user?.id ?? '');
       console.log('response', response);
     }
-
-
-
-
     // optional: persist previewUrl/mediaId where you need them
     // return;
     try {
@@ -166,10 +162,12 @@ export default function EditProfile({ navigation }: Props) {
             dispatch(setUser(result));
           }
         });
-
+        setLoading(false);
         showToastSuccess('Profile updated successfully.');
       }
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       showToastError(
         error instanceof Error ? error.message : 'An error occurred.',
       );
@@ -229,6 +227,7 @@ export default function EditProfile({ navigation }: Props) {
 
         <TouchableOpacity
           activeOpacity={0.9}
+          disabled={loading}
           style={styles.ctaBtn}
           onPress={() => {
             onSubmit();
@@ -241,13 +240,17 @@ export default function EditProfile({ navigation }: Props) {
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Save Details</Text>
-            <FontAwesome5
-              iconStyle="solid"
-              name="sign-in-alt"
-              size={18}
-              color={COLORS.white}
-              style={{ marginLeft: 8 }}
-            />
+            {loading ? (
+              <ActivityIndicator style={{ marginLeft: 8 }} size="small" color={COLORS.white} />
+            ) : (
+              <FontAwesome5
+                iconStyle="solid"
+                name="sign-in-alt"
+                size={18}
+                color={COLORS.white}
+                style={{ marginLeft: 8 }}
+              />
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>

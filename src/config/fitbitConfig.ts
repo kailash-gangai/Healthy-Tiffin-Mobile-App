@@ -7,7 +7,7 @@ export const FITBIT_CONFIG: AuthConfiguration = {
     revocationEndpoint: 'https://api.fitbit.com/oauth2/revoke',
   },
   clientId: '23QMBM',
-  clientSecret: 'db5d7e9e1330730200416b55fe44940b',
+  clientSecret: '6d74d7ae2fb54a067e248cea2ea1185e',
   redirectUrl: 'healthytiffin://oauth',
   usePKCE: true,
   scopes: ['activity', 'sleep', 'heartrate', 'weight', 'nutrition', 'profile'],

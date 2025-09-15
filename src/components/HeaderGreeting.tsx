@@ -59,10 +59,10 @@ export default function HeaderGreeting({ name }: { name: string }) {
 const s = StyleSheet.create({
       orange: {
             backgroundColor: '#F9B233',
-            height: 160,
+            height: 130,
             paddingHorizontal: 16,
             justifyContent: 'center',
-            paddingTop: SPACING * 2,
+            paddingTop: SPACING,
       },
       row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
       left: { flexDirection: 'row', alignItems: 'center', gap: 10 },

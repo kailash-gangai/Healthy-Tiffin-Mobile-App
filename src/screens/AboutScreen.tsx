@@ -16,7 +16,7 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
     const user = useSelector((state: RootState) => state.user);
     console.log('user', user);
     const handlePress = () => {
- 
+
         if (!user || user.customerToken === null || user.customerToken === '') {
 
             navigation.navigate("SignIn");
@@ -25,7 +25,7 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
         }
     }
     return (
-        <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.container}>
             {/* 1. Header Image */}
             <Image
                 source={require("../assets/banners/chana.jpg")} // replace with your top image
@@ -45,29 +45,29 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.featuresContainer}>
                 <View style={styles.featureRow}>
                     <FeatureItem
-                        icon={require("../assets/LOGO.png")}
+                        icon={require("../assets/icons/fresh.png")}
                         title="Made Fresh Daily"
                     />
                     <FeatureItem
-                        icon={require("../assets/LOGO.png")}
+                        icon={require("../assets/icons/veg-non.png")}
                         title="Veg, Non-Veg, Vegan, Jain"
                     />
                     <FeatureItem
-                        icon={require("../assets/LOGO.png")}
+                        icon={require("../assets/icons/delivery.png")}
                         title="Delivered Daily"
                     />
                 </View>
                 <View style={styles.featureRow}>
                     <FeatureItem
-                        icon={require("../assets/LOGO.png")}
+                        icon={require("../assets/icons/zero-plastic.png")}
                         title="Zero Plastic"
                     />
                     <FeatureItem
-                        icon={require("../assets/LOGO.png")}
+                        icon={require("../assets/icons/ayurveda.png")}
                         title="Ayurveda"
                     />
                     <FeatureItem
-                        icon={require("../assets/LOGO.png")}
+                        icon={require("../assets/icons/cal.png")}
                         title="Track Fitness Goals"
                     />
                 </View>
@@ -93,7 +93,7 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
             >
                 <Text style={styles.buttonText}>TRY IT TODAY</Text>
             </TouchableOpacity>
-        </SafeAreaView>
+        </ScrollView>
     );
 };
 
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     },
     headerImage: {
         width: "100%",
-        height: 220,
+        height: 350,
     },
     greenSection: {
         backgroundColor: "#006400",
@@ -143,9 +143,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 5,
     },
     featureIcon: {
-        width: 60,
-        height: 60,
         marginBottom: 8,
+        height: 92,
+        width: 92,
     },
     featureText: {
         textAlign: "center",
@@ -154,12 +154,11 @@ const styles = StyleSheet.create({
     },
     banner: {
         position: "relative",
-        height: 180,
         marginVertical: 20,
     },
     bannerImage: {
         width: "100%",
-        height: "100%",
+        height: 146,
         borderRadius: 10,
     },
     bannerOverlay: {

@@ -159,7 +159,7 @@ export default function SleepTrackerScreen() {
                               <SleepSVG />
                               {/* Cards */}
                               <View style={styles.rowCards}>
-                                    <Card title="Bed Time" value={fmt(bed)} onPress={() => openModal("bed")} icon={require("../../assets/icons/moon.png")} />
+                                    <Card title="Bed Time" value={fmt(bed)} onPress={() => openModal("bed")} icon={require("../../assets/icons/moon1.png")} />
                                     <Card title="Wake Time" value={fmt(wake)} onPress={() => openModal("wake")} icon={require("../../assets/icons/sun.png")} />
                               </View>
                         </View>

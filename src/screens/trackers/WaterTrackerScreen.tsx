@@ -106,9 +106,9 @@ export default function WaterTrackerScreen() {
       return (
             <SafeAreaView>
                   <AppHeader title="Water Tracker" onBack={() => navigation.goBack()} />
-                  <View style={{ marginVertical: 16 }}>
+                  {/* <View style={{ marginVertical: 16 }}>
                         <DurationTabs days={["Today", "Weekly", "Monthly", "Yearly"]} onChange={setActiveTab} />
-                  </View>
+                  </View> */}
                   <View style={styles.container}>
                         {/* Tabs */}
                         <View style={styles.imageContainer}>

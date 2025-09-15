@@ -5,8 +5,9 @@ import { Use } from 'react-native-svg';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../screens/navigation/types';
 import { useNavigation } from '@react-navigation/native';
-
-const DIAMETER = 72;
+import { Dimensions } from 'react-native';
+const width = Dimensions.get('window').width;
+const DIAMETER = width / 5 - 10;
 const items =
       [
             { value: '70', unit: 'kg', type: 'Weight', bgColor: '#DDE3F6', color: '#3B49DF', navigate: 'WeightTracker' },
@@ -17,9 +18,7 @@ const items =
       ];
 export default function StatsCard() {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
       return (
-
             < View style={s.cardWrap} >
                   <View style={s.card}>
                         <View style={s.rowStats}>
@@ -46,7 +45,7 @@ const s = StyleSheet.create({
       cardWrap: {
             backgroundColor: COLORS.white,
             alignItems: 'center',
-            marginTop: -16,
+            marginTop: -20,
             borderTopLeftRadius: RADIUS,
             borderTopRightRadius: RADIUS,
 
@@ -55,15 +54,15 @@ const s = StyleSheet.create({
             marginVertical: 26,
             backgroundColor: COLORS.white,
             borderRadius: 20,
-            paddingVertical: 14,
+            paddingVertical: 12,
             paddingHorizontal: 8,
             ...SHADOW,
       },
       rowStats: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, justifyContent: 'space-around' },
-      pill: { alignItems: 'center', justifyContent: 'center', padding: 4 },
+      pill: { alignItems: 'center', justifyContent: 'center', },
       value: { fontWeight: '800', fontSize: 16, },
-      unit: { fontSize: 10 },
-      label: { fontSize: 12, color: '#000', fontWeight: '800' },
+      unit: { fontSize: 12 },
+      label: { fontSize: 14, color: '#000', fontWeight: '800' },
       circle: {
             width: DIAMETER,
             height: DIAMETER,

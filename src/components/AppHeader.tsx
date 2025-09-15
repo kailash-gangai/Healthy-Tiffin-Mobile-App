@@ -15,17 +15,9 @@ type Props = {
 };
 
 export default function AppHeader({ title, onBack, right }: Props) {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const user = useSelector((state: RootState) => state.user);
-  // useEffect(() => {
-  //   if (!user || !user.name) {
-  //     navigation.navigate('SignIn');
-  //   }
-  // }, [user, navigation]);
+
   return (
     <View style={s.topbar}>
-      {/* Back button */}
       <TouchableOpacity
         onPress={onBack}
         style={s.back}
@@ -35,13 +27,17 @@ export default function AppHeader({ title, onBack, right }: Props) {
           iconStyle="solid"
           name="chevron-left"
           size={18}
-          color={COLORS.white}
+          color='#fff'
         />
       </TouchableOpacity>
 
-      {/* Title */}
-      <Text style={s.title}>{title}</Text>
+      <View style={s.titleWrapper}>
+        <Text style={s.title}>{title}</Text>
+      </View>
+      {/* optional right side to balance spacing */}
+      <View style={s.right}>{right}</View>
     </View>
+
   );
 }
 
@@ -51,7 +47,7 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.green,
     flexDirection: 'row',
     alignItems: 'center',
-    // justifyContent: 'space-between',
+    justifyContent: 'space-between',
     paddingHorizontal: 12,
   },
   back: {
@@ -61,20 +57,22 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: COLORS.overlay,
     borderRadius: 14,
-    padding: 4,
     opacity: 0.6,
   },
-  title: {
+  titleWrapper: {
     flex: 1,
-    textAlign: 'center',
+    marginLeft: 16,
+  },
+  title: {
     fontWeight: '800',
     fontSize: 22,
     letterSpacing: 2,
     color: COLORS.white,
   },
   right: {
-    width: 28,
+    width: 28, // keeps center balance if no right element
     alignItems: 'center',
     justifyContent: 'center',
   },
 });
+

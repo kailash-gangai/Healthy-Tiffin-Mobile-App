@@ -16,8 +16,8 @@ export default function App() {
   /* Permission options */
 
   useEffect(() => {
-    const i = initHealth();
-    console.log(i, 'init');
+    // const i = initHealth();
+    // console.log(i, 'init');
   }, []);
 
   return (

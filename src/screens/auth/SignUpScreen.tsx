@@ -11,6 +11,7 @@ import {
     GestureResponderEvent,
     KeyboardAvoidingView,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -52,6 +53,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState<string>('');
     const [pass, setPass] = useState<string>('');
     const [errors, setErrors] = useState<any>({});
+    const [isloading, setIsloading] = useState(false);
     const validateEmail = (email: string) => {
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         return emailRegex.test(email);
@@ -66,21 +68,26 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         return firstName && lastName; // Ensure both first and last name are present
     };
     const onSubmit = useCallback(async (_: GestureResponderEvent) => {
+        setIsloading(true);
         setErrors({});
         if (!name || !email || !pass) {
             setErrors({ name: name ? '' : 'Is required', email: email ? '' : 'Is required', pass: pass ? '' : 'Is required' });
+            setIsloading(false);
             return;
         }
         if (!validateEmail(email)) {
             setErrors({ email: 'Please enter a valid email address.' });
+            setIsloading(false);
             return;
         }
         if (!validateName(name)) {
             setErrors({ name: 'Please enter your full name.' });
+            setIsloading(false);
             return;
         }
         if (!validatePassword(pass)) {
             setErrors({ pass: 'Password must be at least 6 characters.' });
+            setIsloading(false);
             return;
         }
 
@@ -94,7 +101,10 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         };
         try {
             const response = await customerUpsert(userData);
-            console.log('response', response);
+            if (response?.customerCreate?.customerUserErrors) {
+                setIsloading(false);
+                Alert.alert("Error", response.customerCreate.customerUserErrors[0]?.message);
+            }
             if (response?.customerCreate?.customer?.id) {
                 const login = await loginCustomer(userData);
                 if (login?.customerAccessTokenCreate?.customerAccessToken?.accessToken) {
@@ -108,13 +118,16 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                             dispatch(setUser(result));
                         }
                     });
+                    setIsloading(false);
                     showToastSuccess('Customer registration successful.');
                     // setTimeout(() => {
                     navigation.navigate('SelectPreferences');
                     // }, 3000);
                 }
+                setIsloading(false);
             }
         } catch (error) {
+            setIsloading(false);
             showToastError(error instanceof Error ? error.message : "An error occurred.");
         }
     }, [name, email, pass]);
@@ -293,7 +306,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                     )}
 
                     {/* CTA */}
-                    <TouchableOpacity activeOpacity={0.9} style={styles.ctaBtn} onPress={onSubmit}>
+                    <TouchableOpacity disabled={isloading} activeOpacity={0.9} style={styles.ctaBtn} onPress={onSubmit}>
                         <LinearGradient
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
@@ -301,7 +314,11 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                             style={styles.ctaGradient}
                         >
                             <Text style={styles.ctaText}>Sign Up</Text>
-                            <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                            {isloading ? (
+                                <ActivityIndicator size="small" style={{ marginLeft: 8 }} color={COLORS.green} />
+                            ) : (
+                                <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                            )}
                         </LinearGradient>
                     </TouchableOpacity>
 
