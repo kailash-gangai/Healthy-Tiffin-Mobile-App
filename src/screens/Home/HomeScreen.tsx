@@ -356,8 +356,8 @@ const HomeScreen: React.FC = () => {
             ]}
           />
           <CTAButton
-            label="Add to cart"
-            isDisabled={!selectedItemsToAddOnCart?.length}
+            label="Add to cart "
+            isDisabled={mealCost + addonCost < 29}
             iconName="shopping-bag"
             onPress={() => dispatch(addItems(selectedItemsToAddOnCart as any))}
             toast={{

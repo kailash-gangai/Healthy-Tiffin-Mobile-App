@@ -1,6 +1,10 @@
 import { callShopifyApiWithVariable } from '../ShopifyConfig';
 
-export const createCart = async (input: any[]) => {
+export const createCart = async (
+  input: any[],
+  customerAccessToken: string,
+  email: string,
+) => {
   const mutation = `
       mutation cartCreate($input: CartInput!) {
         cartCreate(input: $input) {
@@ -24,6 +28,10 @@ export const createCart = async (input: any[]) => {
         { key: 'DayCount', value: uniqueDays.size.toString() },
         { key: 'Discount', value: '10' },
       ],
+      buyerIdentity: {
+        customerAccessToken: customerAccessToken,
+        email: email,
+      },
       lines: input.map(item => ({
         quantity: item.qty,
         merchandiseId: item.variantId,

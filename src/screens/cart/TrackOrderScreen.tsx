@@ -50,12 +50,17 @@ const STEPS = [
 
 export default function TrackOrderScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
+  const { customerToken, email } = useAppSelector(state => state.user);
   const shopifyCheckout = useShopifyCheckoutSheet();
 
   const dispatch = useAppDispatch();
   const cart = async () => {
     try {
-      const createdCart = await createCart(lines);
+      const createdCart = await createCart(
+        lines,
+        customerToken as string,
+        email as string,
+      );
       console.log(createdCart, 'cart');
       shopifyCheckout.present(createdCart.checkoutUrl);
 
@@ -160,6 +165,7 @@ export default function TrackOrderScreen({ navigation }: any) {
                 color: C.black,
                 fontSize: 20,
               }}
+              onPress={() => navigation.navigate('Referal')}
             >
               Invite friend, get $10 off
             </Text>

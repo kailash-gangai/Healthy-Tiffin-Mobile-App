@@ -8,6 +8,7 @@ import { ShopifyCheckoutSheetProvider } from '@shopify/checkout-sheet-kit';
 import Toast from 'react-native-toast-message';
 import { PersistGate } from 'redux-persist/integration/react';
 import SkeletonLoading from './src/components/SkeletonLoading';
+import { initHealth } from './src/health/healthkit';
 
 export default function App() {
   const isDarkMode = useColorScheme() === 'dark';
