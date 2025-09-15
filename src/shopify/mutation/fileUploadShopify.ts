@@ -1,7 +1,4 @@
-// shopifyUploadRN.ts
-// RN 0.70+ / TypeScript. No server needed. Uses fetch + FormData.
-
-const API_VERSION = '2025-07';
+import { STORE_ADMIN_API_KEY, STORE_ADMIN_API_URL } from '../ShopifyConfig';
 
 type StagedTarget = {
   url: string;
@@ -9,24 +6,17 @@ type StagedTarget = {
   parameters: { name: string; value: string }[];
 };
 
-async function adminGraphQL<T>(
-  shop: string, // e.g. "your-store.myshopify.com"
-  adminToken: string, // Admin API access token
-  query: string,
-  variables: any,
-): Promise<T> {
-  const res = await fetch(
-    `https://${shop}/admin/api/${API_VERSION}/graphql.json`,
-    {
-      method: 'POST',
-      headers: {
-        'X-Shopify-Access-Token': adminToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, variables }),
+async function adminGraphQL<T>(query: string, variables: any): Promise<T> {
+  const res = await fetch(STORE_ADMIN_API_URL, {
+    method: 'POST',
+    headers: {
+      'X-Shopify-Access-Token': STORE_ADMIN_API_KEY,
+      'Content-Type': 'application/json',
     },
-  );
+    body: JSON.stringify({ query, variables }),
+  });
   const json = await res.json();
+  console.log('res', json);
   if (!res.ok || json.errors)
     throw new Error(JSON.stringify(json.errors ?? json));
   return json.data as T;
@@ -41,8 +31,6 @@ mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
 }`;
 
 async function createStagedTarget(
-  shop: string,
-  adminToken: string,
   filename: string,
   mimeType: string,
 ): Promise<StagedTarget> {
@@ -58,7 +46,7 @@ async function createStagedTarget(
   };
   const data = await adminGraphQL<{
     stagedUploadsCreate: { stagedTargets: StagedTarget[]; userErrors: any[] };
-  }>(shop, adminToken, STAGED_UPLOADS_MUT, variables);
+  }>(STAGED_UPLOADS_MUT, variables);
 
   const err = data.stagedUploadsCreate.userErrors?.[0];
   if (err) throw new Error(err.message);
@@ -90,28 +78,57 @@ const FILE_CREATE_MUT = `
 mutation fileCreate($files: [FileCreateInput!]!) {
   fileCreate(files: $files) {
     files { id fileStatus preview { image { url } } }
+    userErrors { field message }S
+  }
+}`;
+
+const FILE_UPDATE_MUT = `
+mutation fileUpdate($files: [FileUpdateInput!]!) {
+  fileUpdate(files: $files) {
+    files { id fileStatus preview { image { url } } }
     userErrors { field message }
   }
 }`;
 
 async function fileCreate(
-  shop: string,
-  adminToken: string,
   resourceUrl: string,
   alt: string,
+  mediaId: string,
 ): Promise<string> {
   const variables = {
-    files: [{ alt, contentType: 'IMAGE', originalSource: resourceUrl }],
+    files: [
+      {
+        alt,
+        ...(!mediaId?.includes('gid://shopify/')
+          ? { contentType: 'IMAGE' }
+          : {}),
+        originalSource: resourceUrl,
+        ...(mediaId?.includes('gid://shopify/') ? { id: mediaId } : {}),
+      },
+    ],
   };
-  const data = await adminGraphQL<{
-    fileCreate: { files: { id: string }[]; userErrors: any[] };
-  }>(shop, adminToken, FILE_CREATE_MUT, variables);
-
-  const err = data.fileCreate.userErrors?.[0];
-  if (err) throw new Error(err.message);
-  const id = data.fileCreate.files?.[0]?.id;
-  if (!id) throw new Error('fileCreate returned no id');
-  return id;
+  console.log('variables', variables);
+  if (mediaId) {
+    const data = await adminGraphQL<{
+      fileUpdate: { files: { id: string }[]; userErrors: any[] };
+    }>(FILE_UPDATE_MUT, variables);
+    console.log('data', data);
+    const err = data.fileUpdate.userErrors?.[0];
+    if (err) throw new Error(err.message);
+    const id = data.fileUpdate.files?.[0]?.id;
+    if (!id) throw new Error('fileCreate returned no id');
+    return id;
+  } else {
+    const data = await adminGraphQL<{
+      fileCreate: { files: { id: string }[]; userErrors: any[] };
+    }>(FILE_CREATE_MUT, variables);
+    console.log('data', data);
+    const err = data.fileCreate.userErrors?.[0];
+    if (err) throw new Error(err.message);
+    const id = data.fileCreate.files?.[0]?.id;
+    if (!id) throw new Error('fileCreate returned no id');
+    return id;
+  }
 }
 
 const GET_FILE_QUERY = `
@@ -122,18 +139,13 @@ query GetFilePreviews($ids: [ID!]!) {
 }`;
 
 async function pollFileReady(
-  shop: string,
-  adminToken: string,
   fileId: string,
   { retries = 10, intervalMs = 3000 } = {},
 ): Promise<string> {
   while (retries-- > 0) {
-    const data = await adminGraphQL<{ nodes: any[] }>(
-      shop,
-      adminToken,
-      GET_FILE_QUERY,
-      { ids: [fileId] },
-    );
+    const data = await adminGraphQL<{ nodes: any[] }>(GET_FILE_QUERY, {
+      ids: [fileId],
+    });
     const node = data.nodes?.[0];
     const status = node?.fileStatus;
     const url = node?.preview?.image?.url;
@@ -143,25 +155,24 @@ async function pollFileReady(
   throw new Error('File not READY after polling');
 }
 
-/**
- * Upload an image file (uri/name/type from image picker) directly to Shopify.
- * Returns { fileId, previewUrl }.
- */
 export async function uploadImageDirectFromRN(
-  shop: string,
-  adminToken: string,
-  file: { uri: string; name?: string; type?: string },
+  file: {
+    uri: string;
+    name?: string;
+    type?: string;
+  },
+  mediaId?: string,
 ) {
   const name = file.name ?? `image-${Date.now()}.jpg`;
   const type = file.type ?? 'image/jpeg';
-
-  const target = await createStagedTarget(shop, adminToken, name, type);
+  const target = await createStagedTarget(name, type);
   const resourceUrl = await postToStagedUrl(target, {
     uri: file.uri,
     name,
     type,
   });
-  const fileId = await fileCreate(shop, adminToken, resourceUrl, name);
-  const previewUrl = await pollFileReady(shop, adminToken, fileId);
+
+  const fileId = await fileCreate(resourceUrl, name, mediaId ?? '');
+  const previewUrl = await pollFileReady(fileId);
   return { fileId, previewUrl };
 }

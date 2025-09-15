@@ -1,5 +1,6 @@
 import * as Keychain from 'react-native-keychain';
 import { getCustomerDetails } from '../../shopify/query/CustomerQuery';
+import { previewImage } from '../../shopify/mutation/FileUpload';
 
 // Define the service for storing customer data
 const SERVICE = 'customer.auth';
@@ -77,7 +78,7 @@ export async function checkCustomerTokens() {
       customerToken: customerToken || '',
       tokenExpire: tokenExpire || '',
       phone: customerDetails.customer.phone || '',
-      avatar: customerDetails.customer?.metafields[0]?.value || '',
+      avatar: customerDetails.customer?.metafield?.value || '',
     };
     return details;
   } catch (error) {

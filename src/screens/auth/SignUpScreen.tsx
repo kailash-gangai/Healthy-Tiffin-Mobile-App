@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
     Platform,
     GestureResponderEvent,
     KeyboardAvoidingView,
+    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -25,6 +26,10 @@ import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/slice/userSlice';
 import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import auth from "@react-native-firebase/auth";
+import { GoogleAuthProvider, getAuth, signInWithCredential } from '@react-native-firebase/auth';
+
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
@@ -33,6 +38,7 @@ type Props = {
     navigation: AboutScreenNavigationProp;
 };
 const SignUpScreen: React.FC<Props> = ({ navigation }) => {
+
     const dispatch = useDispatch();
     const insets = useSafeAreaInsets();
     const kbOffset = Platform.select({
@@ -110,6 +116,101 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         }
     }, [name, email, pass]);
 
+    useEffect(() => {
+        GoogleSignin.configure({
+            offlineAccess: true,
+            webClientId: '541872006500-so95kn3c1v5hi6a110aqm5d0867b8hm7.apps.googleusercontent.com',
+        });
+    }, []);
+
+    async function onGoogleButtonPress() {
+
+        try {
+            await GoogleSignin.hasPlayServices();
+            await GoogleSignin.signOut();
+
+            await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+            // Obtain the user's ID token
+            const data: any = await GoogleSignin.signIn();
+
+            // create a new firebase credential with the token
+            const googleCredential = auth.GoogleAuthProvider.credential(
+                data?.data.idToken,
+            );
+
+            console.log('credential: ', googleCredential);
+            // login with credential
+            await auth().signInWithCredential(googleCredential);
+
+            //  Handle the linked account as needed in your app
+            return;
+        } catch (e) {
+            console.log('e: ', e);
+        }
+    }
+    const GoogleSingUp = async () => {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        // Get the users ID token
+        const signInResult = await GoogleSignin.signIn();
+        console.log('signInResult', signInResult);
+        // Try the new style of google-sign in result, from v13+ of that module
+        let idToken = signInResult.data?.idToken;
+        if (!idToken) {
+            idToken = signInResult.idToken;
+        }
+        if (!idToken) {
+            throw new Error('No ID token found');
+        }
+
+        // Create a Google credential with the token
+        const googleCredential = GoogleAuthProvider.credential(signInResult.data.idToken);
+        console.log('googleCredential', googleCredential);
+        // Sign-in the user with the credential
+        return signInWithCredential(getAuth(), googleCredential);
+        // try {
+        //     await GoogleSignin.hasPlayServices();
+        //     const userInfo = await GoogleSignin.signIn();
+        //     // Send userInfo.idToken to your backend for verification
+        //     console.log(userInfo);
+
+        //     const customerData = {
+        //         email: userInfo?.data.user.email,
+        //         first_name: userInfo?.data.user.givenName,
+        //         last_name: userInfo?.data.user.familyName,
+        //     };
+        //     var Multipassify = require('multipassify');
+
+        //     const multipass = new Multipassify('2456b37a3afcb621ee972127be9c6024');
+        //     const mpToken = multipass.encode({
+        //         email: userInfo?.data.user.email,
+        //         first_name: userInfo?.data.user.givenName,
+        //         last_name: userInfo?.data.user.familyName,
+        //         return_to: 'https://healthytiffin.com',
+        //     });
+        //     const query = `
+        //         mutation($token: String!) {
+        //           customerAccessTokenCreateWithMultipass(multipassToken: $token) {
+        //             customerAccessToken { accessToken expiresAt }
+        //             customerUserErrors { field message code }
+        //           }
+        //         }`;
+
+        //     const res = await fetch(STORE_API_URL!, {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'X-Shopify-Storefront-Access-Token': STOREFRONT_PUBLIC_TOKEN!,
+        //         },
+        //         body: JSON.stringify({ query, variables: { token: mpToken } }),
+        //     });
+
+        //     const json = await res.json();
+        //     console.log('customerData', customerData);
+
+        // } catch (error) {
+        //     console.error(error);
+        // }
+    };
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
@@ -216,7 +317,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         <CircleBtn
                             bg="#EA4335"
                             icon={<Fontisto name="google" size={18} color={COLORS.white} />}
-                            onPress={() => { }}
+                            onPress={() => {
+                                onGoogleButtonPress().then(() => console.log('Signed in with Google!'))
+                            }}
                         />
                         <CircleBtn
                             bg="#000000"

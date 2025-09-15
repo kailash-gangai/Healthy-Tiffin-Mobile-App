@@ -21,20 +21,14 @@ import {
   ImageLibraryOptions,
   CameraOptions,
 } from 'react-native-image-picker';
-import { readFile } from 'react-native-fs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { getCustomerDetails } from '../../shopify/query/CustomerQuery';
-import { customerUpsert } from '../../shopify/mutation/CustomerAuth';
+import { customerMetafieldUpdate, customerUpsert } from '../../shopify/mutation/CustomerAuth';
 import { setUser } from '../../store/slice/userSlice';
 import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
-import {
-  createFile,
-  previewImage,
-  stagedUploadsCreate,
-} from '../../shopify/mutation/FileUpload';
+
 import {
   STORE_ADMIN_API_KEY,
   STORE_ADMIN_API_URL,
@@ -45,6 +39,7 @@ import {
   showToastSuccess,
 } from '../../config/ShowToastMessages';
 import { uploadImageDirectFromRN } from '../../shopify/mutation/fileUploadShopify';
+import { previewImage } from '../../shopify/mutation/FileUpload';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -52,28 +47,6 @@ type Props = {
   navigation: AboutScreenNavigationProp;
 };
 
-async function pollFileReadyRN(
-  mediaId: string,
-  { retries = 10, intervalMs = 3000 } = {},
-): Promise<string> {
-  while (retries-- > 0) {
-    const res = await previewImage(mediaId);
-    // tolerate different shapes
-    const node =
-      res?.nodes?.[0] ??
-      res?.data?.nodes?.[0] ??
-      res?.file ??
-      res?.data?.file ??
-      null;
-
-    const status = node?.fileStatus;
-    const url = node?.preview?.image?.url;
-    if (status === 'READY' && url) return url;
-
-    await new Promise(r => setTimeout(r, intervalMs));
-  }
-  throw new Error('File not READY after polling');
-}
 
 export default function EditProfile({ navigation }: Props) {
   const dispatch = useDispatch();
@@ -143,8 +116,13 @@ export default function EditProfile({ navigation }: Props) {
       ]);
     }
   };
-
-  console.log(file, 'file');
+  const media = async (user: any) => {
+    const medias = await previewImage(user.avatar);
+    setAvatar(medias.nodes[0]?.preview.image.url);
+  };
+  useEffect(() => {
+    media(user);
+  }, []);
   const onSubmit = async () => {
     let [firstName, lastName] = name?.split(' ') ?? [];
     let userData = {
@@ -153,9 +131,10 @@ export default function EditProfile({ navigation }: Props) {
       email: email,
       phone: phone,
     };
-    const a = file.assets[0];
-    if (avatar) {
+    const a = file?.assets[0] ?? null;
+    if (avatar && a) {
       const { fileId, previewUrl } = await uploadImageDirectFromRN(
+
         STORE_DOMAIN,
         STORE_ADMIN_API_KEY,
         {
@@ -163,14 +142,23 @@ export default function EditProfile({ navigation }: Props) {
           name: a.fileName ?? 'upload.jpg',
           type: a.type ?? 'image/jpeg',
         },
+        user.avatar ?? '',
       );
       console.log('uploaded:', fileId, previewUrl);
+      const response = await customerMetafieldUpdate([
+        { key: 'image', value: fileId, type: 'file_reference' },
+      ], user?.id ?? '');
+      console.log('response', response);
     }
+
+
+
 
     // optional: persist previewUrl/mediaId where you need them
     // return;
     try {
       const res = await customerUpsert(userData, user?.customerToken || '');
+      // console.log('res', res);
       if (res?.customerUpdate?.customer?.id) {
         let customerdetails = checkCustomerTokens();
         customerdetails.then(result => {
