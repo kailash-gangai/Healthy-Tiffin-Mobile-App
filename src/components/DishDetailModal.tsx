@@ -10,6 +10,9 @@ import {
   Pressable,
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { useAppDispatch } from '../store/hooks';
+import { addItem } from '../store/slice/cartSlice';
+import Toast from 'react-native-toast-message';
 
 type Dish = {
   title: string;
@@ -47,6 +50,7 @@ export default function DishDetailModal({
   liked?: boolean;
   dish: Dish;
 }) {
+  const dispatch = useAppDispatch();
   return (
     <Modal
       visible={visible}
@@ -111,6 +115,30 @@ export default function DishDetailModal({
             <Text style={s.kcalUnit}> CALORIES</Text>
           </Text>
 
+          <TouchableOpacity
+            activeOpacity={0.6}
+            onPress={() => {
+              dispatch(addItem(dish as any));
+              Toast.show({
+                text1: 'Added',
+                text2: 'item added to the cart',
+                visibilityTime: 2000,
+                position: 'bottom',
+                autoHide: true,
+              });
+            }}
+            style={{
+              alignSelf: 'flex-end',
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              backgroundColor: '#000',
+              borderRadius: 50,
+            }}
+          >
+            <Text style={{ color: '#ffffffff', fontWeight: '700' }}>
+              Add to cart
+            </Text>
+          </TouchableOpacity>
           {/* tags */}
           <View
             style={{
@@ -207,7 +235,9 @@ const s = StyleSheet.create({
     paddingRight: 10,
   },
 
-  kcal: { marginTop: 8 },
+  kcal: {
+    marginTop: 8,
+  },
   kcalNum: { color: COLORS.green, fontWeight: '800', fontSize: 20 },
   kcalUnit: {
     color: COLORS.sub,
