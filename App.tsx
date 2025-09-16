@@ -9,6 +9,11 @@ import Toast from 'react-native-toast-message';
 import { PersistGate } from 'redux-persist/integration/react';
 import SkeletonLoading from './src/components/SkeletonLoading';
 import { initHealth } from './src/health/healthkit';
+import {
+  clearAndRescheduleAll,
+  debugScheduled,
+  showHealthyTiffinNow,
+} from './src/utils/notification';
 
 export default function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -17,6 +22,11 @@ export default function App() {
   /* Permission options */
 
   useEffect(() => {
+    console.log('yo fg fdg');
+    clearAndRescheduleAll();
+    // showHealthyTiffinNow();
+    debugScheduled();
+    // openExactAlarmSettings();s
     // const i = initHealth();
     // console.log(i, 'init');
   }, []);
