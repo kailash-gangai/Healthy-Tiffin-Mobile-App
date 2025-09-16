@@ -10,7 +10,9 @@ import {
 } from '../store/Keystore/fitbitTokenStore';
 
 export async function connectFitbit(): Promise<FitbitTokens> {
+  console.log('connectFitbit', FITBIT_CONFIG);
   const res = await authorize(FITBIT_CONFIG);
+  console.log('connectFitbit res', res);
   await saveFitbitTokens(res);
   return res;
 }

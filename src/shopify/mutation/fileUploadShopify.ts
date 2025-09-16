@@ -78,7 +78,7 @@ const FILE_CREATE_MUT = `
 mutation fileCreate($files: [FileCreateInput!]!) {
   fileCreate(files: $files) {
     files { id fileStatus preview { image { url } } }
-    userErrors { field message }S
+    userErrors { field message }
   }
 }`;
 

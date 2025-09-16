@@ -12,6 +12,7 @@ import { clearCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { RootState } from '../../store';
 import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
 import { previewImage } from '../../shopify/mutation/FileUpload';
+import { disconnectFitbit, getValidTokens } from '../../config/fitbitService';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,6 +25,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
       const [image, setImage] = useState('');
       const [gender, setGender] = useState<string>('');
       const [age, setAge] = useState<string>('');
+      const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
       const Row = ({
             icon, label, danger, onPress,
       }: { icon: React.ReactNode; label: string; danger?: boolean; onPress?: () => void }) => (
@@ -42,11 +44,21 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
             const medias = await previewImage(user.avatar);
             setImage(medias.nodes[0]?.preview.image.url);
       }; s
+      const getAccessTokenHealthKit = async () => {
+            const t = await getValidTokens();
+            if (t) {
+                  setIsHealthKitConnected(true);
+            } else {
+                  setIsHealthKitConnected(false);
+            }
+      }
 
       useEffect(() => {
             fetchdata('gender').then(res => setGender(res));
             fetchdata('age').then(res => setAge(res));
+
             media(user);
+            getAccessTokenHealthKit();
       }, []);
 
       const Badge = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
@@ -60,6 +72,14 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
             dispatch(clearUser());
             clearCustomerTokens();
             navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] });
+      };
+      const DisconnectHealthKit = async () => {
+            const t = await getValidTokens();
+            if (t) {
+                  await disconnectFitbit(t.accessToken);
+            }
+            setIsHealthKitConnected(false);
+            navigation.navigate('ConnectDevice');
       };
       return (
             <View style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -117,6 +137,16 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                                                 navigation.navigate('ChangePassword');
                                           }}
                                     />
+
+                                    <Row
+                                          icon={<FontAwesome5 iconStyle="solid" {...isHealthKitConnected ? { name: 'link' } : { name: 'unlink' }} size={24} color={COLORS.accent} />}
+                                          label={isHealthKitConnected ? "Disconnect HealthKit" : "Connect HealthKit"}
+                                          onPress={() => {
+                                                isHealthKitConnected ? DisconnectHealthKit() : navigation.navigate('ConnectDevice');
+                                          }}
+                                    />
+
+
                                     <Row
                                           icon={<FontAwesome5 iconStyle="solid" name="info" size={24} color={COLORS.accent} />}
                                           label="About"
@@ -124,6 +154,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                                                 navigation.navigate('AboutProfile');
                                           }}
                                     />
+
                                     <View style={s.divider} />
                                     <Row
                                           icon={<FontAwesome5 iconStyle="solid" name="sign-out-alt" size={24} color={COLORS.red} />}

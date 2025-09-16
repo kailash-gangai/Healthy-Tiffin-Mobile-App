@@ -52,18 +52,20 @@ export default function ConnectDevicesScreen({ navigation }: any) {
   }, []); // no nav dep → run once
 
   const onConnectFitbit = async () => {
-    try {
-      setLoading(true);
-      const t = await connectFitbit(); // OAuth + save tokens securely
-      setTokens(t);
-      if (!redirected.current) {
-        redirected.current = true;
-        navigation.reset({ index: 0, routes: [{ name: 'StepsTracker' }] });
-      }
-    } catch (e) {
-      console.warn('Fitbit connect error', e);
-      setLoading(false);
+    // try {
+    setLoading(true);
+    const t = await connectFitbit(); // OAuth + save tokens securely
+    console.log('connectFitbit res', t);
+    setTokens(t);
+    if (!redirected.current) {
+      redirected.current = true;
+      navigation.reset({ index: 0, routes: [{ name: 'StepsTracker' }] });
     }
+    // } catch (e) {
+
+    //   console.warn('Fitbit connect error', e);
+    //   setLoading(false);
+    // }
   };
 
   const SectionTitle = ({ t }: { t: string }) => <Text style={s.h2}>{t}</Text>;
