@@ -14,7 +14,7 @@ const items_old =
       [
             { value: '0', unit: 'kg', type: 'Weight', bgColor: '#DDE3F6', color: '#3B49DF', navigate: 'WeightTracker' },
             { value: '0', unit: '', type: 'Steps', bgColor: '#DDEEE2', color: '#0B5733', navigate: 'StepsTracker' },
-            { value: '8', unit: 'hrs', type: 'Sleep', bgColor: '#EDE7FB', color: '#6A4CDB', navigate: 'SleepTracker' },
+            { value: '8', unit: '', type: 'Sleep', bgColor: '#EDE7FB', color: '#6A4CDB', navigate: 'SleepTracker' },
             { value: '16', unit: 'Glasses', type: 'Water', bgColor: '#EAF3FB', color: '#0B73B3', navigate: 'WaterTracker' },
             { value: '0', unit: 'Cal', type: 'Calories', bgColor: '#FDF1D9', color: '#D27C00', navigate: 'CaloriesTracker' },
       ];
