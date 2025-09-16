@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { COLORS, SHADOW, RADIUS, SPACING } from '../ui/theme';
 import { Use } from 'react-native-svg';
@@ -6,18 +6,81 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../screens/navigation/types';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
+import { getfitBitData, getfitBitSleepgoal, getfitBitWeight, getValidTokens } from '../config/fitbitService';
+import { showToastError } from '../config/ShowToastMessages';
 const width = Dimensions.get('window').width;
 const DIAMETER = width / 5 - 10;
-const items =
+const items_old =
       [
-            { value: '70', unit: 'kg', type: 'Weight', bgColor: '#DDE3F6', color: '#3B49DF', navigate: 'WeightTracker' },
-            { value: '120', unit: '', type: 'Steps', bgColor: '#DDEEE2', color: '#0B5733', navigate: 'StepsTracker' },
-            { value: '10', unit: 'hrs', type: 'Sleep', bgColor: '#EDE7FB', color: '#6A4CDB', navigate: 'SleepTracker' },
-            { value: '8', unit: 'Glasses', type: 'Water', bgColor: '#EAF3FB', color: '#0B73B3', navigate: 'WaterTracker' },
-            { value: '60', unit: 'Cal', type: 'Calories', bgColor: '#FDF1D9', color: '#D27C00', navigate: 'CaloriesTracker' },
+            { value: '0', unit: 'kg', type: 'Weight', bgColor: '#DDE3F6', color: '#3B49DF', navigate: 'WeightTracker' },
+            { value: '0', unit: '', type: 'Steps', bgColor: '#DDEEE2', color: '#0B5733', navigate: 'StepsTracker' },
+            { value: '8', unit: 'hrs', type: 'Sleep', bgColor: '#EDE7FB', color: '#6A4CDB', navigate: 'SleepTracker' },
+            { value: '16', unit: 'Glasses', type: 'Water', bgColor: '#EAF3FB', color: '#0B73B3', navigate: 'WaterTracker' },
+            { value: '0', unit: 'Cal', type: 'Calories', bgColor: '#FDF1D9', color: '#D27C00', navigate: 'CaloriesTracker' },
       ];
+function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
+      let err: any;
+      for (let i = 0; i < tries; i++) {
+            try { return await fn(); } catch (e: any) {
+                  err = e;
+                  const retryAfter =
+                        Number(e?.response?.headers?.["retry-after"]) || 0;
+                  const wait = retryAfter ? retryAfter * 1000 : 400 * 2 ** i;
+                  if (e?.response?.status !== 429 && e?.response?.status < 500) break;
+                  await delay(wait);
+            }
+      }
+      throw err;
+}
 export default function StatsCard() {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+      const [items, setItems] = React.useState(items_old);
+      const didRun = useRef(false);
+      const lastFetchAt = useRef(0);
+
+      useEffect(() => {
+            // Guard React 18 StrictMode double invoke and add a 60s throttle.
+            if (didRun.current) return; didRun.current = true;
+            const now = Date.now();
+            if (now - lastFetchAt.current < 60_000) return;
+            lastFetchAt.current = now;
+
+            (async () => {
+                  try {
+                        const t = await withRetry(() => getValidTokens());
+                        const token = t?.accessToken as string;
+                        console.log('fitbit data chips');
+                        const [s, weight, sleep] = await Promise.all([
+                              withRetry(() => getfitBitData(token, "")),
+                              withRetry(() => getfitBitWeight(token, "")),
+                              withRetry(() => getfitBitSleepgoal(token)),
+                        ]);
+
+                        const steps = String(s?.summary?.steps ?? "");
+                        const calories = String(s?.summary?.caloriesOut ?? "");
+                        const wt = String(weight?.goal?.startWeight ?? "");
+                        const sleepMin = parseInt(sleep?.goal?.minDuration ?? "0", 10);
+                        const sleepFmt = `${Math.floor(sleepMin / 60)} H ${sleepMin % 60} M`;
+
+                        // Single state update
+                        setItems(prev =>
+                              prev.map(i => {
+                                    switch (i.type) {
+                                          case "Steps": return { ...i, value: steps };
+                                          case "Calories": return { ...i, value: calories };
+                                          case "Weight": return { ...i, value: wt };
+                                          case "Sleep": return { ...i, value: sleepFmt };
+                                          default: return i;
+                                    }
+                              })
+                        );
+                  } catch (e: any) {
+                        console.warn("fitbit data err", e?.message ?? e);
+                        showToastError(e?.message ?? e);
+                  }
+            })();
+      }, [setItems]);
       return (
             < View style={s.cardWrap} >
                   <View style={s.card}>

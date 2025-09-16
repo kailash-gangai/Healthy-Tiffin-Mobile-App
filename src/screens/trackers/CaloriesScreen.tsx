@@ -1,71 +1,97 @@
 // CaloriesScreen.tsx
-import React, { useMemo, useState } from "react";
-import {
-      View,
-      Text,
-      TextInput,
-      StyleSheet,
-      ScrollView,
-
-} from "react-native";
+import React, { useMemo, useCallback, useState, memo, useEffect } from "react";
+import { View, Text, TextInput, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
-import DayTabs from "../../components/DayTabs";
 import { SPACING } from "../../ui/theme";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
+
+type FieldProps = {
+      label: string;
+      value: string;
+      onChange: (t: string) => void;
+      autoUpdated?: boolean;
+};
+
+// define once, memoize to avoid remount
+const Field = memo(({ label, value, onChange, autoUpdated }: FieldProps) => (
+      <View style={styles.fieldWrap}>
+            <View style={styles.fieldHeader}>
+                  <Text style={styles.label}>{label}</Text>
+                  {autoUpdated ? <Text style={styles.auto}>Auto Updated</Text> : null}
+            </View>
+            <TextInput
+                  value={value}
+                  onChangeText={onChange}
+                  inputMode="numeric"
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor="#9AA2AF"
+                  style={styles.input}
+                  maxLength={5}
+                  returnKeyType="done"
+            />
+      </View>
+));
+
 export default function CaloriesScreen() {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
       const [breakfast, setBreakfast] = useState("200");
       const [lunch, setLunch] = useState("300");
       const [snack, setSnack] = useState("200");
       const [dinner, setDinner] = useState("200");
 
+      // sanitize once
+      const onlyDigits = useCallback((t: string) => t.replace(/[^0-9]/g, ""), []);
+      const onBreakfast = useCallback((t: string) => setBreakfast(onlyDigits(t)), [onlyDigits]);
+      const onLunch = useCallback((t: string) => setLunch(onlyDigits(t)), [onlyDigits]);
+      const onSnack = useCallback((t: string) => setSnack(onlyDigits(t)), [onlyDigits]);
+      const onDinner = useCallback((t: string) => setDinner(onlyDigits(t)), [onlyDigits]);
+
       const total = useMemo(() => {
-            const n = (...v: string[]) =>
-                  v.reduce((s, x) => s + (parseInt(x, 10) || 0), 0);
+            const n = (...v: string[]) => v.reduce((s, x) => s + (parseInt(x, 10) || 0), 0);
             return n(breakfast, lunch, snack, dinner);
       }, [breakfast, lunch, snack, dinner]);
-
-      const Field = ({
-            label,
-            value,
-            onChange,
-            autoUpdated,
+      function logCalories({
+            breakfast,
+            lunch,
+            snack,
+            dinner,
+            total,
       }: {
-            label: string;
-            value: string;
-            onChange: (t: string) => void;
-            autoUpdated?: boolean;
-      }) => (
-            <View style={styles.fieldWrap}>
-                  <View style={styles.fieldHeader}>
-                        <Text style={styles.label}>{label}</Text>
-                        {autoUpdated && <Text style={styles.auto}>Auto Updated</Text>}
-                  </View>
-                  <TextInput
-                        value={value}
-                        onChangeText={(t) => onChange(t.replace(/[^0-9]/g, ""))}
-                        keyboardType="number-pad"
-                        placeholder="0"
-                        placeholderTextColor="#9AA2AF"
-                        style={styles.input}
-                  />
-            </View>
-      );
-
+            breakfast: string;
+            lunch: string;
+            snack: string;
+            dinner: string;
+            total: number;
+      }) {
+            const data = {
+                  breakfast: parseInt(breakfast || "0", 10),
+                  lunch: parseInt(lunch || "0", 10),
+                  snack: parseInt(snack || "0", 10),
+                  dinner: parseInt(dinner || "0", 10),
+                  total,
+                  date: new Date().toISOString(),
+            };
+            console.log("Calories data:", data);
+      }
+      useEffect(() => {
+            logCalories({ breakfast, lunch, snack, dinner, total });
+      }, [breakfast, lunch, snack, dinner, total]);
       return (
             <SafeAreaView style={styles.container}>
                   <AppHeader title="Calories Tracker" onBack={() => navigation.goBack()} />
-
-
-                  <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-                        <Field label="Breakfast Calorie" value={breakfast} onChange={setBreakfast} />
-                        <Field label="Lunch Calorie" value={lunch} onChange={setLunch} autoUpdated />
-                        <Field label="Snack Calories" value={snack} onChange={setSnack} />
-                        <Field label="Dinner Calories" value={dinner} onChange={setDinner} autoUpdated />
-                  </ScrollView>
+                  <KeyboardAvoidingView behavior={Platform.select({ ios: "padding", android: undefined })} style={{ flex: 1 }}>
+                        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+                              <Field label="Breakfast Calories" value={breakfast} onChange={onBreakfast} />
+                              <Field label="Lunch Calories" value={lunch} onChange={onLunch} />
+                              <Field label="Snack Calories" value={snack} onChange={onSnack} />
+                              <Field label="Dinner Calories" value={dinner} onChange={onDinner} />
+                        </ScrollView>
+                  </KeyboardAvoidingView>
 
                   {/* Sticky total */}
                   <View style={styles.totalBar}>
@@ -93,9 +119,7 @@ const styles = StyleSheet.create({
             paddingHorizontal: 14,
             fontSize: 16,
             color: "#111827",
-
       },
-
       totalBar: {
             position: "absolute",
             left: 0,
