@@ -155,3 +155,23 @@ export async function setfitBitSleepgoal(
   let url = FITBIT_API_URL + `sleep/goal.json?` + payload;
   return await postDataToApi(url, accessToken);
 }
+export async function setfitBitFoodgoal(
+  accessToken: string,
+
+): Promise<number> {
+  console.log('setfitBitSleepgoal', bedtime, wakeupTime, minDuration);
+  let payload = '';
+  if (bedtime) {
+    payload += `bedtime=${bedtime}`;
+  }
+  if (wakeupTime && bedtime) {
+    payload += `&wakeupTime=${wakeupTime}`;
+  } else if (wakeupTime) {
+    payload += `wakeupTime=${wakeupTime}`;
+  }
+  if (minDuration) {
+    payload += `&minDuration=${minDuration}`;
+  }
+  let url = FITBIT_API_URL + `sleep/goal.json?` + payload;
+  return await postDataToApi(url, accessToken);
+}

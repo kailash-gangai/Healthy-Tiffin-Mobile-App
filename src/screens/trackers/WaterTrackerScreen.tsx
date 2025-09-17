@@ -23,6 +23,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { getValidTokens, getfitBitWater, getfitBitWaterLog, setfitBitWaterGole, setfitBitWaterLog } from "../../config/fitbitService";
+import { showToastError } from "../../config/ShowToastMessages";
 
 type TabKey = "today" | "weekly" | "monthly";
 
@@ -64,7 +65,9 @@ export default function WaterTrackerScreen() {
                               // setStartingDate(s?.goal?.startDate);
                               const log = await getfitBitWaterLog(t.accessToken, new Date().toISOString().slice(0, 10), 0);
                               console.log('log', log);
-                              setCount(log?.water?.length ?? 0);
+                              const waterCount = Math.floor((log?.summary?.water ?? 0) / 236);
+                              console.log('waterCount', waterCount);
+                              setCount(waterCount > 0 ? waterCount : 0);
                               if (!alive) return;
                         } catch (e: any) {
                               if (!alive) return;
@@ -101,8 +104,13 @@ export default function WaterTrackerScreen() {
 
       const updateCount = (n: number) => {
             setCount((c) => c + n);
+            if (count + n < 0) {
+                  setCount(0);
+                  showToastError("Count cannot be negative");
+                  return;
+            }
             console.log('count', count);
-            const res = setfitBitWaterLog(accessToken, new Date().toISOString().slice(0, 10), count + n);
+            const res = setfitBitWaterLog(accessToken, new Date().toISOString().slice(0, 10), n);
             console.log('res', res);
       };
 

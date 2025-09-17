@@ -69,7 +69,8 @@ const ProgressScreen: React.FC = () => {
                         const calories = String(s?.summary?.caloriesOut ?? "");
                         const sleepMin = parseInt(sleep?.goal?.minDuration ?? "0", 10);
                         const sleepFmt = `${Math.floor(sleepMin / 60)} H ${sleepMin % 60} M`;
-                        const waterCount = water?.water?.length ?? 0;
+                        const waterCount = Math.floor((water?.summary?.water ?? 0) / 236.587997);
+
                         // Single state update
                         setItems(prev =>
                               prev.map(i => {
@@ -77,7 +78,7 @@ const ProgressScreen: React.FC = () => {
                                           case "steps": return { ...i, value: steps };
                                           case "cal": return { ...i, value: calories };
                                           case "sleep": return { ...i, value: sleepFmt };
-                                          case "water": return { ...i, value: String(waterCount) + " Glasses" };
+                                          case "water": return { ...i, value: String(waterCount > 0 ? waterCount : 0) + " Glasses" };
                                           default: return i;
                                     }
                               })

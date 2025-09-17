@@ -63,7 +63,7 @@ export default function StatsCard() {
                         const wt = String(weight?.goal?.startWeight ?? "");
                         const sleepMin = parseInt(sleep?.goal?.minDuration ?? "0", 10);
                         const sleepFmt = `${Math.floor(sleepMin / 60)} H ${sleepMin % 60} M`;
-                        const waterCount = water?.water?.length ?? 0;
+                        const waterCount = Math.floor((water?.summary?.water ?? 0) / 236);
                         // Single state update
                         setItems(prev =>
                               prev.map(i => {
@@ -72,7 +72,7 @@ export default function StatsCard() {
                                           case "Calories": return { ...i, value: calories };
                                           case "Weight": return { ...i, value: wt };
                                           case "Sleep": return { ...i, value: sleepFmt };
-                                          case "Water": return { ...i, value: String(waterCount) };
+                                          case "Water": return { ...i, value: String(waterCount > 0 ? waterCount : 0) };
                                           default: return i;
                                     }
                               })
