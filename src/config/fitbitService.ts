@@ -155,23 +155,27 @@ export async function setfitBitSleepgoal(
   let url = FITBIT_API_URL + `sleep/goal.json?` + payload;
   return await postDataToApi(url, accessToken);
 }
-export async function setfitBitFoodgoal(
+export async function setfitBitFoodLog(
   accessToken: string,
-
+  foodName = 'Apple',
+  calories: number,
+  mealTypeId: number,
 ): Promise<number> {
-  console.log('setfitBitSleepgoal', bedtime, wakeupTime, minDuration);
-  let payload = '';
-  if (bedtime) {
-    payload += `bedtime=${bedtime}`;
-  }
-  if (wakeupTime && bedtime) {
-    payload += `&wakeupTime=${wakeupTime}`;
-  } else if (wakeupTime) {
-    payload += `wakeupTime=${wakeupTime}`;
-  }
-  if (minDuration) {
-    payload += `&minDuration=${minDuration}`;
-  }
-  let url = FITBIT_API_URL + `sleep/goal.json?` + payload;
+  let payload =
+    'foodName=' +
+    foodName +
+    '&unitId=304&amount=1&calories=' +
+    calories +
+    '&mealTypeId=' +
+    mealTypeId;
+  payload += '&date=' + new Date().toISOString().slice(0, 10);
+  const url = `${FITBIT_API_URL}foods/log.json?` + payload;
   return await postDataToApi(url, accessToken);
+}
+export async function getfitBitFoodLog(accessToken: string) {
+  let url =
+    FITBIT_API_URL +
+    `foods/log/date/${new Date().toISOString().slice(0, 10)}.json`;
+  console.log('getfitBitFoodLog url', url);
+  return await getDataFromApi(url, accessToken);
 }
