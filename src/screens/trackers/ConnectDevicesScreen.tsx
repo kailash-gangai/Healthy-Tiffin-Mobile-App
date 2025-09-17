@@ -15,16 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import { connectFitbit, getValidTokens } from '../../config/fitbitService';
 import { initHealth } from '../../health/healthkit';
-
-const C = {
-  green: '#0B5733',
-  white: '#FFF',
-  text: '#232323',
-  sub: '#6F6F6F',
-  chip: '#F4F5F6',
-  ok: '#1FA56A',
-};
-
+import { COLORS as C } from '../../ui/theme';
 export default function ConnectDevicesScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState<any>(null);
@@ -39,7 +30,7 @@ export default function ConnectDevicesScreen({ navigation }: any) {
         setTokens(t);
         if (t && !redirected.current) {
           redirected.current = true;
-          navigation.reset({ index: 0, routes: [{ name: 'StepsTracker' }] });
+          navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
           return;
         }
       } finally {
@@ -52,20 +43,20 @@ export default function ConnectDevicesScreen({ navigation }: any) {
   }, []); // no nav dep → run once
 
   const onConnectFitbit = async () => {
-    // try {
-    setLoading(true);
-    const t = await connectFitbit(); // OAuth + save tokens securely
-    console.log('connectFitbit res', t);
-    setTokens(t);
-    if (!redirected.current) {
-      redirected.current = true;
-      navigation.reset({ index: 0, routes: [{ name: 'StepsTracker' }] });
-    }
-    // } catch (e) {
+    try {
+      setLoading(true);
+      const t = await connectFitbit(); // OAuth + save tokens securely
+      console.log('connectFitbit res', t);
+      setTokens(t);
+      if (!redirected.current) {
+        redirected.current = true;
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+      }
+    } catch (e) {
 
-    //   console.warn('Fitbit connect error', e);
-    //   setLoading(false);
-    // }
+      console.warn('Fitbit connect error', e);
+      setLoading(false);
+    }
   };
 
   const SectionTitle = ({ t }: { t: string }) => <Text style={s.h2}>{t}</Text>;
@@ -163,7 +154,7 @@ function DeviceCard({
         onPress={onPress}
         activeOpacity={0.9}
       >
-        <Text style={[s.setup, status !== 'SETUP' && { color: C.ok }]}>
+        <Text style={[s.setup, status !== 'SETUP' && { color: C.black }]}>
           {status}
         </Text>
       </TouchableOpacity>
@@ -178,7 +169,7 @@ const s = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '800',
-    color: C.text,
+    color: C.black,
     marginVertical: 10,
   },
 
@@ -198,7 +189,7 @@ const s = StyleSheet.create({
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   icon: { width: 44, height: 44, borderRadius: 10, resizeMode: 'contain' },
-  title: { color: C.text, fontWeight: '800', fontSize: 16 },
+  title: { color: C.black, fontWeight: '800', fontSize: 16 },
   setup: { color: C.green, fontWeight: '800' },
 
   loadingOverlay: {

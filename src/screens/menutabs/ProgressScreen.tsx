@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { ScrollView, View, StyleSheet, Text } from 'react-native';
 import { CARTWRAP, COLORS, RADIUS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
@@ -8,8 +8,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-import { getValidTokens } from '../../config/fitbitService';
-import { getfitBitData } from '../../config/fitbitService';
+import { getfitBitData, getfitBitSleepgoal, getfitBitWeight, getValidTokens } from '../../config/fitbitService';
+
 import { showToastError } from '../../config/ShowToastMessages';
 const items_old = [
       { id: 'steps', label: 'Steps', value: '0', tint: '#E8F2EB', color: '#1E8E5A', image: require('../../assets/icons/running.png'), navigate: 'StepsTracker' },
@@ -17,33 +17,76 @@ const items_old = [
       { id: 'cal', label: 'Calories', value: '0', tint: '#FDF2E3', color: '#F4A300', image: require('../../assets/icons/fire.png'), navigate: 'CaloriesTracker' },
       { id: 'water', label: 'Water', value: '0 Glasses', tint: '#EAF3FB', color: '#2C85D8', image: require('../../assets/icons/water-drops.png'), navigate: 'WaterTracker' }
 ];
+
+function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+
+async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
+      let err: any;
+      for (let i = 0; i < tries; i++) {
+            try { return await fn(); } catch (e: any) {
+                  err = e;
+                  const retryAfter =
+                        Number(e?.response?.headers?.["retry-after"]) || 0;
+                  const wait = retryAfter ? retryAfter * 1000 : 400 * 2 ** i;
+                  if (e?.response?.status !== 429 && e?.response?.status < 500) break;
+                  await delay(wait);
+            }
+      }
+      throw err;
+}
 const ProgressScreen: React.FC = () => {
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
       const [accessToken, setAccessToken] = useState<string | null>(null);
       const [items, setItems] = useState(items_old);
-      useFocusEffect(
-            useCallback(() => {
-                  (async () => {
-                        const t = await getValidTokens();
-                        setAccessToken(t?.accessToken ?? '');
-                        if (!t) {
+      const didRun = useRef(false);
+      const lastFetchAt = useRef(0);
+
+      useEffect(() => {
+            // Guard React 18 StrictMode double invoke and add a 60s throttle.
+            if (didRun.current) return; didRun.current = true;
+            const now = Date.now();
+            if (now - lastFetchAt.current < 60_000) return;
+            lastFetchAt.current = now;
+
+            (async () => {
+                  try {
+                        const t = await withRetry(() => getValidTokens());
+                        const token = t?.accessToken as string;
+                        setAccessToken(token);
+                        if (!token) {
                               navigate.replace("ConnectDevice");
                               return;
                         }
-                        try {
-                              const s = await getfitBitData(t.accessToken, '');
-                              setItems(prev => prev.map(i =>
-                                    i.id === "steps" ? { ...i, value: s?.summary?.steps } : i
-                              ));
+                        console.log('fitbit data progress');
+                        // Fetch all in parallel
+                        const [s, sleep] = await Promise.all([
+                              withRetry(() => getfitBitData(token, "")),
+                              withRetry(() => getfitBitSleepgoal(token)),
+                        ]);
+                        const steps = String(s?.summary?.steps ?? "");
+                        const calories = String(s?.summary?.caloriesOut ?? "");
+                        const sleepMin = parseInt(sleep?.goal?.minDuration ?? "0", 10);
+                        const sleepFmt = `${Math.floor(sleepMin / 60)} H ${sleepMin % 60} M`;
 
-                        } catch (e: any) {
-                              showToastError(e instanceof Error ? e.message : "An error occurred.");
-                        }
-                  })();
+                        // Single state update
+                        setItems(prev =>
+                              prev.map(i => {
+                                    switch (i.id) {
+                                          case "steps": return { ...i, value: steps };
+                                          case "cal": return { ...i, value: calories };
+                                          case "sleep": return { ...i, value: sleepFmt };
+                                          default: return i;
+                                    }
+                              })
+                        );
+                  } catch (e: any) {
+                        console.warn("fitbit data err", e?.message ?? e);
+                        showToastError(e?.message ?? e);
+                  }
+            })();
+      }, [setItems]);
 
-            }, [])
-      );
       return (
             <ScrollView bounces={false} style={{ flex: 1, backgroundColor: COLORS.white }}>
                   <HeaderGreeting name="Sam" />
@@ -58,7 +101,12 @@ const ProgressScreen: React.FC = () => {
             </ScrollView>
       );
 };
-
+function formatHoursMinutes(minutes: number): string {
+      console.log('minutes', minutes);
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return `${h} H ${m} M`;
+}
 export default ProgressScreen;
 const styles = StyleSheet.create({
       dayTabs: {
