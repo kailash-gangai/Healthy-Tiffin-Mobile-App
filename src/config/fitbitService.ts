@@ -121,6 +121,14 @@ export async function setfitBitWaterLog(
   return await postDataToApi(url, accessToken);
 }
 
+export async function getfitBitWaterLog(
+  accessToken: string,
+  date: string,
+): Promise<number> {
+  date = date || new Date().toISOString().slice(0, 10);
+  let url = FITBIT_API_URL + `foods/log/water/date/${date}.json`;
+  return await getDataFromApi(url, accessToken);
+}
 export async function getfitBitSleepgoal(accessToken: string): Promise<number> {
   let url = FITBIT_API_URL + `sleep/goal.json`;
   return await getDataFromApi(url, accessToken);

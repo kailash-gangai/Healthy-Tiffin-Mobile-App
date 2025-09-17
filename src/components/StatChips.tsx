@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../screens/navigation/types';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
-import { getfitBitData, getfitBitSleepgoal, getfitBitWeight, getValidTokens } from '../config/fitbitService';
+import { getfitBitData, getfitBitSleepgoal, getfitBitWaterLog, getfitBitWeight, getValidTokens } from '../config/fitbitService';
 import { showToastError } from '../config/ShowToastMessages';
 const width = Dimensions.get('window').width;
 const DIAMETER = width / 5 - 10;
@@ -51,10 +51,11 @@ export default function StatsCard() {
                         const t = await withRetry(() => getValidTokens());
                         const token = t?.accessToken as string;
                         console.log('fitbit data chips');
-                        const [s, weight, sleep] = await Promise.all([
+                        const [s, weight, sleep, water] = await Promise.all([
                               withRetry(() => getfitBitData(token, "")),
                               withRetry(() => getfitBitWeight(token, "")),
                               withRetry(() => getfitBitSleepgoal(token)),
+                              withRetry(() => getfitBitWaterLog(token, "")), // today
                         ]);
 
                         const steps = String(s?.summary?.steps ?? "");
@@ -62,7 +63,7 @@ export default function StatsCard() {
                         const wt = String(weight?.goal?.startWeight ?? "");
                         const sleepMin = parseInt(sleep?.goal?.minDuration ?? "0", 10);
                         const sleepFmt = `${Math.floor(sleepMin / 60)} H ${sleepMin % 60} M`;
-
+                        const waterCount = water?.water?.length ?? 0;
                         // Single state update
                         setItems(prev =>
                               prev.map(i => {
@@ -71,6 +72,7 @@ export default function StatsCard() {
                                           case "Calories": return { ...i, value: calories };
                                           case "Weight": return { ...i, value: wt };
                                           case "Sleep": return { ...i, value: sleepFmt };
+                                          case "Water": return { ...i, value: String(waterCount) };
                                           default: return i;
                                     }
                               })

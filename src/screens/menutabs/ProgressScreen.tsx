@@ -8,7 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-import { getfitBitData, getfitBitSleepgoal, getfitBitWeight, getValidTokens } from '../../config/fitbitService';
+import { getfitBitData, getfitBitSleepgoal, getfitBitWaterLog, getfitBitWeight, getValidTokens } from '../../config/fitbitService';
 
 import { showToastError } from '../../config/ShowToastMessages';
 const items_old = [
@@ -60,15 +60,16 @@ const ProgressScreen: React.FC = () => {
                         }
                         console.log('fitbit data progress');
                         // Fetch all in parallel
-                        const [s, sleep] = await Promise.all([
+                        const [s, sleep, water] = await Promise.all([
                               withRetry(() => getfitBitData(token, "")),
                               withRetry(() => getfitBitSleepgoal(token)),
+                              withRetry(() => getfitBitWaterLog(token, "")), // today
                         ]);
                         const steps = String(s?.summary?.steps ?? "");
                         const calories = String(s?.summary?.caloriesOut ?? "");
                         const sleepMin = parseInt(sleep?.goal?.minDuration ?? "0", 10);
                         const sleepFmt = `${Math.floor(sleepMin / 60)} H ${sleepMin % 60} M`;
-
+                        const waterCount = water?.water?.length ?? 0;
                         // Single state update
                         setItems(prev =>
                               prev.map(i => {
@@ -76,6 +77,7 @@ const ProgressScreen: React.FC = () => {
                                           case "steps": return { ...i, value: steps };
                                           case "cal": return { ...i, value: calories };
                                           case "sleep": return { ...i, value: sleepFmt };
+                                          case "water": return { ...i, value: String(waterCount) + " Glasses" };
                                           default: return i;
                                     }
                               })

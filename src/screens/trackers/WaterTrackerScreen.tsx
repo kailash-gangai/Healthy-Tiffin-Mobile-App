@@ -22,7 +22,7 @@ import DurationTabs from "../../components/DurationTabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import { getValidTokens, getfitBitWater, setfitBitWaterGole, setfitBitWaterLog } from "../../config/fitbitService";
+import { getValidTokens, getfitBitWater, getfitBitWaterLog, setfitBitWaterGole, setfitBitWaterLog } from "../../config/fitbitService";
 
 type TabKey = "today" | "weekly" | "monthly";
 
@@ -58,11 +58,13 @@ export default function WaterTrackerScreen() {
                         }
                         try {
                               const s = await getfitBitWater(t.accessToken);
-                              console.log('myres', s.goal.goal);
+                              console.log('myres', s);
                               // setCurrent(s?.goal.goal);
                               setGoal(s?.goal?.goal);
                               // setStartingDate(s?.goal?.startDate);
-
+                              const log = await getfitBitWaterLog(t.accessToken, new Date().toISOString().slice(0, 10), 0);
+                              console.log('log', log);
+                              setCount(log?.water?.length ?? 0);
                               if (!alive) return;
                         } catch (e: any) {
                               if (!alive) return;
@@ -100,7 +102,8 @@ export default function WaterTrackerScreen() {
       const updateCount = (n: number) => {
             setCount((c) => c + n);
             console.log('count', count);
-            setfitBitWaterLog(accessToken, new Date().toISOString().slice(0, 10), count + n);
+            const res = setfitBitWaterLog(accessToken, new Date().toISOString().slice(0, 10), count + n);
+            console.log('res', res);
       };
 
       return (
