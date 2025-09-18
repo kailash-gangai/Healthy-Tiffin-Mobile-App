@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -20,14 +20,38 @@ import {
   clearCart,
   decreaseItem,
   increaseItem,
+  removeDayAddons,
+  removeDayMains,
   removeItem,
 } from '../../store/slice/cartSlice';
+
+const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
+const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
+
+const catRank = (c?: string) => {
+  const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
+  return i === -1 ? 1e9 : i;
+};
+const WEEK = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+const rotateFromToday = (arr: string[]) => {
+  const i = arr.indexOf(todayName);
+  if (i < 0) return arr;
+  return [...arr.slice(i), ...arr.slice(0, i)];
+};
 
 export default function CartScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
-  const [addr, setAddr] = useState('2118 Thornridge Cir, Syracuse');
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
 
@@ -41,7 +65,59 @@ export default function CartScreen({ navigation }: any) {
   const subtotal = mealCost + addons + nonMember;
 
   const isEmpty = lines.length === 0;
-  const contentBottomPad = isEmpty ? 24 + insets.bottom : 180 + insets.bottom;
+  const contentBottomPad = isEmpty ? 24 + insets.bottom : 200 + insets.bottom;
+
+  // unique days in cart
+  const days = useMemo(() => {
+    const byDay = [...new Set(lines.map(l => l.day))].filter(
+      Boolean,
+    ) as string[];
+    const ring = rotateFromToday(WEEK);
+    return byDay.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
+  }, [lines]);
+
+  const grouped = useMemo(
+    () =>
+      days.map(d => {
+        const mains = lines
+          .filter(x => x.day === d && x.type === 'main')
+          .slice()
+          .sort((a, b) => catRank(a.category) - catRank(b.category));
+        const addons = lines.filter(x => x.day === d && x.type === 'addon');
+        return { day: d, mains, addons };
+      }),
+    [days, lines],
+  );
+
+  // first missing day per required categories, priority = today → forward
+  const missingInfo = useMemo(() => {
+    const ring = rotateFromToday(WEEK);
+    const daysInCart = [...new Set(lines.map(l => l.day))].filter(
+      Boolean,
+    ) as string[];
+    const scan = ring.filter(d => daysInCart.includes(d));
+    for (const d of scan) {
+      const catsPresent = new Set(
+        lines
+          .filter(l => l.day === d && l.type === 'main')
+          .map(l => String(l.category).toUpperCase()),
+      );
+      const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
+      if (missing.length > 0) return { day: d, missing };
+    }
+    return null;
+  }, [lines]);
+
+  const [openByDay, setOpenByDay] = useState<Record<string, boolean>>({});
+  const isOpen = (d: string) => openByDay[d] ?? true;
+  const toggleDay = (d: string) =>
+    setOpenByDay(p => ({ ...p, [d]: !isOpen(d) }));
+
+  const onRemoveDayMains = (d: string) => dispatch(removeDayMains({ day: d }));
+  const onRemoveDayAddons = (d: string) =>
+    dispatch(removeDayAddons({ day: d }));
+  const payDisabled = isEmpty || !!missingInfo;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
       <AppHeader title="My Cart" onBack={() => navigation.goBack()} />
@@ -51,25 +127,9 @@ export default function CartScreen({ navigation }: any) {
         showsVerticalScrollIndicator
       >
         {isEmpty ? (
-          <View
-            style={{
-              backgroundColor: '#FAFAFA',
-              padding: 16,
-              borderRadius: 16,
-            }}
-          >
-            <View style={{ alignItems: 'center', paddingVertical: 28 }}>
-              <View
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 36,
-                  backgroundColor: '#E8F5EE',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 12,
-                }}
-              >
+          <View style={s.emptyBox}>
+            <View style={s.emptyInner}>
+              <View style={s.emptyIconWrap}>
                 <FontAwesome5
                   iconStyle="solid"
                   name="shopping-bag"
@@ -77,110 +137,235 @@ export default function CartScreen({ navigation }: any) {
                   color="#0B5733"
                 />
               </View>
-              <Text
-                style={{ fontSize: 20, fontWeight: '800', color: '#0B5733' }}
-              >
-                Your cart is empty
-              </Text>
-              <Text style={{ marginTop: 6, color: '#5E6D62' }}>
-                No items in cart
-              </Text>
+              <Text style={s.emptyTitle}>Your cart is empty</Text>
+              <Text style={s.emptySub}>No items in cart</Text>
             </View>
 
             <TouchableOpacity
-              style={{
-                height: 48,
-                borderRadius: 12,
-                backgroundColor: '#0B5733',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={s.emptyCta}
               onPress={() => navigation.navigate('Home')}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>
-                Start ordering
-              </Text>
+              <Text style={s.emptyCtaTxt}>Start ordering</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            {lines.map(it => (
-              <View key={`${it.id}-${it.variantId}`} style={s.card}>
+            {grouped.map(({ day, mains, addons }) => (
+              <View key={day} style={s.dayCard}>
                 <TouchableOpacity
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: 15,
-                    zIndex: 2,
-                  }}
-                  onPress={() =>
-                    dispatch(removeItem({ id: it.id, variantId: it.variantId }))
-                  }
+                  style={s.dayHdr}
+                  onPress={() => toggleDay(day)}
+                  activeOpacity={0.9}
                 >
+                  <Text style={s.dayTitle}>{day} Summary</Text>
                   <FontAwesome5
                     iconStyle="solid"
-                    name="trash"
+                    name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
                     size={16}
-                    color={C.red}
+                    color={C.black}
                   />
                 </TouchableOpacity>
 
-                <Image source={{ uri: it.image }} style={s.img} />
+                {isOpen(day) && (
+                  <>
+                    {/* Main block */}
+                    {mains.length > 0 && (
+                      <View style={s.block}>
+                        <View style={s.blockHdRow}>
+                          <Text style={s.blockChip}>Main</Text>
+                          <TouchableOpacity
+                            onPress={() => onRemoveDayMains(day)}
+                            style={s.hdrTrashBtn}
+                          >
+                            <FontAwesome5
+                              iconStyle="solid"
+                              name="trash"
+                              size={16}
+                              color={C.red}
+                            />
+                          </TouchableOpacity>
+                        </View>
 
-                <View style={s.cardContent}>
-                  <Text style={s.itemTitle} numberOfLines={2}>
-                    {it.title}
-                  </Text>
-                  <Text style={s.price}>${it.price}</Text>
+                        {mains.map(it => (
+                          <View key={`${it.id}-${it.variantId}`} style={s.card}>
+                            <TouchableOpacity
+                              onPress={() =>
+                                dispatch(
+                                  removeItem({
+                                    id: it.id,
+                                    variantId: it.variantId,
+                                  }),
+                                )
+                              }
+                              style={s.priceTrashBtn}
+                              accessibilityRole="button"
+                              accessibilityLabel="Remove item"
+                            >
+                              <FontAwesome5
+                                iconStyle="solid"
+                                name="times"
+                                size={20}
+                                color={C.red}
+                              />
+                            </TouchableOpacity>
 
-                  <View style={s.detailsRow}>
-                    <Text style={s.detailText}>
-                      <Text style={s.detailLabel}>Type: </Text>
-                      {it.type}
-                    </Text>
-                    <Text style={s.detailText}>
-                      <Text style={s.detailLabel}>Category: </Text>
-                      {it.category}
-                    </Text>
-                  </View>
+                            <Image source={{ uri: it.image }} style={s.img} />
 
-                  <View style={s.detailsRow}>
-                    <Text style={s.detailText}>
-                      <Text style={s.detailLabel}>Date: </Text>
-                      {it.date}
-                    </Text>
-                    <Text style={s.detailText}>
-                      <Text style={s.detailLabel}>Day: </Text>
-                      {it.day}
-                    </Text>
-                  </View>
+                            <View style={s.cardContent}>
+                              {/* type + category */}
+                              <View style={s.titleRowTight}>
+                                <Text style={s.typeBadge}>Type: {it.type}</Text>
+                                <Text style={s.catPill}>{it.category}</Text>
+                              </View>
 
-                  <View style={s.qtyRow}>
-                    <Round
-                      onPress={() => {
-                        if (it.qty === 1) return;
-                        dispatch(
-                          decreaseItem({ id: it.id, variantId: it.variantId }),
-                        );
-                      }}
-                    >
-                      <Text style={s.sign}>−</Text>
-                    </Round>
-                    <Text style={s.qty}>{it.qty}</Text>
-                    <Round
-                      onPress={() =>
-                        dispatch(
-                          increaseItem({ id: it.id, variantId: it.variantId }),
-                        )
-                      }
-                    >
-                      <Text style={s.sign}>＋</Text>
-                    </Round>
-                  </View>
-                </View>
+                              {/* title */}
+                              <Text style={s.itemTitle} numberOfLines={2}>
+                                {it.title}
+                              </Text>
+
+                              {/* price below title */}
+                              <Text style={s.priceUnder}>${it.price}</Text>
+
+                              {/* qty row */}
+                              <View style={s.qtyRow}>
+                                <Round
+                                  onPress={() => {
+                                    if (it.qty === 1) return;
+                                    dispatch(
+                                      decreaseItem({
+                                        id: it.id,
+                                        variantId: it.variantId,
+                                      }),
+                                    );
+                                  }}
+                                >
+                                  <Text style={s.sign}>−</Text>
+                                </Round>
+                                <Text style={s.qty}>{it.qty}</Text>
+                                <Round
+                                  onPress={() =>
+                                    dispatch(
+                                      increaseItem({
+                                        id: it.id,
+                                        variantId: it.variantId,
+                                      }),
+                                    )
+                                  }
+                                >
+                                  <Text style={s.sign}>＋</Text>
+                                </Round>
+                              </View>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Add-ons block */}
+                    {addons.length > 0 && (
+                      <View style={s.block}>
+                        <View style={s.blockHdRow}>
+                          <Text style={s.blockChipAlt}>Add-ons</Text>
+                          <TouchableOpacity
+                            onPress={() => onRemoveDayAddons(day)}
+                            style={s.hdrTrashBtn}
+                          >
+                            <FontAwesome5
+                              iconStyle="solid"
+                              name="trash"
+                              size={16}
+                              color={C.red}
+                            />
+                          </TouchableOpacity>
+                        </View>
+
+                        {addons.map(it => (
+                          <View
+                            key={`${it.id}-${it.variantId}`}
+                            style={s.cardAlt}
+                          >
+                            <TouchableOpacity
+                              onPress={() =>
+                                dispatch(
+                                  removeItem({
+                                    id: it.id,
+                                    variantId: it.variantId,
+                                  }),
+                                )
+                              }
+                              style={s.priceTrashBtn}
+                              accessibilityRole="button"
+                              accessibilityLabel="Remove add-on"
+                            >
+                              <FontAwesome5
+                                iconStyle="solid"
+                                name="times"
+                                size={20}
+                                color={C.red}
+                              />
+                            </TouchableOpacity>
+
+                            <Image
+                              source={{ uri: it.image }}
+                              style={s.imgSmall}
+                            />
+
+                            <View style={s.cardContent}>
+                              {/* type + category */}
+                              <View style={s.titleRowTight}>
+                                <Text style={s.typeBadgeAlt}>
+                                  Type: {it.type}
+                                </Text>
+                                <Text style={s.catPillAlt}>{it.category}</Text>
+                              </View>
+
+                              {/* title */}
+                              <Text style={s.itemTitleSm} numberOfLines={2}>
+                                {it.title}
+                              </Text>
+
+                              {/* price under title */}
+                              <Text style={s.priceSmUnder}>${it.price}</Text>
+
+                              <View style={s.qtyRowSm}>
+                                <Round
+                                  onPress={() => {
+                                    if (it.qty === 1) return;
+                                    dispatch(
+                                      decreaseItem({
+                                        id: it.id,
+                                        variantId: it.variantId,
+                                      }),
+                                    );
+                                  }}
+                                >
+                                  <Text style={s.sign}>−</Text>
+                                </Round>
+                                <Text style={s.qty}>{it.qty}</Text>
+                                <Round
+                                  onPress={() =>
+                                    dispatch(
+                                      increaseItem({
+                                        id: it.id,
+                                        variantId: it.variantId,
+                                      }),
+                                    )
+                                  }
+                                >
+                                  <Text style={s.sign}>＋</Text>
+                                </Round>
+                              </View>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
               </View>
             ))}
 
+            {/* Clear cart + notes + summary + upsell */}
             <TouchableOpacity
               onPress={() => dispatch(clearCart())}
               activeOpacity={0.9}
@@ -189,7 +374,6 @@ export default function CartScreen({ navigation }: any) {
               <Text style={s.clearCart}>Clear cart</Text>
             </TouchableOpacity>
 
-            {/* notes */}
             <Text style={s.caption}>Add delivery instructions</Text>
             <TextInput
               style={s.note}
@@ -200,7 +384,6 @@ export default function CartScreen({ navigation }: any) {
               placeholderTextColor={C.sub}
             />
 
-            {/* price summary */}
             <View style={s.summary}>
               <Row k="Meal box price" v={`$${mealCost}`} />
               <Row k="Add on's" v={`$${addons}`} />
@@ -208,9 +391,8 @@ export default function CartScreen({ navigation }: any) {
               <Row k="Total" v={`$${subtotal}`} bold />
             </View>
 
-            {/* upsell */}
             <Text style={s.upsellText}>
-              Subscribe and save delivery charges &{'\n'}get many more features.
+              Subscribe and save delivery charges {'\n'}get many more features.
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('Subscription')}
@@ -225,6 +407,18 @@ export default function CartScreen({ navigation }: any) {
 
       {!isEmpty && (
         <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
+          {/* Missing categories notice near payment */}
+          {missingInfo && (
+            <View style={s.missWrap}>
+              <Text style={s.missTitle}>
+                Missing meal for {String(missingInfo.day).toLowerCase()}
+              </Text>
+              <Text style={s.missCats}>
+                {missingInfo.missing.map(x => x.toLowerCase()).join(', ')}
+              </Text>
+            </View>
+          )}
+
           <View style={s.segment}>
             <TouchableOpacity
               style={[s.segBtn, mode === 'delivery' && s.segOn]}
@@ -255,10 +449,10 @@ export default function CartScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={s.payBtn}
-            disabled={isEmpty}
+            disabled={payDisabled}
             onPress={() => navigation.navigate('OrderTrack')}
           >
-            <Text style={s.payTxt}>
+            <Text style={[s.payTxt, payDisabled && s.payBtnDisabled]}>
               To Payment{' '}
               <FontAwesome5
                 iconStyle="solid"
@@ -303,6 +497,7 @@ function Round({ children, onPress }: any) {
 /* styles */
 const s = StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 24 },
+
   footer: {
     position: 'absolute',
     left: 0,
@@ -314,31 +509,119 @@ const s = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
   },
-  detailsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 10,
+
+  /* day grouping */
+  dayCard: {
+    backgroundColor: '#F7F8F7',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.border,
+    marginBottom: 12,
+    overflow: 'hidden',
   },
-  detailText: { color: C.sub, fontSize: 14, marginTop: 4 },
-  detailLabel: { fontWeight: '700', color: C.black },
+  dayHdr: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#EFEFEF',
+  },
+  dayTitle: { fontWeight: '800', color: C.black, fontSize: 16 },
+
+  /* section blocks */
+  block: {
+    margin: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3DE',
+    backgroundColor: C.white,
+    padding: 8,
+  },
+  blockHdRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  blockChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: '#EAF6EF',
+    color: C.green,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  blockChipAlt: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: '#FFF4E8',
+    color: C.oranger,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  hdrTrashBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* main item card (smaller, detailed) */
   card: {
     flexDirection: 'row',
     backgroundColor: C.white,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 12,
-    ...SHADOW,
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E6EAE7',
+  },
+  priceTrashBtn: {
+    position: 'absolute',
+    right: -2,
+    top: -9,
   },
   img: {
-    width: 110,
-    height: 100,
-    borderRadius: 12,
-    marginRight: 12,
+    width: 80,
+    height: 68,
+    borderRadius: 10,
+    marginRight: 10,
     resizeMode: 'cover',
   },
-  itemTitle: { color: C.black, fontWeight: '800', fontSize: 16 },
-  price: { color: C.green, fontWeight: '800', fontSize: 24, marginTop: 6 },
+  cardContent: { flex: 1, justifyContent: 'flex-start' },
+  titleRowTight: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+    color: C.black,
+    overflow: 'hidden',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  catPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: '#EAF1FF',
+    color: '#3A6AE3',
+    overflow: 'hidden',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  itemTitle: { color: C.black, fontWeight: '800', fontSize: 14, marginTop: 6 },
+  priceUnder: { color: C.green, fontWeight: '800', fontSize: 16, marginTop: 4 },
+
+  /* qty */
   qtyRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 12 },
   round: {
     width: 28,
@@ -356,6 +639,73 @@ const s = StyleSheet.create({
     color: C.oranger,
     fontSize: 16,
   },
+
+  /* addon item card (smaller, price under title) */
+  cardAlt: {
+    flexDirection: 'row',
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    padding: 10,
+    paddingTop: 18,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#EEE',
+  },
+  imgSmall: {
+    width: 64,
+    height: 56,
+    borderRadius: 8,
+    marginRight: 10,
+    resizeMode: 'cover',
+  },
+  typeBadgeAlt: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: '#F6F6F6',
+    color: C.black,
+    overflow: 'hidden',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  catPillAlt: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: '#FFF0F0',
+    color: '#C44',
+    overflow: 'hidden',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  itemTitleSm: {
+    color: C.black,
+    fontWeight: '700',
+    fontSize: 13,
+    marginTop: 6,
+  },
+  priceSmUnder: {
+    color: C.black,
+    fontWeight: '800',
+    fontSize: 15,
+    marginTop: 4,
+  },
+  qtyRowSm: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 12,
+  },
+
+  /* existing */
+  detailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  detailText: { color: C.sub, fontSize: 14, marginTop: 4 },
+  detailLabel: { fontWeight: '700', color: C.black },
 
   caption: {
     color: C.black,
@@ -404,6 +754,7 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   subBtnTxt: { color: C.green, fontWeight: '800', fontSize: 22 },
+
   clearCartBtn: {
     height: 60,
     borderRadius: 12,
@@ -428,7 +779,9 @@ const s = StyleSheet.create({
   segOn: { backgroundColor: C.green },
   segTxt: { color: C.black, fontWeight: '700' },
   segTxtOn: { color: C.white },
+
   saveNote: { textAlign: 'center', color: C.sub, marginBottom: 10 },
+
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -436,6 +789,7 @@ const s = StyleSheet.create({
   },
   totalK: { color: C.sub, fontWeight: '700' },
   totalV: { color: C.black, fontWeight: '900', fontSize: 24 },
+
   payBtn: {
     height: 52,
     borderRadius: 12,
@@ -443,6 +797,29 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  payTxt: { fontWeight: '800', color: C.white, fontSize: 20 },
+
+  emptyBox: { backgroundColor: '#FAFAFA', padding: 16, borderRadius: 16 },
+  emptyInner: { alignItems: 'center', paddingVertical: 28 },
+  emptyIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#E8F5EE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#0B5733' },
+  emptySub: { marginTop: 6, color: '#5E6D62' },
+  emptyCta: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#0B5733',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyCtaTxt: { color: '#FFFFFF', fontWeight: '800' },
 
   emptyCartText: {
     textAlign: 'center',
@@ -451,6 +828,18 @@ const s = StyleSheet.create({
     color: C.sub,
     marginTop: 20,
   },
-  cardContent: { flex: 1, justifyContent: 'space-between' },
-  payTxt: { fontWeight: '800', color: C.white, fontSize: 20 },
+
+  /* missing notice near payment */
+  missWrap: {
+    backgroundColor: '#FFF6E5',
+    borderColor: '#FFD699',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+  },
+  missTitle: { fontWeight: '800', color: '#8A5A00', fontSize: 14 },
+  missCats: { marginTop: 2, color: '#8A5A00', fontSize: 13 },
+
+  payBtnDisabled: { opacity: 0.5 },
 });

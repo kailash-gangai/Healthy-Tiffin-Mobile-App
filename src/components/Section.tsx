@@ -40,8 +40,14 @@ export default function Section({
 
   return (
     <View style={s.wrap}>
-      {/* header */}
-      <View style={s.header}>
+      {/* header: whole row toggles, plus icon still present */}
+      <TouchableOpacity
+        style={s.header}
+        onPress={toggle}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${open ? 'Collapse' : 'Expand'} ${title}`}
+      >
         <Image source={hero} style={s.hero} />
         <View style={{ flex: 1 }}>
           <View style={s.titleRow}>
@@ -59,7 +65,7 @@ export default function Section({
             color="#9B9B9B"
           />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
       {/* body */}
       {open && <View style={s.body}>{children}</View>}

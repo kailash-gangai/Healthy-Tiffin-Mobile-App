@@ -40,6 +40,7 @@ export type Item = {
   tags: string[];
   image: string;
   qty?: number;
+  category?: string;
   price: string | number;
 };
 
@@ -163,8 +164,36 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  console.log(isCartCleared, 'is cart cleared');
-  console.log(selectedItemsToAddOnCart, 'sel');
+  // console.log(isCartCleared, 'is cart cleared');
+  // console.log(selectedItemsToAddOnCart, 'sel');
+  // console.log(categories, 'all categories');
+  // console.log(addonCategories, 'all caddon categories');
+  const order = ['protein', 'veggies', 'sides', 'probiotics'];
+  const rank = (k: string) => {
+    const i = order.indexOf(k.toLowerCase());
+    return i === -1 ? 1e9 : i; // unknowns go last
+  };
+  const sortedCategories = categories
+    .slice()
+    .sort((a, b) => rank(a.key) - rank(b.key));
+
+  const idToCat = categories.reduce(
+    (m, s) => (s.value.forEach(v => m.set(v.id, s.key.toLowerCase())), m),
+    new Map<string, string>(),
+  );
+  const missing = categories
+    .map(s => s.key.toLowerCase())
+    .filter(
+      c =>
+        !selectedItemsToAddOnCart.some(
+          i => (i.category || idToCat.get(i.id) || '').toLowerCase() === c,
+        ),
+    );
+  const result = {
+    ok: !missing.length,
+    missing,
+    message: missing.length ? `Missing meal for: ${missing.join(', ')}` : '',
+  };
   useEffect(() => {
     if (isCartCleared) {
       setSelectedItemsToAddOnCart([]);
@@ -197,7 +226,7 @@ const HomeScreen: React.FC = () => {
             <View style={styles.container}>
               <Text style={styles.heading}>Main</Text>
             </View>
-            {!categories.length && (
+            {!sortedCategories.length && (
               <View
                 style={{
                   marginHorizontal: 16,
@@ -282,7 +311,7 @@ const HomeScreen: React.FC = () => {
               </View>
             )}
 
-            {categories?.map(cat => (
+            {sortedCategories?.map(cat => (
               <Section
                 key={cat.key}
                 hero={require('../../assets/banners/chana.jpg')}
@@ -356,8 +385,9 @@ const HomeScreen: React.FC = () => {
             ]}
           />
           <CTAButton
-            label="Add to cart "
-            isDisabled={mealCost + addonCost < 29}
+            label={result}
+            day={currentDay}
+            isDisabled={!result?.ok}
             iconName="shopping-bag"
             onPress={() => dispatch(addItems(selectedItemsToAddOnCart as any))}
             toast={{

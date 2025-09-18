@@ -16,6 +16,8 @@ type AddPayload = {
 type SetQtyPayload = { id: string; variantId?: string; qty: number };
 type RemovePayload = { id: string; variantId?: string };
 
+type RemoveByDayPayload = { day: string };
+
 export type CartLine = {
   id: string;
   type: 'main' | 'addon';
@@ -179,6 +181,16 @@ const cartSlice = createSlice({
     cartFLag: s => {
       s.isCartCleared = false;
     },
+    removeDayMains: (s, a: PayloadAction<RemoveByDayPayload>) => {
+      const { day } = a.payload;
+      s.lines = s.lines.filter(l => !(l.day === day && l.type === 'main'));
+    },
+
+    // NEW: remove all ADDON items for a day
+    removeDayAddons: (s, a: PayloadAction<RemoveByDayPayload>) => {
+      const { day } = a.payload;
+      s.lines = s.lines.filter(l => !(l.day === day && l.type === 'addon'));
+    },
   },
 });
 
@@ -191,6 +203,8 @@ export const {
   setQty,
   removeItem,
   clearCart,
+  removeDayMains,
+  removeDayAddons,
   cartFLag,
 } = cartSlice.actions;
 export default cartSlice.reducer;

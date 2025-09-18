@@ -225,6 +225,8 @@ const ReferralScreen: React.FC = () => {
       >
         <ScrollView contentContainerStyle={s.scroll} bounces={false}>
           <View style={s.badge}>
+            {' '}
+            v
             <Image source={{ uri: EMPTY_STATE_URL }} height={55} width={55} />
           </View>
 

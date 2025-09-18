@@ -5,49 +5,72 @@ import {
   Text,
   StyleSheet,
   GestureResponderEvent,
+  View,
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import Toast from 'react-native-toast-message';
 
 type ToastProps = {
   type?: 'success' | 'error' | 'info';
-  title?: string; // maps to text1
-  message?: string; // maps to text2
+  title?: string;
+  message?: string;
   position?: 'top' | 'bottom';
-  visibilityTime?: number; // ms
+  visibilityTime?: number;
 };
 
 type Props = {
-  label: string;
+  label: any; // unchanged
+  day?: string; // NEW: single day
   isDisabled?: boolean;
   onPress: (e: GestureResponderEvent) => void;
   iconName?: string;
   disabled?: boolean;
-  toast?: ToastProps; // NEW
+  toast?: ToastProps;
 };
+
+const compact = (arr: string[] = [], keep = 3) =>
+  arr.length <= keep
+    ? arr
+        .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
+        .join(', ')
+    : `${arr
+        .slice(0, keep)
+        .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
+        .join(', ')} +${arr.length - keep} more`;
 
 export default function CTAButton({
   isDisabled,
   label,
+  day,
   onPress,
   iconName = 'shopping-bag',
   disabled,
   toast,
 }: Props) {
+  const lbl = typeof label === 'string' ? { message: label } : label || {};
+  const ok: boolean = lbl?.result?.ok ?? lbl?.ok ?? true;
+  const missing: string[] = lbl?.result?.missing ?? lbl?.missing ?? [];
+
+  const primary = ok
+    ? lbl?.message?.trim() || 'Add to cart'
+    : `Missing meal for ${day ?? ''}`.trim();
+
+  const secondary = !ok && missing?.length ? compact(missing) : '';
+
   const handlePress = (e: GestureResponderEvent) => {
     onPress?.(e);
-
-    if (toast) {
-      if (Toast?.show) {
-        Toast.show({
-          type: toast.type ?? 'success',
-          text1: toast.title ?? label,
-          text2: toast.message ?? '',
-          position: toast.position ?? 'bottom',
-          autoHide: true,
-          visibilityTime: toast.visibilityTime ?? 2000,
-        });
-      }
+    if (toast && Toast?.show) {
+      Toast.show({
+        type: toast.type ?? 'success',
+        text1:
+          toast.title ??
+          (typeof label === 'string' ? label : label?.message) ??
+          '',
+        text2: toast.message ?? '',
+        position: toast.position ?? 'bottom',
+        autoHide: true,
+        visibilityTime: toast.visibilityTime ?? 2000,
+      });
     }
   };
 
@@ -59,15 +82,29 @@ export default function CTAButton({
       style={[s.btn, disabled && s.btnDisabled]}
       accessibilityRole="button"
     >
-      <Text style={s.txt}>{label}</Text>
+      <View style={s.row}>
+        {/* left spacer keeps text centered despite right icon */}
+        <View style={s.iconSpacer} />
 
-      <FontAwesome5
-        iconStyle="solid"
-        name={iconName}
-        size={18}
-        color="#000"
-        style={{ marginLeft: 8 }}
-      />
+        <View style={s.textWrap}>
+          <Text style={s.txt} numberOfLines={1} ellipsizeMode="tail">
+            {primary}
+          </Text>
+          {!!secondary && (
+            <Text style={s.subtxt} numberOfLines={1} ellipsizeMode="tail">
+              {secondary}
+            </Text>
+          )}
+        </View>
+
+        <FontAwesome5
+          iconStyle="solid"
+          name={iconName as any}
+          size={18}
+          color="#000"
+          style={s.icon}
+        />
+      </View>
     </TouchableOpacity>
   );
 }
@@ -85,7 +122,17 @@ const s = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
+    paddingHorizontal: 12,
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  iconSpacer: { width: 26 }, // ≈ size(18) + margin(8)
+  icon: { marginLeft: 8, width: 18 },
+  textWrap: { flex: 1, alignItems: 'center' },
   btnDisabled: { opacity: 0.5 },
   txt: { fontWeight: '800', color: '#000', fontSize: 16 },
+  subtxt: { fontWeight: '600', color: '#000', fontSize: 12, marginTop: 2 },
 });
