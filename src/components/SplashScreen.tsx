@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, StyleSheet, Image, Animated, Dimensions } from "react-native";
-
+import SvgTopRight from "../assets/svg/top--right-shape.svg";
+import SvgBottomLeft from "../assets/svg/bottom-left-shape.svg";
 interface SplashScreenProps {
     onFinish: () => void; // callback when animation ends
 }
@@ -43,18 +44,20 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
     return (
         <Animated.View style={[styles.container, { opacity: screenFade }]}>
             {/* Top Right Circle */}
-            <Image
-                source={require("../assets/LOGO.png")}
+            {/* <Image
+                source={require("../assets/svg/top--right-shape.png")}
                 style={styles.topRightCircle}
                 resizeMode="contain"
-            />
+            /> */}
+            <SvgTopRight style={styles.topRightCircle} />
 
             {/* Bottom Left Circle */}
-            <Image
-                source={require("../assets/LOGO.png")}
+            {/* <Image
+                source={require("../assets/svg/bottom-left-shape.svg")}
                 style={styles.bottomLeftCircle}
                 resizeMode="contain"
-            />
+            /> */}
+            <SvgBottomLeft style={styles.bottomLeftCircle} />
 
             {/* Center Logo */}
             <Animated.Image
@@ -82,21 +85,21 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     logo: {
-        width: 150,
-        height: 150,
+        width: 224,
+        height: 224,
     },
     topRightCircle: {
         position: "absolute",
-        top: -height * 0.1,
-        right: -width * 0.2,
-        width: width * 0.6,
-        height: width * 0.6,
+        top: 0,
+        right: 0,
+        // width: width,
+        // height: width,
     },
     bottomLeftCircle: {
         position: "absolute",
-        bottom: -height * 0.1,
-        left: -width * 0.2,
-        width: width * 0.6,
-        height: width * 0.6,
+        bottom: 0,
+        left: 0,
+        // width: width,
+        // height: width,
     },
 });
