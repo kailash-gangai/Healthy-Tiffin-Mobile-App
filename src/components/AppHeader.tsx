@@ -2,11 +2,6 @@ import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { COLORS } from '../ui/theme';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../screens/navigation/types';
 
 type Props = {
   title: string;
@@ -64,9 +59,9 @@ const s = StyleSheet.create({
     marginLeft: 16,
   },
   title: {
-    fontWeight: '800',
-    fontSize: 22,
-    letterSpacing: 2,
+    fontWeight: '600',
+    fontSize: 18,
+    letterSpacing: 1,
     color: COLORS.white,
   },
   right: {
