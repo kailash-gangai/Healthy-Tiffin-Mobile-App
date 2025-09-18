@@ -1,5 +1,5 @@
 // CaloriesScreen.tsx
-import React, { useMemo, useCallback, useState, memo, useEffect } from "react";
+import React, { useMemo, useCallback, useState, memo, useEffect, useRef } from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
@@ -50,7 +50,7 @@ export default function CaloriesScreen() {
       const [snack, setSnack] = useState("");
       const [dinner, setDinner] = useState("");
       const [accessToken, setAccessToken] = useState<string | null>(null);
-      const [getFoodLogs, setGetFoodLogs] = useState({});
+      const [getFoodLogs, setGetFoodLogs] = useState([]);
       const [summary, setSummary] = useState("");
       // sanitize once
       const onlyDigits = useCallback((t: string) => t.replace(/[^0-9]/g, ""), []);
@@ -65,8 +65,13 @@ export default function CaloriesScreen() {
             const n = (...v: string[]) => v.reduce((s, x) => s + (parseInt(x, 10) || 0), 0);
             return n(breakfast, lunch, snack, dinner, anytime);
       }, [breakfast, lunch, snack, dinner, anytime]);
-
+      const didRun = useRef(false);
+      const lastFetchAt = useRef(0);
       useEffect(() => {
+            if (didRun.current) return; didRun.current = true;
+            const now = Date.now();
+            if (now - lastFetchAt.current < 60_000) return;
+            lastFetchAt.current = now;
             (async () => {
                   try {
                         const t = await getValidTokens();
@@ -74,6 +79,7 @@ export default function CaloriesScreen() {
                         setAccessToken(token);               // keep if other code needs it
 
                         const foods = await getfitBitFoodLog(token); // use token directly
+                        console.log("fitbit food logs", foods);
                         // console.log("fitbit food logs", foods);
                         setSummary(`${foods.summary?.calories?.toFixed(0)}`);
                         const logs = foods.foods.map((food: any) => ({
@@ -84,12 +90,12 @@ export default function CaloriesScreen() {
                               mealTypeId: food.loggedFood?.mealTypeId,
                         }));
                         setGetFoodLogs(logs);
-                        // console.log("grouped foods", logs);
+                        console.log("grouped foods", logs);
                   } catch (e: any) {
                         showToastError(e?.message ?? e);
                   }
             })();
-      }, []);
+      }, [breakfast, lunch, snack, dinner, anytime]);
 
       const updateCalories = async (mealTypeId?: number, calories?: number) => {
             await setfitBitFoodLog(accessToken as string, 'Quick Calories', calories ?? 0, mealTypeId || 7);
@@ -110,7 +116,12 @@ export default function CaloriesScreen() {
                         </ScrollView>
                   </KeyboardAvoidingView>
 
-                  <MealLogList logs={getFoodLogs} summaryText="Today • Summary" summary={summary} />
+                  {(getFoodLogs.length > 0 && summary.length > 0) ? (
+                        <MealLogList logs={getFoodLogs} summaryText="Today • Summary" summary={summary} />
+                  ) : (
+                        <Text>No food logs</Text>
+                  )}
+
                   <View style={styles.totalBar}>
                         <Text style={styles.totalText}>
                               Total Calories : <Text style={styles.totalStrong}>{total <= 0 ? summary : total}</Text>

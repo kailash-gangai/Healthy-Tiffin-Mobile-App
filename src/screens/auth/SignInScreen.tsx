@@ -164,7 +164,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                     >
                         <Text style={styles.ctaText}>Sign In</Text>
                         {isloading ? (
-                            <ActivityIndicator size="small" style={{ marginLeft: 8 }} color={COLORS.green} />
+                            <ActivityIndicator size="small" style={{ marginLeft: 8 }} color={COLORS.white} />
                         ) : (
                             <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
                         )}

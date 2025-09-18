@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Text, TouchableOpacity, View, StyleSheet, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { FlatList, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+// correct import path for RN Vector Icons
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { COLORS } from '../ui/theme';
 
 type Props = {
-  onChange?: (dateYMD: string, index: number) => void; // returns YYYY-MM-DD and index
+  onChange?: (dateYMD: string, index: number) => void;
+  defaultYMD?: string; // optional external default
 };
 
 const ITEM_W = 200;
@@ -18,10 +20,10 @@ const toYMD = (d: Date) => {
 const niceDate = (d: Date) =>
   `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })}`;
 
-export default function DateTabs({ onChange }: Props) {
+export default function DateTabs({ onChange, defaultYMD }: Props) {
   const listRef = useRef<FlatList<any>>(null);
 
-  // last 7 days, oldest -> today
+  // build last 7 days, oldest -> today
   const items = useMemo(() => {
     const out: { label: string; ymd: string; date: Date }[] = [];
     const today = new Date();
@@ -37,26 +39,36 @@ export default function DateTabs({ onChange }: Props) {
     return out;
   }, []);
 
-  const todayIdx = items.length - 1; // rightmost
-  const [active, setActive] = useState(todayIdx);
+  const todayIdx = items.length - 1;
+  const initialIdx = useMemo(() => {
+    if (!defaultYMD) return todayIdx;
+    const idx = items.findIndex(x => x.ymd === defaultYMD);
+    return idx >= 0 ? idx : todayIdx;
+  }, [defaultYMD, items, todayIdx]);
 
+  const [active, setActive] = useState(initialIdx);
+  const firedOnceRef = useRef(false);
+
+  // run once: center initial, fire onChange once
   useEffect(() => {
     requestAnimationFrame(() => {
-      listRef.current?.scrollToIndex({ index: todayIdx, viewPosition: 0.5, animated: true });
+      listRef.current?.scrollToIndex({ index: initialIdx, viewPosition: 0.5, animated: true });
     });
-    onChange?.(items[todayIdx].ymd, todayIdx);
-  }, [todayIdx, onChange, items]);
+    if (!firedOnceRef.current) {
+      firedOnceRef.current = true;
+      onChange?.(items[initialIdx].ymd, initialIdx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // prevent effect re-firing
 
-  const select = (i: number) => {
+  const select = useCallback((i: number) => {
+    if (i === active) return;
     setActive(i);
     onChange?.(items[i].ymd, i);
     listRef.current?.scrollToIndex({ index: i, viewPosition: 0.4, animated: true });
-  };
+  }, [active, items, onChange]);
 
-  const onScrollToIndexFailed = (e: {
-    index: number;
-    highestMeasuredFrameIndex: number;
-  }) => {
+  const onScrollToIndexFailed = (e: { index: number; highestMeasuredFrameIndex: number; }) => {
     const i = Math.min(e.index, e.highestMeasuredFrameIndex);
     setTimeout(() => listRef.current?.scrollToIndex({ index: i, animated: true }), 50);
   };
@@ -80,7 +92,7 @@ export default function DateTabs({ onChange }: Props) {
           onPress={() => select(Math.max(0, index - 1))}
           disabled={index === 0}
         >
-          <FontAwesome5 iconStyle="solid" name="chevron-left" size={18} color="#F6D873" />
+          <FontAwesome5 iconStyle='solid' name="chevron-left" size={18} color="#F6D873" />
         </TouchableOpacity>
 
         <View style={{ alignItems: 'center' }}>
@@ -93,7 +105,7 @@ export default function DateTabs({ onChange }: Props) {
           onPress={() => select(Math.min(items.length - 1, index + 1))}
           disabled={index === items.length - 1}
         >
-          <FontAwesome5 iconStyle="solid" name="chevron-right" size={18} color="#F6D873" />
+          <FontAwesome5 iconStyle='solid' name="chevron-right" size={18} color="#F6D873" />
         </TouchableOpacity>
       </View>
     );
@@ -107,7 +119,6 @@ export default function DateTabs({ onChange }: Props) {
       renderItem={renderItem}
       keyExtractor={(it, i) => `${it.ymd}-${i}`}
       getItemLayout={(_, i) => ({ length: ITEM_W, offset: ITEM_W * i, index: i })}
-      initialScrollIndex={todayIdx}
       onScrollToIndexFailed={onScrollToIndexFailed}
       showsHorizontalScrollIndicator={false}
     />
