@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
+import { ScrollView, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
 import HealthMetrics from '../../components/HealthMetrics';
@@ -72,6 +72,8 @@ function formatYMD(d: Date) {
 export default function ProgressScreen() {
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
       const [items, setItems] = useState(items_old);
+      const [loadingYMD, setLoadingYMD] = useState<string | null>(null);
+      const [initLoading, setInitLoading] = useState(true);
 
       const tokenRef = useRef<string | null>(null);
       const cacheRef = useRef<Map<string, DaySummary>>(new Map());
@@ -95,64 +97,76 @@ export default function ProgressScreen() {
             });
       }, []);
 
-      // 401-refresh wrapper
-      const fetchWithAuth = useCallback(async <T,>(call: (tok: string) => Promise<T>): Promise<T> => {
-            let tok = tokenRef.current as string;
-            try { return await call(tok); }
-            catch (e: any) {
-                  if (e?.response?.status === 401) {
-                        const t = await withRetry(() => getValidTokens());
-                        tok = t?.accessToken as string;
-                        tokenRef.current = tok;
-                        if (!tok) throw e;
-                        return await call(tok);
-                  }
-                  throw e;
-            }
-      }, []);
-
-      const fetchDayUnsafe = useCallback(async (ymd: string): Promise<DaySummary> => {
-            const [act, water] = await Promise.all([
-                  fetchWithAuth(tok => withRetry(() => getfitBitData(tok, ymd))),
-                  fetchWithAuth(tok => withRetry(() => getfitBitWaterLog(tok, ymd))),
-            ]);
-
-            if (sleepGoalRef.current == null) {
-                  const sg = await fetchWithAuth(tok => withRetry(() => getfitBitSleepgoal(tok)));
-                  const mins = parseInt(sg?.goal?.minDuration ?? '0', 10);
-                  sleepGoalRef.current = Number.isNaN(mins) ? 0 : mins;
-            }
-
-            const steps = String(act?.summary?.steps ?? '0');
-            const calories = String(act?.summary?.caloriesOut ?? '0');
-            const sleepFmt = computeSleepFmt(sleepGoalRef.current || 0);
-            const waterMl = Number(water?.summary?.water ?? 0);
-            const glasses = Math.floor(waterMl / 236.587997);
-            const waterStr = `${glasses > 0 ? glasses : 0} Glasses`;
-
-            return { steps, calories, sleepFmt, water: waterStr };
-      }, [computeSleepFmt, fetchWithAuth]);
-
-      const fetchDay = useCallback((ymd: string, applyIfSelected = false) =>
-            new Promise<void>((resolve) => {
-                  const cached = cacheRef.current.get(ymd);
-                  if (cached) {
-                        if (applyIfSelected) safeSetItems(cached);
-                        resolve(); return;
-                  }
-                  queue.enqueue(async () => {
-                        try {
-                              const d = await fetchDayUnsafe(ymd);
-                              cacheRef.current.set(ymd, d);
-                              if (applyIfSelected) safeSetItems(d);
-                        } catch (e: any) {
-                              console.warn('fitbit day fetch err', e?.message ?? e);
-                              showToastError(e?.message ?? e);
-                        } finally {
-                              resolve();
+      // 401-refresh wrapper with silent option
+      const fetchWithAuth = useCallback(
+            async <T,>(call: (tok: string) => Promise<T>, { silent = false } = {}): Promise<T> => {
+                  let tok = tokenRef.current as string;
+                  try { return await call(tok); }
+                  catch (e: any) {
+                        if (e?.response?.status === 401) {
+                              try {
+                                    const t = await withRetry(() => getValidTokens());
+                                    tok = t?.accessToken as string;
+                                    tokenRef.current = tok;
+                                    if (!tok) throw e;
+                                    return await call(tok);
+                              } catch (e2) {
+                                    if (!silent) showToastError('Session expired. Please reconnect.');
+                                    throw e2;
+                              }
                         }
-                  });
-            }), [fetchDayUnsafe, queue, safeSetItems]);
+                        if (!silent) showToastError(e?.message ?? 'Request failed');
+                        throw e;
+                  }
+            },
+            []
+      );
+
+      const fetchDayUnsafe = useCallback(
+            async (ymd: string, opts: { silent?: boolean } = {}): Promise<DaySummary> => {
+                  const [act, water] = await Promise.all([
+                        fetchWithAuth(tok => withRetry(() => getfitBitData(tok, ymd)), opts),
+                        fetchWithAuth(tok => withRetry(() => getfitBitWaterLog(tok, ymd)), opts),
+                  ]);
+
+                  if (sleepGoalRef.current == null) {
+                        const sg = await fetchWithAuth(tok => withRetry(() => getfitBitSleepgoal(tok)), opts);
+                        const mins = parseInt(sg?.goal?.minDuration ?? '0', 10);
+                        sleepGoalRef.current = Number.isNaN(mins) ? 0 : mins;
+                  }
+
+                  const steps = String(act?.summary?.steps ?? '0');
+                  const calories = String(act?.summary?.caloriesOut ?? '0');
+                  const sleepFmt = computeSleepFmt(sleepGoalRef.current || 0);
+                  const waterMl = Number(water?.summary?.water ?? 0);
+                  const glasses = Math.floor(waterMl / 236.587997);
+                  const waterStr = `${glasses > 0 ? glasses : 0} Glasses`;
+
+                  return { steps, calories, sleepFmt, water: waterStr };
+            },
+            [computeSleepFmt, fetchWithAuth]
+      );
+
+      const fetchDay = useCallback(
+            (ymd: string, applyIfSelected = false, { silent = false } = {}) =>
+                  new Promise<void>((resolve) => {
+                        const cached = cacheRef.current.get(ymd);
+                        if (cached) {
+                              if (applyIfSelected) safeSetItems(cached);
+                              resolve(); return;
+                        }
+                        queue.enqueue(async () => {
+                              try {
+                                    const d = await fetchDayUnsafe(ymd, { silent });
+                                    cacheRef.current.set(ymd, d);
+                                    if (applyIfSelected) safeSetItems(d);
+                              } finally {
+                                    resolve();
+                              }
+                        });
+                  }),
+            [fetchDayUnsafe, queue, safeSetItems]
+      );
 
       const preloadLast7Days = useCallback(async (selectedYMD: string) => {
             const days: string[] = [];
@@ -162,10 +176,10 @@ export default function ProgressScreen() {
                   d.setDate(base.getDate() - i);
                   days.push(formatYMD(d));
             }
-            // oldest -> newest; apply today immediately
+            // oldest → newest; apply today immediately
             for (let i = days.length - 1; i >= 0; i--) {
                   const y = days[i];
-                  await fetchDay(y, y === selectedYMD);
+                  await fetchDay(y, y === selectedYMD, { silent: true }); // silent during init
             }
       }, [fetchDay]);
 
@@ -180,20 +194,30 @@ export default function ProgressScreen() {
                         tokenRef.current = token;
                         if (!token) { navigate.replace('ConnectDevice'); return; }
                         const today = formatYMD(new Date());
+                        setLoadingYMD(today);
                         await preloadLast7Days(today);
                   } catch (e: any) {
-                        console.warn('fitbit init err', e?.message ?? e);
-                        showToastError(e?.message ?? e);
+                        // error already surfaced in fetchWithAuth when not silent
+                  } finally {
+                        setLoadingYMD(null);
+                        setInitLoading(false);
                   }
             })();
       }, [navigate, preloadLast7Days]);
 
-      // date change handler (stable)
-      const handleDateChange = useCallback((ymd: string) => {
-            const cached = cacheRef.current.get(ymd);
-            if (cached) { safeSetItems(cached); return; }
-            fetchDay(ymd, true);
+      // date change handler with loader
+      const handleDateChange = useCallback(async (ymd: string) => {
+            setLoadingYMD(ymd);
+            try {
+                  const cached = cacheRef.current.get(ymd);
+                  if (cached) { safeSetItems(cached); return; }
+                  await fetchDay(ymd, true, { silent: false });
+            } finally {
+                  setLoadingYMD(null);
+            }
       }, [fetchDay, safeSetItems]);
+
+      const showSpinner = initLoading || loadingYMD !== null;
 
       return (
             <ScrollView bounces={false} style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -202,7 +226,13 @@ export default function ProgressScreen() {
                         <DateTabs onChange={handleDateChange} />
                   </View>
                   <View style={styles.healthMetrics}>
-                        <HealthMetrics items={items} />
+                        {showSpinner ? (
+                              <View style={styles.loaderWrap}>
+                                    <ActivityIndicator size="large" />
+                              </View>
+                        ) : (
+                              <HealthMetrics items={items} />
+                        )}
                   </View>
             </ScrollView>
       );
@@ -221,5 +251,11 @@ const styles = StyleSheet.create({
             borderRadius: RADIUS,
             padding: SPACING / 2,
             paddingHorizontal: SPACING * 2,
+            minHeight: 140,
+      },
+      loaderWrap: {
+            height: 120,
+            alignItems: 'center',
+            justifyContent: 'center',
       },
 });
