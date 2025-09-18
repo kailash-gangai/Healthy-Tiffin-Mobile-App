@@ -95,7 +95,7 @@ export default function CaloriesScreen() {
                         showToastError(e?.message ?? e);
                   }
             })();
-      }, []);
+      }, [breakfast, lunch, snack, dinner, anytime]);
 
       const updateCalories = async (mealTypeId?: number, calories?: number) => {
             await setfitBitFoodLog(accessToken as string, 'Quick Calories', calories ?? 0, mealTypeId || 7);
