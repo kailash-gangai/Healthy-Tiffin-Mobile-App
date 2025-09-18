@@ -43,6 +43,10 @@ export default function ConnectDevicesScreen({ navigation }: any) {
   }, []); // no nav dep → run once
 
   const onConnectFitbit = async () => {
+    if (Platform.OS == 'ios') {
+      Alert.alert('Fitbit supported only on Android');
+      return;
+    }
     try {
       setLoading(true);
       const t = await connectFitbit(); // OAuth + save tokens securely

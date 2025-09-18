@@ -64,9 +64,9 @@ export default function WaterTrackerScreen() {
                               setGoal(s?.goal?.goal);
                               // setStartingDate(s?.goal?.startDate);
                               const log = await getfitBitWaterLog(t.accessToken, new Date().toISOString().slice(0, 10), 0);
-                              console.log('log', log);
+                              // console.log('log', log);
                               const waterCount = Math.floor((log?.summary?.water ?? 0) / 236);
-                              console.log('waterCount', waterCount);
+                              // console.log('waterCount', waterCount);
                               setCount(waterCount > 0 ? waterCount : 0);
                               if (!alive) return;
                         } catch (e: any) {
