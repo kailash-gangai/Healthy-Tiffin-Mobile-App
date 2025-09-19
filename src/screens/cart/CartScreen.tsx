@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+
 import AppHeader from '../../components/AppHeader';
 import { COLORS as C, SHADOW, SPACING } from '../../ui/theme';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
@@ -17,6 +18,7 @@ import {
 } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
+  addItems,
   clearCart,
   decreaseItem,
   increaseItem,
@@ -24,10 +26,161 @@ import {
   removeDayMains,
   removeItem,
 } from '../../store/slice/cartSlice';
+import MissingCategoryModal from '../../components/MissingCategoryModal';
 
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 
+const CATALOG = [
+  {
+    key: 'probiotics',
+    value: [
+      {
+        id: 'gid://shopify/Product/8796777775346',
+        variantId: 'gid://shopify/ProductVariant/47804110242034',
+        title: 'Basmati Rice',
+        description:
+          'This traditional cooking method of boiling basmati rice and discarding excess water helps reduce starch content, making it lighter on digestion and lower in glycemic load. Rich in essential carbohydrates for sustained energy, this method preserves the rice’s aromatic flavor while promoting gut health and better blood sugar balance. A wholesome, heart-healthy choice for everyday meals! Calories (8 oz serving): 210 kcalPortion Size: 16 ozaromatic | low-fat | easily digestible',
+        tags: ['Gluten free', 'plate method', 'satvik', 'veg', 'VG'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/BasmatiRice.jpg?v=1753780861',
+        price: '6.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796775186674',
+        variantId: 'gid://shopify/ProductVariant/47804105130226',
+        title: 'Organic Plain Yogurt (12oz)',
+        description:
+          'Calories (6 oz serving): 80 kcalPortion Size: 12 ozprobiotic | gut-friendly | calcium-rich | hormone-free | unprocessed dairy',
+        tags: ['Dairy', 'Gluten free', 'VG'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Screenshot_2025-07-19_at_9.38.54_AM.png?v=1753780650',
+        price: '6.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796763324658',
+        variantId: 'gid://shopify/ProductVariant/47804074721522',
+        title: 'Add-on! Tamatar Ka Soup',
+        description:
+          'Tamatar Ka Soup is a light, comforting North Indian-style tomato soup made without cream, onion, or garlic. Simmered with cumin, black pepper, and minimal cold-pressed oil, it’s rich in vitamin C, lycopene, and antioxidants—supporting immunity, digestion, and skin health in a clean, satvik-friendly form. Calories (8 oz serving): 120 kcalPortion Size: 16 ozNorth Indian | antioxidant-rich | hydrating | light | home-style',
+        tags: [],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/TamatarKaSoup.jpg?v=1753779961',
+        price: '10.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796780888306',
+        variantId: 'gid://shopify/ProductVariant/47804115583218',
+        title: 'Malai Chicken kebab',
+        description:
+          'A creamy, melt-in-the-mouth kebab, marinated in hung curd and light spices, offering calcium-rich, digestion-friendly protein, perfect for a low-oil indulgence. North Indian | Malai | Creamy Texture | High-Protein | Calcium-Rich | Low-Oil | Digestion-Friendly | Indulgent | Organic | Fresh | Local',
+        tags: ['fresh', 'Kebab', 'NV', 'organic'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Murghmalaitikka.jpg?v=1753781168',
+        price: '4.5',
+      },
+    ],
+  },
+  {
+    key: 'protein',
+    value: [
+      {
+        id: 'gid://shopify/Product/8796772892914',
+        variantId: 'gid://shopify/ProductVariant/47804094808306',
+        title: 'Besan Chilla (2pc)',
+        description:
+          'Rooted in Rajasthani and Punjabi households, this gram flour pancake is packed with plant protein, iron, and fiber. Low in oil and spiced gently, it aids digestion and blood sugar stability, making it a protein-rich, gluten-free choice for breakfasts and light meals.',
+        tags: ['Gluten free', 'VG'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/BesanKaChilla.jpg?v=1753780523',
+        price: '10.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796781478130',
+        variantId: 'gid://shopify/ProductVariant/47804116402418',
+        title: 'Chicken Changezi',
+        description:
+          "A Mughlai-style curry with marinated chicken simmered in a rich yogurt, cream, and spice blend. High in protein and flavor, it's indulgent, aromatic, and festive. Calories (8 oz serving): 310 kcalPortion Size: 16 ozMughlai | high-protein | yogurt-based | creamy | slow-cooked",
+        tags: ['fresh', 'NV', 'Old Delhi', 'organic'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/LOGO_4e14745a-b8ca-4dbb-9b50-146d25f2fad6.png?v=1753781227',
+        price: '18.0',
+      },
+    ],
+  },
+  {
+    key: 'sides',
+    value: [
+      {
+        id: 'gid://shopify/Product/8796763488498',
+        variantId: 'gid://shopify/ProductVariant/47804074885362',
+        title: 'Add-on! Moroccan Couscous Chickpea Salad',
+        description:
+          "Couscous & Chickpea Salad is a Mediterranean-inspired bowl of balanced nutrition. Combining fluffy couscous, protein-rich chickpeas, and crisp vegetables, it's tossed with lemon juice and herbs for a light, oil-optional finish. High in fiber, plant protein, and complex carbs, it supports digestion, satiety, and clean, energizing meals.",
+        tags: ['VGN'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/CouscousSalad.jpg?v=1753779973',
+        price: '10.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796763521266',
+        variantId: 'gid://shopify/ProductVariant/47804074918130',
+        title: 'Add-on! Nutritious! Ashgourd Soup',
+        description: '',
+        tags: [],
+        image: null,
+        price: '10.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796782461170',
+        variantId: 'gid://shopify/ProductVariant/47804117385458',
+        title: 'Punjabi! Chicken Tariwala',
+        description:
+          "Indulge in the wholesome flavors of Punjabi Chicken Tariwala, a nutritious delight that combines succulent chicken pieces with a rich tomato-based curry. Packed with aromatic spices like cumin, coriander, and garam masala, this dish offers a burst of authentic Punjabi taste. Loaded with lean protein and an array of vitamins from fresh tomatoes, it's a healthy twist to a classic favorite. Enjoy a guilt-free, satisfying meal that nourishes your body and tantalizes your taste buds Punjabi | Organic | Local | Fresh",
+        tags: ['fresh', 'NV', 'organic', 'Punjabi'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Screenshot_2025-07-20_at_10.11.21_AM.png?v=1753781307',
+        price: '4.5',
+      },
+    ],
+  },
+  {
+    key: 'veggies',
+    value: [
+      {
+        id: 'gid://shopify/Product/8796762898674',
+        variantId: 'gid://shopify/ProductVariant/47804074295538',
+        title: 'Add-on! Persian Shirazi Salad',
+        description:
+          'A light, hydrating Persian classic, this finely diced mix of cucumbers, tomatoes, and red onions is tossed with fresh mint, lemon juice, and olive oil. Rich in vitamin C and antioxidants, it’s a cooling, detoxifying, and naturally low-calorie choice. Calories (8 oz serving): 70 kcalPortion Size: 16 ozPersian | hydrating | digestive support | refreshing | low-calorie',
+        tags: ['VGN'],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/PersianShiraziSalad.jpg?v=1753779931',
+        price: '10.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796763226354',
+        variantId: 'gid://shopify/ProductVariant/47804074623218',
+        title: 'Add-on! Sweet Corn Soup',
+        description: '',
+        tags: [],
+        image: null,
+        price: '10.0',
+      },
+      {
+        id: 'gid://shopify/Product/8796763029746',
+        variantId: 'gid://shopify/ProductVariant/47804074426610',
+        title: 'Add-on! Pumpkin Soup',
+        description:
+          'Inspired by global wellness cuisine, this pumpkin soup is gently simmered with ginger, herbs, and a touch of cold-pressed olive oil—no cream or heavy seasoning. Naturally rich in beta-carotene, fiber, and vitamin C, it supports immunity, digestion, and skin health while staying light, warming, and comforting. Calories (8 oz serving): 110 kcalPortion Size: 16 ozseasonal | beta-carotene | immune support | gut-soothing',
+        tags: [],
+        image:
+          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Pumpkinsoup.jpg?v=1753779944',
+        price: '10.0',
+      },
+    ],
+  },
+];
 const catRank = (c?: string) => {
   const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
   return i === -1 ? 1e9 : i;
@@ -49,12 +202,17 @@ const rotateFromToday = (arr: string[]) => {
 };
 
 export default function CartScreen({ navigation }: any) {
+  const [missingOpen, setMissingOpen] = useState(false);
   const { lines } = useAppSelector(state => state.cart);
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
 
+  const handleAddFromModal = (payload: any) => {
+    // add one item immediately
+    dispatch(addItems([payload]));
+  };
   const mealCost = lines
     .filter(i => i.type === 'main')
     .reduce((s, x) => s + +x.price * x.qty, 0);
@@ -436,14 +594,30 @@ export default function CartScreen({ navigation }: any) {
               <TouchableOpacity
                 style={s.missCta}
                 activeOpacity={0.9}
-                onPress={() => navigation.navigate('Home')}
+                onPress={() => {
+                  navigation.navigate('Home');
+                  // setMissingOpen(true)
+                }}
                 accessibilityRole="button"
-                accessibilityLabel="Go to menu to add items"
+                accessibilityLabel="Open suggestions to add items"
               >
                 <Text style={s.missCtaTxt}>Add</Text>
               </TouchableOpacity>
             </View>
           )}
+
+          {/* <MissingCategoryModal
+            visible={missingOpen && !!missingInfo}
+            onClose={() => setMissingOpen(false)}
+            day={missingInfo?.day || ''}
+            missingCats={missingInfo?.missing || []}
+            catalog={CATALOG}
+            onAdd={p => {
+              handleAddFromModal(p);
+              // optional: close when category fulfilled
+              // setMissingOpen(false);
+            }}
+          /> */}
 
           {/* <View style={s.segment}>
             <TouchableOpacity
