@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { COLORS, SHADOW } from '../../ui/theme';
+import AppHeader from '../../components/AppHeader';
 
 type R = RouteProp<RootStackParamList, 'OrderDetail'>;
 
@@ -34,13 +35,8 @@ export default function OrderDetailScreen({ navigation }: any) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
       {/* Top bar */}
-      <View style={s.topbar}>
-        <Text onPress={() => navigation.goBack()} style={s.back}>
-          {'‹'}
-        </Text>
-        <Text style={s.title}>Order {order.name}</Text>
-        <View style={{ width: 24 }} />
-      </View>
+
+      <AppHeader title={order.name} onBack={() => navigation.goBack()} />
 
       <FlatList
         contentContainerStyle={s.body}

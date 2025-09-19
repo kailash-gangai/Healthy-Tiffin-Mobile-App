@@ -115,30 +115,6 @@ export default function DishDetailModal({
             <Text style={s.kcalUnit}> CALORIES</Text>
           </Text>
 
-          <TouchableOpacity
-            activeOpacity={0.6}
-            onPress={() => {
-              dispatch(addItem(dish as any));
-              Toast.show({
-                text1: 'Added',
-                text2: 'item added to the cart',
-                visibilityTime: 2000,
-                position: 'bottom',
-                autoHide: true,
-              });
-            }}
-            style={{
-              alignSelf: 'flex-end',
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              backgroundColor: '#000',
-              borderRadius: 50,
-            }}
-          >
-            <Text style={{ color: '#ffffffff', fontWeight: '700' }}>
-              Add to cart
-            </Text>
-          </TouchableOpacity>
           {/* tags */}
           <View
             style={{
