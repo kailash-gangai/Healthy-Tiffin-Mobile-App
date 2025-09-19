@@ -61,7 +61,7 @@ export default function CartScreen({ navigation }: any) {
   const addons = lines
     .filter(i => i.type === 'addon')
     .reduce((s, x) => s + +x.price * x.qty, 0);
-  const nonMember = 5;
+  const nonMember = 0;
   const subtotal = mealCost + addons + nonMember;
 
   const isEmpty = lines.length === 0;
@@ -387,11 +387,11 @@ export default function CartScreen({ navigation }: any) {
             <View style={s.summary}>
               <Row k="Meal box price" v={`$${mealCost}`} />
               <Row k="Add on's" v={`$${addons}`} />
-              <Row k="Non member shipping" v={`$${nonMember}`} />
+              {/* <Row k="Non member shipping" v={`$${nonMember}`} /> */}
               <Row k="Total" v={`$${subtotal}`} bold />
             </View>
 
-            <Text style={s.upsellText}>
+            {/* <Text style={s.upsellText}>
               Subscribe and save delivery charges {'\n'}get many more features.
             </Text>
             <TouchableOpacity
@@ -400,7 +400,7 @@ export default function CartScreen({ navigation }: any) {
               style={s.subBtn}
             >
               <Text style={s.subBtnTxt}>Subscribe Premium</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </>
         )}
       </ScrollView>
@@ -409,17 +409,43 @@ export default function CartScreen({ navigation }: any) {
         <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
           {/* Missing categories notice near payment */}
           {missingInfo && (
-            <View style={s.missWrap}>
-              <Text style={s.missTitle}>
-                Missing meal for {String(missingInfo.day).toLowerCase()}
-              </Text>
-              <Text style={s.missCats}>
-                {missingInfo.missing.map(x => x.toLowerCase()).join(', ')}
-              </Text>
+            <View style={s.missRow}>
+              <View style={s.missIcon}>
+                <FontAwesome5
+                  iconStyle="solid"
+                  name="exclamation-circle"
+                  size={18}
+                  color="#8A5A00"
+                />
+              </View>
+
+              <View style={s.missTxtWrap}>
+                <Text style={s.missTitle}>
+                  Missing meal for {String(missingInfo.day).toLowerCase()}
+                </Text>
+
+                <View style={s.missChipsRow}>
+                  {missingInfo.missing.map(x => (
+                    <View key={x} style={s.missChip}>
+                      <Text style={s.missChipTxt}>{x.toLowerCase()}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={s.missCta}
+                activeOpacity={0.9}
+                onPress={() => navigation.navigate('Home')}
+                accessibilityRole="button"
+                accessibilityLabel="Go to menu to add items"
+              >
+                <Text style={s.missCtaTxt}>Add</Text>
+              </TouchableOpacity>
             </View>
           )}
 
-          <View style={s.segment}>
+          {/* <View style={s.segment}>
             <TouchableOpacity
               style={[s.segBtn, mode === 'delivery' && s.segOn]}
               onPress={() => setMode('delivery')}
@@ -440,7 +466,7 @@ export default function CartScreen({ navigation }: any) {
 
           {mode === 'pickup' && (
             <Text style={s.saveNote}>Save extra 5% when you pickup orders</Text>
-          )}
+          )} */}
 
           <View style={s.totalRow}>
             <Text style={s.totalK}>TOTAL:</Text>
@@ -840,6 +866,59 @@ const s = StyleSheet.create({
   },
   missTitle: { fontWeight: '800', color: '#8A5A00', fontSize: 14 },
   missCats: { marginTop: 2, color: '#8A5A00', fontSize: 13 },
+  missBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#0B5733',
+  },
+  missBtnTxt: { color: '#FFF', fontWeight: '800' },
 
   payBtnDisabled: { opacity: 0.5 },
+  missRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFF6E5',
+    borderWidth: 1,
+    borderColor: '#FFD699',
+    marginBottom: 10,
+  },
+  missIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFE9C2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  missTxtWrap: { flex: 1 },
+  missChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  missChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#FFEFD1',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#FFE0A6',
+  },
+  missChipTxt: { color: '#8A5A00', fontWeight: '700', fontSize: 12 },
+
+  missCta: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#0B5733',
+    marginLeft: 10,
+  },
+  missCtaTxt: { color: '#FFF', fontWeight: '800' },
 });

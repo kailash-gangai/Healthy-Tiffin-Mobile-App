@@ -19,6 +19,7 @@ import {
 import { getProductsByIds } from '../../shopify/queries/getProducts';
 import { addItems, cartFLag } from '../../store/slice/cartSlice';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { getAllArticles } from '../../shopify/queries/blogs';
 
 interface CategoriesProps {
   key: string;
@@ -54,20 +55,36 @@ const ALL_DAYS = [
   'Sunday',
 ];
 
-const HomeScreen: React.FC = () => {
+interface BlogProp {
+  id: string;
+  title: string;
+  image?: {
+    url: string | null;
+  };
+  date: string;
+  video?: string | null;
+  author?: string;
+  content?: string | null;
+  excerpt?: string;
+}
+const HomeScreen: React.FC = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
   const { isCartCleared } = useAppSelector(state => state.cart);
-
   const [tab, setTab] = useState<0 | 1>(0);
   const [categories, setCategories] = useState<CategoriesProps[]>([]);
   const [addonCategories, setAddonCategories] = useState<CategoriesProps[]>([]);
   const [daysMeta, setDaysMeta] = useState<any[]>([]);
   const [addonsMeta, setAddonsMeta] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(false);
+  const [blogs, setBlogs] = useState<BlogProp[]>([]);
   const [selectedItemsToAddOnCart, setSelectedItemsToAddOnCart] = useState<
     Item[]
   >([]);
   const [filteredIndex, setFilteredIndex] = useState(0); // index within filtered list
+  const [openByKey, setOpenByKey] = React.useState<Record<string, boolean>>({});
+  const isOpen = (k: string) => openByKey[k] ?? true;
+  const setOpen = (k: string, v: boolean) =>
+    setOpenByKey(s => ({ ...s, [k]: v }));
 
   // map JS day to ALL_DAYS index (Mon..Sun)
   const absoluteTodayIndex = useMemo(() => {
@@ -97,6 +114,7 @@ const HomeScreen: React.FC = () => {
   );
 
   const currentDay = ALL_DAYS[absoluteDayIndex];
+  const order = ['protein', 'veggies', 'sides', 'probiotics'];
 
   const currentDayMetaObjectId = daysMeta.find(
     d => d.handle.toLowerCase() === currentDay.toLowerCase(),
@@ -117,6 +135,19 @@ const HomeScreen: React.FC = () => {
     setLoading(true);
     try {
       const listOfMetaobjects = await getAllMetaobjects('main_menus');
+      const resultBlogs = await getAllArticles();
+      const articles: any = resultBlogs?.articles;
+      const blog: any = articles?.map((blog: any) => ({
+        id: blog?.id,
+        title: blog?.title,
+        image: blog?.image?.url,
+        content: blog?.content,
+        video: blog?.video || null,
+        author: blog.authorV2?.name,
+        date: blog?.publishedAt,
+        excerpt: blog?.excerpt,
+      }));
+      setBlogs(blog);
       const listOfAddons = await getAllMetaobjects('addon_menu');
       if (!listOfMetaobjects || !listOfAddons)
         throw new Error('Failed to fetch metaobjects.');
@@ -168,7 +199,7 @@ const HomeScreen: React.FC = () => {
   // console.log(selectedItemsToAddOnCart, 'sel');
   // console.log(categories, 'all categories');
   // console.log(addonCategories, 'all caddon categories');
-  const order = ['protein', 'veggies', 'sides', 'probiotics'];
+
   const rank = (k: string) => {
     const i = order.indexOf(k.toLowerCase());
     return i === -1 ? 1e9 : i; // unknowns go last
@@ -181,19 +212,33 @@ const HomeScreen: React.FC = () => {
     (m, s) => (s.value.forEach(v => m.set(v.id, s.key.toLowerCase())), m),
     new Map<string, string>(),
   );
-  const missing = categories
-    .map(s => s.key.toLowerCase())
-    .filter(
+
+  const mainCats = categories.map(s => s.key.toLowerCase());
+  const hasAnyMain = selectedItemsToAddOnCart.some(i => i.type === 'main');
+  const hasAnyAddon = selectedItemsToAddOnCart.some(i => i.type === 'addon');
+
+  let result: { ok: boolean; missing: string[]; message: string };
+
+  // allow cart if ONLY addons selected
+  if (!hasAnyMain && hasAnyAddon) {
+    result = { ok: true, missing: [], message: '' };
+  } else if (hasAnyMain) {
+    // original main-selection enforcement stays the same
+    const missing = mainCats.filter(
       c =>
         !selectedItemsToAddOnCart.some(
           i => (i.category || idToCat.get(i.id) || '').toLowerCase() === c,
         ),
     );
-  const result = {
-    ok: !missing.length,
-    missing,
-    message: missing.length ? `Missing meal for: ${missing.join(', ')}` : '',
-  };
+    result = {
+      ok: missing.length === 0,
+      missing,
+      message: missing.length ? `Missing meal for: ${missing.join(', ')}` : '',
+    };
+  } else {
+    // nothing selected
+    result = { ok: false, missing: [], message: '' };
+  }
   useEffect(() => {
     if (isCartCleared) {
       setSelectedItemsToAddOnCart([]);
@@ -311,31 +356,37 @@ const HomeScreen: React.FC = () => {
               </View>
             )}
 
-            {sortedCategories?.map(cat => (
-              <Section
-                key={cat.key}
-                hero={require('../../assets/banners/chana.jpg')}
-                title={cat.key.toUpperCase()}
-                note={`Select from ${cat.value.length} options`}
-                collapsed={false}
-              >
-                {cat.value.map(d => (
-                  <DishCard
-                    category={cat.key.toUpperCase()}
-                    day={currentDay}
-                    type="main"
-                    setSelectedItemsToAddOnCart={
-                      setSelectedItemsToAddOnCart as any
-                    }
-                    selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
-                    isLoading={isLoading}
-                    key={d.id}
-                    item={d as any}
-                  />
-                ))}
-              </Section>
-            ))}
-
+            {sortedCategories.map(cat => {
+              const key = `main:${cat.key}`;
+              return (
+                <Section
+                  key={key}
+                  hero={require('../../assets/banners/chana.jpg')}
+                  title={cat.key.toUpperCase()}
+                  note={`Select from ${cat.value.length} options`}
+                  open={isOpen(key)}
+                  setOpen={(v: boolean) => setOpen(key, v)}
+                >
+                  {cat.value.map(d => (
+                    <DishCard
+                      key={d.id}
+                      category={cat.key.toUpperCase()}
+                      day={currentDay}
+                      type="main"
+                      item={d as any}
+                      setSelectedItemsToAddOnCart={
+                        setSelectedItemsToAddOnCart as any
+                      }
+                      selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
+                      isLoading={isLoading}
+                      onChange={picked => {
+                        if (picked?.selected) setOpen(key, false);
+                      }}
+                    />
+                  ))}
+                </Section>
+              );
+            })}
             {/* Move OrderToggle directly below categories.map */}
           </View>
         )}
@@ -347,30 +398,37 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.heading}>Addons</Text>
             </View>
 
-            {addonCategories?.map(cat => (
-              <Section
-                key={cat.key}
-                hero={require('../../assets/banners/chana.jpg')}
-                title={cat.key.toUpperCase()}
-                note={`Select from ${cat.value.length} options`}
-                collapsed={false}
-              >
-                {cat.value.map(d => (
-                  <DishCard
-                    category={cat.key.toUpperCase()}
-                    day={currentDay}
-                    type="addon"
-                    setSelectedItemsToAddOnCart={
-                      setSelectedItemsToAddOnCart as any
-                    }
-                    selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
-                    isLoading={isLoading}
-                    key={d.id}
-                    item={d as any}
-                  />
-                ))}
-              </Section>
-            ))}
+            {addonCategories.map(cat => {
+              const key = `addon:${cat.key}`;
+              return (
+                <Section
+                  key={key}
+                  hero={require('../../assets/banners/chana.jpg')}
+                  title={cat.key.toUpperCase()}
+                  note={`Select from ${cat.value.length} options`}
+                  open={isOpen(key)}
+                  setOpen={(v: boolean) => setOpen(key, v)}
+                >
+                  {cat.value.map(d => (
+                    <DishCard
+                      key={d.id}
+                      category={cat.key.toUpperCase()}
+                      day={currentDay}
+                      type="addon"
+                      item={d as any}
+                      setSelectedItemsToAddOnCart={
+                        setSelectedItemsToAddOnCart as any
+                      }
+                      selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
+                      isLoading={isLoading}
+                      onChange={picked => {
+                        if (picked?.selected) setOpen(key, false);
+                      }}
+                    />
+                  ))}
+                </Section>
+              );
+            })}
           </>
         )}
 
@@ -389,7 +447,10 @@ const HomeScreen: React.FC = () => {
             day={currentDay}
             isDisabled={!result?.ok}
             iconName="shopping-bag"
-            onPress={() => dispatch(addItems(selectedItemsToAddOnCart as any))}
+            onPress={() => {
+              dispatch(addItems(selectedItemsToAddOnCart as any));
+              navigation.navigate('Cart');
+            }}
             toast={{
               type: 'success',
               title: 'Added',
@@ -399,20 +460,7 @@ const HomeScreen: React.FC = () => {
           />
         </View>
 
-        <FitnessCarousel
-          items={[
-            {
-              id: 'a',
-              title: '5 healthy tips to lose fat fast and effectively',
-              image: require('../../assets/banners/chana.jpg'),
-            },
-            {
-              id: 'b',
-              title: 'What to do when you stop binge eating',
-              image: require('../../assets/banners/chana.jpg'),
-            },
-          ]}
-        />
+        {blogs && <FitnessCarousel items={blogs} />}
       </ScrollView>
     </View>
   );

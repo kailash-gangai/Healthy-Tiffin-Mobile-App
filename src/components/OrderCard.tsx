@@ -72,7 +72,8 @@ export default memo(function OrderCard({
         {/* header */}
         <View style={s.header}>
           <Text style={s.title} numberOfLines={1}>
-            {name} <Text style={s.sub}>· #{orderNumber}</Text>
+            {/* #{orderNumber} */}
+            {name} <Text style={s.sub}></Text>
           </Text>
           <Pill text={fulfillmentStatus} kind="fulfillment" />
         </View>
@@ -96,21 +97,14 @@ export default memo(function OrderCard({
         {/* meta */}
         <View style={s.metaGrid}>
           <View style={s.metaCol}>
-            <Text style={s.metaK}>Ordered</Text>
             <Text style={s.metaV}>{fmt(processedAt)}</Text>
           </View>
           <View style={[s.metaCol, { alignItems: 'flex-end' }]}>
-            <Text style={s.metaK}>Payment</Text>
             <View style={{ marginTop: 2 }}>
               <Pill text={financialStatus} kind="payment" />
             </View>
           </View>
         </View>
-
-        {/* items line */}
-        <Text style={s.itemsLine} numberOfLines={1}>
-          {items.map(i => i.title).join(' • ')}
-        </Text>
       </View>
     </TouchableOpacity>
   );

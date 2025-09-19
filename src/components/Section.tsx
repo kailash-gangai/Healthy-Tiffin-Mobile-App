@@ -1,16 +1,8 @@
-import React from 'react';
+import React, { useImperativeHandle } from 'react';
+
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { SHADOW } from '../ui/theme';
-
-export type SectionProps = {
-  title: string;
-  note?: string;
-  hero: any; // require('...') image
-  collapsed?: boolean;
-  children?: React.ReactNode;
-  onToggle?: (open: boolean) => void;
-};
 
 const COLORS = {
   bg: '#FFFFFF',
@@ -22,6 +14,19 @@ const COLORS = {
   shadow: 'rgba(0,0,0,0.08)',
 };
 
+export type SectionProps = {
+  title: string;
+  note?: string;
+  hero: any;
+  collapsed?: boolean;
+  children?: React.ReactNode;
+  onToggle?: (open: boolean) => void;
+
+  // new (controlled)
+  open?: boolean;
+  setOpen?: (v: boolean) => void;
+};
+
 export default function Section({
   title,
   note,
@@ -29,8 +34,13 @@ export default function Section({
   collapsed = true,
   children,
   onToggle,
+  open: controlledOpen,
+  setOpen: setControlledOpen,
 }: SectionProps) {
-  const [open, setOpen] = React.useState(!collapsed);
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(!collapsed);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = isControlled ? setControlledOpen! : setUncontrolledOpen;
 
   const toggle = () => {
     const next = !open;
@@ -40,14 +50,7 @@ export default function Section({
 
   return (
     <View style={s.wrap}>
-      {/* header: whole row toggles, plus icon still present */}
-      <TouchableOpacity
-        style={s.header}
-        onPress={toggle}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel={`${open ? 'Collapse' : 'Expand'} ${title}`}
-      >
+      <TouchableOpacity style={s.header} onPress={toggle} activeOpacity={0.8}>
         <Image source={hero} style={s.hero} />
         <View style={{ flex: 1 }}>
           <View style={s.titleRow}>
@@ -56,7 +59,6 @@ export default function Section({
           </View>
           {!!note && <Text style={s.note}>{note}</Text>}
         </View>
-
         <TouchableOpacity onPress={toggle} style={s.addBtn} activeOpacity={0.8}>
           <FontAwesome5
             iconStyle="solid"
@@ -67,7 +69,6 @@ export default function Section({
         </TouchableOpacity>
       </TouchableOpacity>
 
-      {/* body */}
       {open && <View style={s.body}>{children}</View>}
     </View>
   );
