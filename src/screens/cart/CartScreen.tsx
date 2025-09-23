@@ -181,6 +181,7 @@ const CATALOG = [
     ],
   },
 ];
+
 const catRank = (c?: string) => {
   const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
   return i === -1 ? 1e9 : i;
@@ -210,16 +211,26 @@ export default function CartScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
 
   const handleAddFromModal = (payload: any) => {
-    // add one item immediately
     dispatch(addItems([payload]));
   };
+
   const mealCost = lines
     .filter(i => i.type === 'main')
     .reduce((s, x) => s + +x.price * x.qty, 0);
+
   const addons = lines
     .filter(i => i.type === 'addon')
     .reduce((s, x) => s + +x.price * x.qty, 0);
+
   const nonMember = 0;
+  let tiffinPrice = 29;
+  const hasAnyMain = useMemo(() => lines.some(l => l.type === 'main'), [lines]);
+  const hasAnyAddon = useMemo(
+    () => lines.some(l => l.type === 'addon'),
+    [lines],
+  );
+  if (!hasAnyMain) tiffinPrice = 0;
+
   const subtotal = mealCost + addons + nonMember;
 
   const isEmpty = lines.length === 0;
@@ -247,8 +258,9 @@ export default function CartScreen({ navigation }: any) {
     [days, lines],
   );
 
-  // first missing day per required categories, priority = today → forward
+  // first missing day per required categories (only when mains exist)
   const missingInfo = useMemo(() => {
+    if (!hasAnyMain) return null;
     const ring = rotateFromToday(WEEK);
     const daysInCart = [...new Set(lines.map(l => l.day))].filter(
       Boolean,
@@ -264,7 +276,21 @@ export default function CartScreen({ navigation }: any) {
       if (missing.length > 0) return { day: d, missing };
     }
     return null;
-  }, [lines]);
+  }, [lines, hasAnyMain]);
+
+  // NEW: Add-ons minimum validation when there are only add-ons
+  const ADDONS_MIN = 29;
+  const addonsOnly = hasAnyAddon && !hasAnyMain;
+  const addonsMinInfo = useMemo(() => {
+    if (!addonsOnly) return null;
+    if (addons >= ADDONS_MIN) return null;
+    const remaining = Math.max(0, ADDONS_MIN - addons);
+    return {
+      total: addons,
+      remaining,
+      message: `Minimum $${ADDONS_MIN} for A La Carte orders`,
+    };
+  }, [addonsOnly, addons]);
 
   const [openByDay, setOpenByDay] = useState<Record<string, boolean>>({});
   const isOpen = (d: string) => openByDay[d] ?? true;
@@ -274,7 +300,10 @@ export default function CartScreen({ navigation }: any) {
   const onRemoveDayMains = (d: string) => dispatch(removeDayMains({ day: d }));
   const onRemoveDayAddons = (d: string) =>
     dispatch(removeDayAddons({ day: d }));
-  const payDisabled = isEmpty || !!missingInfo;
+
+  const payDisabled = isEmpty || !!missingInfo || !!addonsMinInfo;
+
+  const fmt = (n: number) => n.toFixed(2);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
@@ -308,220 +337,255 @@ export default function CartScreen({ navigation }: any) {
           </View>
         ) : (
           <>
-            {grouped.map(({ day, mains, addons }) => (
-              <View key={day} style={s.dayCard}>
-                <TouchableOpacity
-                  style={s.dayHdr}
-                  onPress={() => toggleDay(day)}
-                  activeOpacity={0.9}
-                >
-                  <Text style={s.dayTitle}>{day} Summary</Text>
-                  <FontAwesome5
-                    iconStyle="solid"
-                    name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={C.black}
-                  />
-                </TouchableOpacity>
+            {grouped.map(({ day, mains, addons }) => {
+              const dayAddonsTotal = addons.reduce(
+                (s, x) => s + +x.price * x.qty,
+                0,
+              );
 
-                {isOpen(day) && (
-                  <>
-                    {/* Main block */}
-                    {mains.length > 0 && (
-                      <View style={s.block}>
-                        <View style={s.blockHdRow}>
-                          <Text style={s.blockChip}>Main</Text>
-                          <TouchableOpacity
-                            onPress={() => onRemoveDayMains(day)}
-                            style={s.hdrTrashBtn}
-                          >
-                            <FontAwesome5
-                              iconStyle="solid"
-                              name="trash"
-                              size={16}
-                              color={C.red}
-                            />
-                          </TouchableOpacity>
-                        </View>
+              return (
+                <View key={day}>
+                  <View key={day} style={s.dayCard}>
+                    <TouchableOpacity
+                      style={s.dayHdr}
+                      onPress={() => toggleDay(day)}
+                      activeOpacity={0.9}
+                    >
+                      <Text style={s.dayTitle}>{day} Summary</Text>
+                      <FontAwesome5
+                        iconStyle="solid"
+                        name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
+                        size={16}
+                        color={C.black}
+                      />
+                    </TouchableOpacity>
 
-                        {mains.map(it => (
-                          <View key={`${it.id}-${it.variantId}`} style={s.card}>
-                            <TouchableOpacity
-                              onPress={() =>
-                                dispatch(
-                                  removeItem({
-                                    id: it.id,
-                                    variantId: it.variantId,
-                                  }),
-                                )
-                              }
-                              style={s.priceTrashBtn}
-                              accessibilityRole="button"
-                              accessibilityLabel="Remove item"
-                            >
-                              <FontAwesome5
-                                iconStyle="solid"
-                                name="times"
-                                size={20}
-                                color={C.red}
-                              />
-                            </TouchableOpacity>
+                    {isOpen(day) && (
+                      <>
+                        {/* Main block */}
+                        {mains.length > 0 && (
+                          <View style={s.block}>
+                            <View style={s.blockHdRow}>
+                              <Text style={s.blockChip}>Main</Text>
+                              <TouchableOpacity
+                                onPress={() => onRemoveDayMains(day)}
+                                style={s.hdrTrashBtn}
+                              >
+                                <FontAwesome5
+                                  iconStyle="solid"
+                                  name="trash"
+                                  size={16}
+                                  color={C.red}
+                                />
+                              </TouchableOpacity>
+                            </View>
 
-                            <Image source={{ uri: it.image }} style={s.img} />
-
-                            <View style={s.cardContent}>
-                              {/* type + category */}
-                              <View style={s.titleRowTight}>
-                                <Text style={s.typeBadge}>Type: {it.type}</Text>
-                                <Text style={s.catPill}>{it.category}</Text>
-                              </View>
-
-                              {/* title */}
-                              <Text style={s.itemTitle} numberOfLines={2}>
-                                {it.title}
-                              </Text>
-
-                              {/* price below title */}
-                              <Text style={s.priceUnder}>${it.price}</Text>
-
-                              {/* qty row */}
-                              <View style={s.qtyRow}>
-                                <Round
-                                  onPress={() => {
-                                    if (it.qty === 1) return;
-                                    dispatch(
-                                      decreaseItem({
-                                        id: it.id,
-                                        variantId: it.variantId,
-                                      }),
-                                    );
-                                  }}
-                                >
-                                  <Text style={s.sign}>−</Text>
-                                </Round>
-                                <Text style={s.qty}>{it.qty}</Text>
-                                <Round
+                            {mains.map(it => (
+                              <View
+                                key={`${it.id}-${it.variantId}`}
+                                style={s.card}
+                              >
+                                <TouchableOpacity
                                   onPress={() =>
                                     dispatch(
-                                      increaseItem({
+                                      removeItem({
                                         id: it.id,
                                         variantId: it.variantId,
                                       }),
                                     )
                                   }
+                                  style={s.priceTrashBtn}
+                                  accessibilityRole="button"
+                                  accessibilityLabel="Remove item"
                                 >
-                                  <Text style={s.sign}>＋</Text>
-                                </Round>
+                                  <FontAwesome5
+                                    iconStyle="solid"
+                                    name="times"
+                                    size={20}
+                                    color={C.red}
+                                  />
+                                </TouchableOpacity>
+
+                                <Image
+                                  source={{ uri: it.image }}
+                                  style={s.img}
+                                />
+
+                                <View style={s.cardContent}>
+                                  {/* type + category */}
+                                  <View style={s.titleRowTight}>
+                                    <Text style={s.typeBadge}>
+                                      Type: {it.type}
+                                    </Text>
+                                    <Text style={s.catPill}>{it.category}</Text>
+                                  </View>
+
+                                  {/* title */}
+                                  <Text style={s.itemTitle} numberOfLines={2}>
+                                    {it.title}
+                                  </Text>
+
+                                  {/* price below title */}
+                                  <Text style={s.priceUnder}>${it.price}</Text>
+
+                                  {/* qty row */}
+                                  <View style={s.qtyRow}>
+                                    <Round
+                                      onPress={() => {
+                                        if (it.qty === 1) return;
+                                        dispatch(
+                                          decreaseItem({
+                                            id: it.id,
+                                            variantId: it.variantId,
+                                          }),
+                                        );
+                                      }}
+                                    >
+                                      <Text style={s.sign}>−</Text>
+                                    </Round>
+                                    <Text style={s.qty}>{it.qty}</Text>
+                                    <Round
+                                      onPress={() =>
+                                        dispatch(
+                                          increaseItem({
+                                            id: it.id,
+                                            variantId: it.variantId,
+                                          }),
+                                        )
+                                      }
+                                    >
+                                      <Text style={s.sign}>＋</Text>
+                                    </Round>
+                                  </View>
+                                </View>
                               </View>
+                            ))}
+                            <View style={s.tiffinTotalBox}>
+                              <Text style={s.tiffinTotalTxt}>
+                                Total for {day} Tiffin 1 : ${tiffinPrice} + ($
+                                {mealCost}) = ${mealCost + tiffinPrice}
+                              </Text>
                             </View>
                           </View>
-                        ))}
-                      </View>
-                    )}
+                        )}
 
-                    {/* Add-ons block */}
-                    {addons.length > 0 && (
-                      <View style={s.block}>
-                        <View style={s.blockHdRow}>
-                          <Text style={s.blockChipAlt}>Add-ons</Text>
-                          <TouchableOpacity
-                            onPress={() => onRemoveDayAddons(day)}
-                            style={s.hdrTrashBtn}
-                          >
-                            <FontAwesome5
-                              iconStyle="solid"
-                              name="trash"
-                              size={16}
-                              color={C.red}
-                            />
-                          </TouchableOpacity>
-                        </View>
+                        {/* Add-ons block */}
+                        {addons.length > 0 && (
+                          <View style={s.block}>
+                            <View style={s.blockHdRow}>
+                              <Text style={s.blockChipAlt}>Add-ons</Text>
+                              <TouchableOpacity
+                                onPress={() => onRemoveDayAddons(day)}
+                                style={s.hdrTrashBtn}
+                              >
+                                <FontAwesome5
+                                  iconStyle="solid"
+                                  name="trash"
+                                  size={16}
+                                  color={C.red}
+                                />
+                              </TouchableOpacity>
+                            </View>
 
-                        {addons.map(it => (
-                          <View
-                            key={`${it.id}-${it.variantId}`}
-                            style={s.cardAlt}
-                          >
-                            <TouchableOpacity
-                              onPress={() =>
-                                dispatch(
-                                  removeItem({
-                                    id: it.id,
-                                    variantId: it.variantId,
-                                  }),
-                                )
-                              }
-                              style={s.priceTrashBtn}
-                              accessibilityRole="button"
-                              accessibilityLabel="Remove add-on"
-                            >
-                              <FontAwesome5
-                                iconStyle="solid"
-                                name="times"
-                                size={20}
-                                color={C.red}
-                              />
-                            </TouchableOpacity>
+                            {addons.map(it => (
+                              <View
+                                key={`${it.id}-${it.variantId}`}
+                                style={s.cardAlt}
+                              >
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    dispatch(
+                                      removeItem({
+                                        id: it.id,
+                                        variantId: it.variantId,
+                                      }),
+                                    )
+                                  }
+                                  style={s.priceTrashBtn}
+                                  accessibilityRole="button"
+                                  accessibilityLabel="Remove add-on"
+                                >
+                                  <FontAwesome5
+                                    iconStyle="solid"
+                                    name="times"
+                                    size={20}
+                                    color={C.red}
+                                  />
+                                </TouchableOpacity>
 
-                            <Image
-                              source={{ uri: it.image }}
-                              style={s.imgSmall}
-                            />
+                                <Image
+                                  source={{ uri: it.image }}
+                                  style={s.imgSmall}
+                                />
 
-                            <View style={s.cardContent}>
-                              {/* type + category */}
-                              <View style={s.titleRowTight}>
-                                <Text style={s.typeBadgeAlt}>
-                                  Type: {it.type}
+                                <View style={s.cardContent}>
+                                  {/* type + category */}
+                                  <View style={s.titleRowTight}>
+                                    <Text style={s.typeBadgeAlt}>
+                                      Type: {it.type}
+                                    </Text>
+                                    <Text style={s.catPillAlt}>
+                                      {it.category}
+                                    </Text>
+                                  </View>
+
+                                  {/* title */}
+                                  <Text style={s.itemTitleSm} numberOfLines={2}>
+                                    {it.title}
+                                  </Text>
+
+                                  {/* price under title */}
+                                  <Text style={s.priceSmUnder}>
+                                    ${it.price}
+                                  </Text>
+
+                                  <View style={s.qtyRowSm}>
+                                    <Round
+                                      onPress={() => {
+                                        if (it.qty === 1) return;
+                                        dispatch(
+                                          decreaseItem({
+                                            id: it.id,
+                                            variantId: it.variantId,
+                                          }),
+                                        );
+                                      }}
+                                    >
+                                      <Text style={s.sign}>−</Text>
+                                    </Round>
+                                    <Text style={s.qty}>{it.qty}</Text>
+                                    <Round
+                                      onPress={() =>
+                                        dispatch(
+                                          increaseItem({
+                                            id: it.id,
+                                            variantId: it.variantId,
+                                          }),
+                                        )
+                                      }
+                                    >
+                                      <Text style={s.sign}>＋</Text>
+                                    </Round>
+                                  </View>
+                                </View>
+                              </View>
+                            ))}
+                            {addons.length > 0 && (
+                              <View style={s.addonTotalBox}>
+                                <Text style={s.addonTotalTxt}>
+                                  Total for {day} A La Carte: $
+                                  {fmt(dayAddonsTotal)}
                                 </Text>
-                                <Text style={s.catPillAlt}>{it.category}</Text>
                               </View>
-
-                              {/* title */}
-                              <Text style={s.itemTitleSm} numberOfLines={2}>
-                                {it.title}
-                              </Text>
-
-                              {/* price under title */}
-                              <Text style={s.priceSmUnder}>${it.price}</Text>
-
-                              <View style={s.qtyRowSm}>
-                                <Round
-                                  onPress={() => {
-                                    if (it.qty === 1) return;
-                                    dispatch(
-                                      decreaseItem({
-                                        id: it.id,
-                                        variantId: it.variantId,
-                                      }),
-                                    );
-                                  }}
-                                >
-                                  <Text style={s.sign}>−</Text>
-                                </Round>
-                                <Text style={s.qty}>{it.qty}</Text>
-                                <Round
-                                  onPress={() =>
-                                    dispatch(
-                                      increaseItem({
-                                        id: it.id,
-                                        variantId: it.variantId,
-                                      }),
-                                    )
-                                  }
-                                >
-                                  <Text style={s.sign}>＋</Text>
-                                </Round>
-                              </View>
-                            </View>
+                            )}
                           </View>
-                        ))}
-                      </View>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </View>
-            ))}
+                  </View>
+                </View>
+              );
+            })}
 
             {/* Clear cart + notes + summary + upsell */}
             <TouchableOpacity
@@ -543,29 +607,18 @@ export default function CartScreen({ navigation }: any) {
             />
 
             <View style={s.summary}>
-              <Row k="Meal box price" v={`$${mealCost}`} />
+              <Row k="Meal box price" v={`$${mealCost + tiffinPrice}`} />
               <Row k="Add on's" v={`$${addons}`} />
               {/* <Row k="Non member shipping" v={`$${nonMember}`} /> */}
-              <Row k="Total" v={`$${subtotal}`} bold />
+              <Row k="Total" v={`$${subtotal + tiffinPrice}`} bold />
             </View>
-
-            {/* <Text style={s.upsellText}>
-              Subscribe and save delivery charges {'\n'}get many more features.
-            </Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Subscription')}
-              activeOpacity={0.9}
-              style={s.subBtn}
-            >
-              <Text style={s.subBtnTxt}>Subscribe Premium</Text>
-            </TouchableOpacity> */}
           </>
         )}
       </ScrollView>
 
       {!isEmpty && (
         <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
-          {/* Missing categories notice near payment */}
+          {/* Missing categories (when mains exist) */}
           {missingInfo && (
             <View style={s.missRow}>
               <View style={s.missIcon}>
@@ -596,7 +649,6 @@ export default function CartScreen({ navigation }: any) {
                 activeOpacity={0.9}
                 onPress={() => {
                   navigation.navigate('Home');
-                  // setMissingOpen(true)
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Open suggestions to add items"
@@ -606,45 +658,50 @@ export default function CartScreen({ navigation }: any) {
             </View>
           )}
 
-          {/* <MissingCategoryModal
-            visible={missingOpen && !!missingInfo}
-            onClose={() => setMissingOpen(false)}
-            day={missingInfo?.day || ''}
-            missingCats={missingInfo?.missing || []}
-            catalog={CATALOG}
-            onAdd={p => {
-              handleAddFromModal(p);
-              // optional: close when category fulfilled
-              // setMissingOpen(false);
-            }}
-          /> */}
+          {/* NEW: Add-ons minimum notice (when only add-ons and < $29) */}
+          {!missingInfo && addonsMinInfo && (
+            <View style={s.missRow}>
+              <View style={s.missIcon}>
+                <FontAwesome5
+                  iconStyle="solid"
+                  name="exclamation-circle"
+                  size={18}
+                  color="#8A5A00"
+                />
+              </View>
 
-          {/* <View style={s.segment}>
-            <TouchableOpacity
-              style={[s.segBtn, mode === 'delivery' && s.segOn]}
-              onPress={() => setMode('delivery')}
-            >
-              <Text style={[s.segTxt, mode === 'delivery' && s.segTxtOn]}>
-                DELIVERY
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[s.segBtn, mode === 'pickup' && s.segOn]}
-              onPress={() => setMode('pickup')}
-            >
-              <Text style={[s.segTxt, mode === 'pickup' && s.segTxtOn]}>
-                PICKUP
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <View style={s.missTxtWrap}>
+                <Text style={s.missTitle}>{addonsMinInfo.message}</Text>
 
-          {mode === 'pickup' && (
-            <Text style={s.saveNote}>Save extra 5% when you pickup orders</Text>
-          )} */}
+                <View style={s.missChipsRow}>
+                  <View style={s.missChip}>
+                    <Text style={s.missChipTxt}>
+                      current: ${fmt(addonsMinInfo.total)}
+                    </Text>
+                  </View>
+                  <View style={s.missChip}>
+                    <Text style={s.missChipTxt}>
+                      add ${fmt(addonsMinInfo.remaining)} more
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={s.missCta}
+                activeOpacity={0.9}
+                onPress={() => navigation.navigate('Home')}
+                accessibilityRole="button"
+                accessibilityLabel="Add more items"
+              >
+                <Text style={s.missCtaTxt}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={s.totalRow}>
             <Text style={s.totalK}>TOTAL:</Text>
-            <Text style={s.totalV}>${subtotal}</Text>
+            <Text style={s.totalV}>${subtotal + tiffinPrice}</Text>
           </View>
 
           <TouchableOpacity
@@ -1029,7 +1086,7 @@ const s = StyleSheet.create({
     marginTop: 20,
   },
 
-  /* missing notice near payment */
+  /* missing/validation notice */
   missWrap: {
     backgroundColor: '#FFF6E5',
     borderColor: '#FFD699',
@@ -1095,4 +1152,33 @@ const s = StyleSheet.create({
     marginLeft: 10,
   },
   missCtaTxt: { color: '#FFF', fontWeight: '800' },
+
+  /* total cards */
+  tiffinTotalBox: {
+    backgroundColor: '#FFF6E5',
+    borderColor: '#FFD699',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  tiffinTotalTxt: {
+    fontWeight: '800',
+    fontSize: 16,
+    color: '#8A5A00',
+  },
+
+  addonTotalBox: {
+    backgroundColor: '#EAF1FF',
+    borderColor: '#CFE0FF',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  addonTotalTxt: {
+    fontWeight: '800',
+    fontSize: 16,
+    color: '#1B4FBF',
+  },
 });

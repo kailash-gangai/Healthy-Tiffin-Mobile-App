@@ -34,6 +34,8 @@ const OrderScreen: React.FC<Props> = ({ navigation }) => {
       if (customer && customer?.customerToken) {
         const data: any = await getCustomerOrder(customer?.customerToken, 50);
         if (data) {
+          console.log(data, 'order dta');
+
           setOrders(data);
           setIsLoading(false);
         }

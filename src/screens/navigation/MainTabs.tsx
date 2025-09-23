@@ -12,22 +12,22 @@ type TabKey = 'progress' | 'favorites' | 'Home' | 'Order' | 'account';
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
-      return (
-            <Tab.Navigator
-                  initialRouteName="Home"
-                  screenOptions={{ headerShown: false }}
-                  tabBar={({ state, navigation }) => (
-                        <BottomTabs
-                              active={state.routes[state.index].name as TabKey}
-                              onChange={(k) => navigation.navigate(k)}
-                        />
-                  )}
-            >
-                  <Tab.Screen name="progress" component={ProgressScreen} />
-                  <Tab.Screen name="favorites" component={FavoritesScreen} />
-                  <Tab.Screen name="Home" component={HomeScreen} />
-                  <Tab.Screen name="Order" component={OrderScreen} />
-                  <Tab.Screen name="account" component={AccountScreen} />
-            </Tab.Navigator>
-      );
+  return (
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={{ headerShown: false }}
+      tabBar={({ state, navigation }) => (
+        <BottomTabs
+          active={state.routes[state.index].name as TabKey}
+          onChange={k => navigation.navigate(k)}
+        />
+      )}
+    >
+      <Tab.Screen name="progress" component={ProgressScreen} />
+      <Tab.Screen name="favorites" component={FavoritesScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Order" component={OrderScreen} />
+      <Tab.Screen name="account" component={AccountScreen} />
+    </Tab.Navigator>
+  );
 }
