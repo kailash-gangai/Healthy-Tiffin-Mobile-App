@@ -70,6 +70,8 @@ interface BlogProp {
 const HomeScreen: React.FC = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
   const { isCartCleared } = useAppSelector(state => state.cart);
+
+  // state
   const [tab, setTab] = useState<0 | 1>(0);
   const [categories, setCategories] = useState<CategoriesProps[]>([]);
   const [addonCategories, setAddonCategories] = useState<CategoriesProps[]>([]);
@@ -80,13 +82,16 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [selectedItemsToAddOnCart, setSelectedItemsToAddOnCart] = useState<
     Item[]
   >([]);
+  const [priceThreshold, setPriceThreshold] = useState<any[]>([]);
   const [filteredIndex, setFilteredIndex] = useState(0); // index within filtered list
   const [openByKey, setOpenByKey] = React.useState<Record<string, boolean>>({});
+
+  // ui helpers
   const isOpen = (k: string) => openByKey[k] ?? true;
   const setOpen = (k: string, v: boolean) =>
     setOpenByKey(s => ({ ...s, [k]: v }));
 
-  // map JS day to ALL_DAYS index (Mon..Sun)
+  // day indexes
   const absoluteTodayIndex = useMemo(() => {
     const js = new Date().getDay(); // 0=Sun..6=Sat
     const week = [
@@ -101,13 +106,11 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     return ALL_DAYS.indexOf(week[js]); // 0..6
   }, []);
 
-  // Only show today and future days
   const FILTERED_DAYS = useMemo(() => {
     if (absoluteTodayIndex < 0) return ALL_DAYS;
     return ALL_DAYS.slice(absoluteTodayIndex); // e.g. ['Thursday','Friday','Saturday','Sunday']
   }, [absoluteTodayIndex]);
 
-  // Convert filtered index -> absolute index in ALL_DAYS
   const absoluteDayIndex = useMemo(
     () => Math.min(ALL_DAYS.length - 1, absoluteTodayIndex + filteredIndex),
     [absoluteTodayIndex, filteredIndex],
@@ -116,6 +119,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const currentDay = ALL_DAYS[absoluteDayIndex];
   const order = ['protein', 'veggies', 'sides', 'probiotics'];
 
+  // metaobject ids
   const currentDayMetaObjectId = daysMeta.find(
     d => d.handle.toLowerCase() === currentDay.toLowerCase(),
   )?.id;
@@ -123,6 +127,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const addonsMetaObjectId = addonsMeta.find(
     (d: any) => d.handle.toLowerCase() === currentDay.toLowerCase(),
   )?.id;
+
+  // costs
   const mealCost = selectedItemsToAddOnCart
     .filter(item => item.type === 'main')
     .reduce((total, item) => total + parseFloat(String(item.price)), 0);
@@ -131,10 +137,48 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     .filter(item => item.type === 'addon')
     .reduce((total, item) => total + parseFloat(String(item.price)), 0);
 
+  // pricing helper
+  function applyPriceThresholds(categories: any[], thresholds: any[]): any[] {
+    const map: Record<string, number> = {};
+
+    for (const t of thresholds) {
+      const prefix = t.key.split('_')[0]?.trim();
+      if (!prefix) continue;
+      const v = parseFloat(t.value);
+      if (Number.isFinite(v)) map[prefix] = v;
+    }
+
+    const keepDecimals = (orig: string, num: number) => {
+      const decs = (orig.split('.')[1] ?? '').length;
+      return decs > 0 ? num.toFixed(decs) : String(Math.trunc(num));
+    };
+
+    return categories.map(cat => {
+      const thr = map[cat.key];
+      if (!Number.isFinite(thr)) return cat;
+
+      const nextItems = cat.value.map((it: any) => {
+        const priceNum = parseFloat(it.price);
+        if (!Number.isFinite(priceNum)) return it;
+        const newNum = Math.max(priceNum - thr, 0);
+        return { ...it, price: keepDecimals(it.price, newNum) };
+      });
+
+      return { ...cat, value: nextItems };
+    });
+  }
+
+  // fetchers
   const fetchMetaObjects = async () => {
     setLoading(true);
     try {
       const listOfMetaobjects = await getAllMetaobjects('main_menus');
+      const priceThreshold = await getAllMetaobjects('price_threshold');
+      const priceMetaobject: any = await getMetaObjectByHandle(
+        priceThreshold?.[0]?.id,
+      );
+      setPriceThreshold(priceMetaobject);
+
       const resultBlogs = await getAllArticles();
       const articles: any = resultBlogs?.articles;
       const blog: any = articles?.map((blog: any) => ({
@@ -148,6 +192,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         excerpt: blog?.excerpt,
       }));
       setBlogs(blog);
+
       const listOfAddons = await getAllMetaobjects('addon_menu');
       if (!listOfMetaobjects || !listOfAddons)
         throw new Error('Failed to fetch metaobjects.');
@@ -195,15 +240,12 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     }
   };
 
-  // console.log(isCartCleared, 'is cart cleared');
-  // console.log(selectedItemsToAddOnCart, 'sel');
-  // console.log(categories, 'all categories');
-  // console.log(addonCategories, 'all caddon categories');
-
+  // derived ordering and maps
   const rank = (k: string) => {
     const i = order.indexOf(k.toLowerCase());
     return i === -1 ? 1e9 : i; // unknowns go last
   };
+
   const sortedCategories = categories
     .slice()
     .sort((a, b) => rank(a.key) - rank(b.key));
@@ -217,13 +259,24 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const hasAnyMain = selectedItemsToAddOnCart.some(i => i.type === 'main');
   const hasAnyAddon = selectedItemsToAddOnCart.some(i => i.type === 'addon');
 
+  // apply thresholds
+  const updatedCategory = applyPriceThresholds(
+    sortedCategories,
+    priceThreshold,
+  );
+  // selection validation
   let result: { ok: boolean; missing: string[]; message: string };
-
-  // allow cart if ONLY addons selected
   if (!hasAnyMain && hasAnyAddon) {
-    result = { ok: true, missing: [], message: '' };
+    if (addonCost < 29) {
+      result = {
+        ok: false,
+        missing: [],
+        message: 'A La Carte Minimum $29 for ' + currentDay,
+      };
+    } else {
+      result = { ok: true, missing: [], message: '' };
+    }
   } else if (hasAnyMain) {
-    // original main-selection enforcement stays the same
     const missing = mainCats.filter(
       c =>
         !selectedItemsToAddOnCart.some(
@@ -239,6 +292,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     // nothing selected
     result = { ok: false, missing: [], message: '' };
   }
+
+  // effects
   useEffect(() => {
     if (isCartCleared) {
       setSelectedItemsToAddOnCart([]);
@@ -246,6 +301,14 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     dispatch(cartFLag());
     fetchMetaObjects();
   }, [currentDayMetaObjectId, addonsMetaObjectId, isCartCleared]);
+
+  // usage and logs
+  // console.log(isCartCleared, 'is cart cleared');
+  // console.log(selectedItemsToAddOnCart, 'sel');
+  // console.log(categories, 'all categories');
+  // console.log(addonCategories, 'all caddon categories');
+  // console.log(priceThreshold, 'state');
+  // console.log(updatedCategory, 'updago');
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -271,7 +334,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             <View style={styles.container}>
               <Text style={styles.heading}>Main</Text>
             </View>
-            {!sortedCategories.length && (
+            {!updatedCategory.length && (
               <View
                 style={{
                   marginHorizontal: 16,
@@ -356,7 +419,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               </View>
             )}
 
-            {sortedCategories.map(cat => {
+            {updatedCategory.map(cat => {
               const key = `main:${cat.key}`;
               return (
                 <Section

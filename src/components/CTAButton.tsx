@@ -50,10 +50,7 @@ export default function CTAButton({
   const lbl = typeof label === 'string' ? { message: label } : label || {};
   const ok: boolean = lbl?.result?.ok ?? lbl?.ok ?? true;
   const missing: string[] = lbl?.result?.missing ?? lbl?.missing ?? [];
-
-  const primary = ok
-    ? lbl?.message?.trim() || 'Add to cart'
-    : `Missing meal for ${day ?? ''}`.trim();
+  const primary = ok ? lbl?.message?.trim() || 'Add to cart' : label.message;
 
   const secondary = !ok && missing?.length ? compact(missing) : '';
 

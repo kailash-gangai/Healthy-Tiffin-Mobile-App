@@ -41,7 +41,6 @@ export const getAllMetaobjects = async (
 
   try {
     const data: MetaObjectFieldReturnType = await callShopifyApi(query);
-
     if (!data?.metaobjects?.nodes) {
       console.warn('No data found');
       return [];
