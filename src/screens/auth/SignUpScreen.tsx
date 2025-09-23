@@ -33,6 +33,10 @@ import { GoogleAuthProvider, getAuth, signInWithCredential } from '@react-native
 GoogleSignin.configure({
     // offlineAccess: true,
     webClientId: "678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd.apps.googleusercontent.com",
+    // ios
+    iosClientId: "541872006500-5mlca2bgg8v4qb26muaabmcjepbekvf2.apps.googleusercontent.com",
+    // android
+    // androidClientId: "678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd.apps.googleusercontent.com",
 });
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));

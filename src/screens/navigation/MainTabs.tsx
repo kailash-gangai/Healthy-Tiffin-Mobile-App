@@ -2,7 +2,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import BottomTabs from '../../components/BottomTabs';
-import HomeScreen from '../home/HomeScreen';
+import HomeScreen from '../Home/HomeScreen';
 import ProgressScreen from '../menutabs/ProgressScreen';
 import FavoritesScreen from '../favorites/FavoritesScreen';
 import OrderScreen from '../order/OrderScreen';
