@@ -338,7 +338,6 @@ export default function CartScreen({ navigation }: any) {
           </View>
         ) : (
           <>
-<<<<<<< HEAD
             {grouped.map(({ day, mains, addons }) => {
               const dayAddonsTotal = addons.reduce(
                 (s, x) => s + +x.price * x.qty,
@@ -381,51 +380,6 @@ export default function CartScreen({ navigation }: any) {
                                 />
                               </TouchableOpacity>
                             </View>
-=======
-            {grouped.map(({ day, mains, addons }) => (
-              <View key={day} style={s.dayCard}>
-                <TouchableOpacity
-                  style={s.dayHdr}
-                  onPress={() => toggleDay(day)}
-                  activeOpacity={0.9}
-                >
-                  <Text style={s.dayTitle}>{day} Summary</Text>
-                  {isOpen(day) ? (<MinusIcon height={24} width={24} />) : (<PlusIcon height={24} width={24} />)}
-                </TouchableOpacity>
-
-                {isOpen(day) && (
-                  <>
-                    {/* Main block */}
-                    {mains.length > 0 && (
-                      <View style={s.block}>
-                        <View style={s.blockHdRow}>
-                          <Text style={s.blockChip}>Main</Text>
-                          <TouchableOpacity
-                            onPress={() => onRemoveDayMains(day)}
-                            style={s.hdrTrashBtn}
-                          >
-                            <TrashIcon height={24} width={24} />
-                          </TouchableOpacity>
-                        </View>
-
-                        {mains.map(it => (
-                          <View key={`${it.id}-${it.variantId}`} style={s.card}>
-                            <TouchableOpacity
-                              onPress={() =>
-                                dispatch(
-                                  removeItem({
-                                    id: it.id,
-                                    variantId: it.variantId,
-                                  }),
-                                )
-                              }
-                              style={s.priceTrashBtn}
-                              accessibilityRole="button"
-                              accessibilityLabel="Remove item"
-                            >
-                              <RemoveIcon height={24} width={24} />
-                            </TouchableOpacity>
->>>>>>> dev-kailash-ios
 
                             {mains.map(it => (
                               <View
