@@ -16,6 +16,8 @@ import AppHeader from '../../components/AppHeader';
 import { connectFitbit, getValidTokens } from '../../config/fitbitService';
 import { initHealth } from '../../health/healthkit';
 import { COLORS as C } from '../../ui/theme';
+import FitbitLogo from '../../assets/logo-fitbit.svg';
+import AppleHealthLogo from '../../assets/logo-apple-health.svg';
 export default function ConnectDevicesScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState<any>(null);
@@ -102,10 +104,7 @@ export default function ConnectDevicesScreen({ navigation }: any) {
 
         <DeviceCard
           icon={
-            <Image
-              source={require('../../assets/banners/chana.jpg')}
-              style={s.icon}
-            />
+            <FitbitLogo width={44} height={44} />
           }
           title="Fitbit"
           status={tokens ? 'Connected' : 'SETUP'}
@@ -114,10 +113,7 @@ export default function ConnectDevicesScreen({ navigation }: any) {
 
         <DeviceCard
           icon={
-            <Image
-              source={require('../../assets/banners/chana.jpg')}
-              style={s.icon}
-            />
+            <AppleHealthLogo width={44} height={44} />
           }
           title="Apple Health"
           status={tokens ? 'Connected' : 'SETUP'}
