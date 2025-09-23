@@ -93,6 +93,8 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
         } catch (error) {
             setIsloading(false);
             Alert.alert("Error", error instanceof Error ? error.message : "An error occurred.");
+        } finally {
+            setIsloading(false);
         }
     }, [email, pass]);
 

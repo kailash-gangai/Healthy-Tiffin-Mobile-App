@@ -31,8 +31,8 @@ const RING_SIZE = Math.min(width * 0.52, 130);
 const R = (RING_SIZE - 14) / 2;
 
 export default function WeightTrackerScreen() {
-      const [current, setCurrent] = useState(200);
-      const [goal, setGoal] = useState(154);
+      const [current, setCurrent] = useState(0);
+      const [goal, setGoal] = useState(0);
       const [open, setOpen] = useState(false);
       const [startingDate, setStartingDate] = useState('');
       const [curDraft, setCurDraft] = useState(String(current));
@@ -59,7 +59,7 @@ export default function WeightTrackerScreen() {
                         }
                         try {
                               const s = await getfitBitWeight(t.accessToken, '');
-
+                              console.log('fitbit weight data', s);
                               setCurrent(s?.goal.startWeight);
                               setGoal(s?.goal?.weight);
                               setStartingDate(s?.goal?.startDate);
@@ -75,12 +75,13 @@ export default function WeightTrackerScreen() {
                   return () => { alive = false; };
             }, [navigate])
       );
-      const submit = () => {
+      const submit = async () => {
             const c = parseInt(curDraft, 10);
             const g = parseInt(goalDraft, 10);
 
             try {
-                  setfitBitWeight(accessToken, startingDate, c, g);
+                  const r = await setfitBitWeight(accessToken, startingDate, c, g);
+                  console.log('set weight result', r);
                   setCurrent(c);
                   setGoal(g);
                   Alert.alert("Goal updated", `Weight goal set to ${g.toLocaleString()} lbs.`);
