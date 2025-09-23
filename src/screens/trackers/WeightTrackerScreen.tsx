@@ -24,7 +24,7 @@ import { COLORS as C, SPACING } from "../../ui/theme";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { getValidTokens, getfitBitWeight, setfitBitWeight } from "../../config/fitbitService";
-
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 
 const { width } = Dimensions.get("window");
 const RING_SIZE = Math.min(width * 0.52, 130);
@@ -175,7 +175,7 @@ export default function WeightTrackerScreen() {
                                     setOpen(true);
                               }}
                         >
-                              <Text style={s.ctaText}>Update Weight    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={C.white} style={{ marginLeft: 8 }} /></Text>
+                              <Text style={s.ctaText}>Update Weight    <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} /></Text>
                         </Pressable>
 
 

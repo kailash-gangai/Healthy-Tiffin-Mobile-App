@@ -75,6 +75,7 @@ export default function ConnectDevicesScreen({ navigation }: any) {
       // Triggers system prompt on first run. Returns fast if already authorized.
       await initHealth();
     } catch (e: any) {
+      console.warn('Health init error', e);
       // If permission was denied earlier, iOS won’t show the popup again.
       Alert.alert(
         'Permission needed',

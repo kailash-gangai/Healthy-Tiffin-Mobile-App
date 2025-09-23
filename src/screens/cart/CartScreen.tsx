@@ -27,6 +27,12 @@ import {
   removeItem,
 } from '../../store/slice/cartSlice';
 import MissingCategoryModal from '../../components/MissingCategoryModal';
+import PlusIcon from '../../assets/htf-icon/icon-add.svg';
+import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
+import RemoveIcon from '../../assets/htf-icon/icon-cross.svg';
+import CartIcon from '../../assets/htf-icon/icon-cart.svg';
+import TrashIcon from '../../assets/htf-icon/icon-trans.svg';
+import InfoIcon from '../../assets/htf-icon/icon-info.svg';
 
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -317,12 +323,7 @@ export default function CartScreen({ navigation }: any) {
           <View style={s.emptyBox}>
             <View style={s.emptyInner}>
               <View style={s.emptyIconWrap}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="shopping-bag"
-                  size={28}
-                  color="#0B5733"
-                />
+                <CartIcon height={64} width={64} />
               </View>
               <Text style={s.emptyTitle}>Your cart is empty</Text>
               <Text style={s.emptySub}>No items in cart</Text>
@@ -337,6 +338,7 @@ export default function CartScreen({ navigation }: any) {
           </View>
         ) : (
           <>
+<<<<<<< HEAD
             {grouped.map(({ day, mains, addons }) => {
               const dayAddonsTotal = addons.reduce(
                 (s, x) => s + +x.price * x.qty,
@@ -379,6 +381,51 @@ export default function CartScreen({ navigation }: any) {
                                 />
                               </TouchableOpacity>
                             </View>
+=======
+            {grouped.map(({ day, mains, addons }) => (
+              <View key={day} style={s.dayCard}>
+                <TouchableOpacity
+                  style={s.dayHdr}
+                  onPress={() => toggleDay(day)}
+                  activeOpacity={0.9}
+                >
+                  <Text style={s.dayTitle}>{day} Summary</Text>
+                  {isOpen(day) ? (<MinusIcon height={24} width={24} />) : (<PlusIcon height={24} width={24} />)}
+                </TouchableOpacity>
+
+                {isOpen(day) && (
+                  <>
+                    {/* Main block */}
+                    {mains.length > 0 && (
+                      <View style={s.block}>
+                        <View style={s.blockHdRow}>
+                          <Text style={s.blockChip}>Main</Text>
+                          <TouchableOpacity
+                            onPress={() => onRemoveDayMains(day)}
+                            style={s.hdrTrashBtn}
+                          >
+                            <TrashIcon height={24} width={24} />
+                          </TouchableOpacity>
+                        </View>
+
+                        {mains.map(it => (
+                          <View key={`${it.id}-${it.variantId}`} style={s.card}>
+                            <TouchableOpacity
+                              onPress={() =>
+                                dispatch(
+                                  removeItem({
+                                    id: it.id,
+                                    variantId: it.variantId,
+                                  }),
+                                )
+                              }
+                              style={s.priceTrashBtn}
+                              accessibilityRole="button"
+                              accessibilityLabel="Remove item"
+                            >
+                              <RemoveIcon height={24} width={24} />
+                            </TouchableOpacity>
+>>>>>>> dev-kailash-ios
 
                             {mains.map(it => (
                               <View
@@ -622,12 +669,7 @@ export default function CartScreen({ navigation }: any) {
           {missingInfo && (
             <View style={s.missRow}>
               <View style={s.missIcon}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="exclamation-circle"
-                  size={18}
-                  color="#8A5A00"
-                />
+                <InfoIcon height={24} width={24} />
               </View>
 
               <View style={s.missTxtWrap}>
@@ -709,15 +751,12 @@ export default function CartScreen({ navigation }: any) {
             disabled={payDisabled}
             onPress={() => navigation.navigate('OrderTrack')}
           >
-            <Text style={[s.payTxt, payDisabled && s.payBtnDisabled]}>
-              To Payment{' '}
-              <FontAwesome5
-                iconStyle="solid"
-                name="arrow-right"
-                size={16}
-                color={C.white}
-              />
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[s.payTxt, payDisabled && s.payBtnDisabled]}>
+                To Payment{' '}
+              </Text>
+              <CartIcon height={24} width={24} style={{ marginLeft: 6 }} />
+            </View>
           </TouchableOpacity>
         </View>
       )}

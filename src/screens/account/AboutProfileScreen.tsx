@@ -3,6 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinkRow from '../../components/LinkRow';
 import AppHeader from '../../components/AppHeader';
+import PolicyIconb from '../../assets/htf-icon/icon-award.svg';
+import TermsIcon from '../../assets/htf-icon/icon-note-award.svg';
 
 export default function AboutProfile({ navigation }: any) {
       return (
@@ -12,12 +14,12 @@ export default function AboutProfile({ navigation }: any) {
                   <View style={s.wrap}>
                         <LinkRow
                               label="Privacy Policy"
-                              icon="lock"
+                              icon={<PolicyIconb width={30} height={30} />}
                               onPress={() => navigation.navigate('PrivacyPolicy')}
                         />
                         <LinkRow
                               label="Terms of Service"
-                              icon="book"
+                              icon={<TermsIcon width={30} height={30} />}
                               onPress={() => navigation.navigate('TermsOfService')}
                         />
                   </View>

@@ -17,7 +17,7 @@ import { RootState } from '../../store';
 import AppHeader from '../../components/AppHeader';
 import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
 import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
-
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
 
@@ -175,7 +175,7 @@ const MedicalPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                                     style={styles.ctaGradient}
                               >
                                     <Text style={styles.ctaText}>Continue</Text>
-                                    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                                    <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} />
                               </LinearGradient>
                         </TouchableOpacity>
                   </View>

@@ -14,6 +14,19 @@ import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
 import { previewImage } from '../../shopify/mutation/FileUpload';
 import { disconnectFitbit, getValidTokens } from '../../config/fitbitService';
 
+import EditIcon from '../../assets/htf-icon/icon-edit.svg';
+import OrderIcon from '../../assets/htf-icon/icon-myorder.svg';
+import CalenderIcon from '../../assets/htf-icon/icon-callendar.svg';
+import GenderIcon from '../../assets/htf-icon/icon-male.svg';
+import NotificationIcon from '../../assets/htf-icon/icon-notifaction-outline.svg';
+import ChangePasswordIcon from '../../assets/htf-icon/icon-key.svg';
+import InfoIcon from '../../assets/htf-icon/icon-info.svg';
+import LogoutIcon from '../../assets/htf-icon/icon-logout.svg';
+import ConnectIcon from '../../assets/htf-icon/icon-connect.svg'
+import DisConnectIcon from '../../assets/htf-icon/icon-disconnect.svg'
+
+
+
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 type Props = {
@@ -99,39 +112,39 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                                     </View>
                                     <View style={s.profile}>
                                           <Badge
-                                                icon={<FontAwesome5 name="calendar" size={22} color={COLORS.white} />}
+                                                icon={<CalenderIcon height={24} width={24} />}
                                                 text={age + " years"}
                                           />
                                           <Badge
-                                                icon={<FontAwesome5 iconStyle="solid" name="mars" size={22} color={COLORS.white} />}
+                                                icon={<GenderIcon height={24} width={24} />}
                                                 text={gender}
                                           />
                                     </View>
                               </View>
                               <View style={s.card}>
                                     <Row
-                                          icon={<FontAwesome5 name="edit" size={24} color={COLORS.accent} />}
+                                          icon={<EditIcon height={24} width={24} />}
                                           label="Edit Preferences and Details"
                                           onPress={() => {
                                                 navigation.navigate('SelectPreferences');
                                           }}
                                     />
                                     <Row
-                                          icon={<FontAwesome5 name="clipboard" size={24} color={COLORS.accent} />}
+                                          icon={<OrderIcon height={24} width={24} />}
                                           label="My Orders"
                                           onPress={() => {
                                                 navigation.navigate('Order');
                                           }}
                                     />
                                     <Row
-                                          icon={<FontAwesome5 name="bell" size={24} color={COLORS.accent} />}
+                                          icon={<NotificationIcon height={24} width={24} />}
                                           label="Notification Settings"
                                           onPress={() => {
                                                 navigation.navigate('NotificationSettings');
                                           }}
                                     />
                                     <Row
-                                          icon={<FontAwesome5 iconStyle="solid" name="key" size={24} color={COLORS.accent} />}
+                                          icon={<ChangePasswordIcon height={24} width={24} />}
                                           label="Change Password"
                                           onPress={() => {
                                                 navigation.navigate('ChangePassword');
@@ -139,7 +152,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                                     />
 
                                     <Row
-                                          icon={<FontAwesome5 iconStyle="solid" {...isHealthKitConnected ? { name: 'link' } : { name: 'unlink' }} size={24} color={COLORS.accent} />}
+                                          icon={isHealthKitConnected ? (<DisConnectIcon height={24} width={24} />) : (<ConnectIcon height={24} width={24} />)}
                                           label={isHealthKitConnected ? "Disconnect HealthKit" : "Connect HealthKit"}
                                           onPress={() => {
                                                 isHealthKitConnected ? DisconnectHealthKit() : navigation.navigate('ConnectDevice');
@@ -148,7 +161,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
 
 
                                     <Row
-                                          icon={<FontAwesome5 iconStyle="solid" name="info" size={24} color={COLORS.accent} />}
+                                          icon={<InfoIcon height={24} width={24} />}
                                           label="About"
                                           onPress={() => {
                                                 navigation.navigate('AboutProfile');
@@ -157,7 +170,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
 
                                     <View style={s.divider} />
                                     <Row
-                                          icon={<FontAwesome5 iconStyle="solid" name="sign-out-alt" size={24} color={COLORS.red} />}
+                                          icon={<LogoutIcon height={24} width={24} />}
                                           label="Log Out"
                                           danger
                                           onPress={() => onLogout()}
@@ -165,11 +178,11 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                               </View>
 
                               {/* CTA */}
-                              <TouchableOpacity activeOpacity={0.9} style={s.cta} onPress={() => {
+                              {/* <TouchableOpacity activeOpacity={0.9} style={s.cta} onPress={() => {
                                     navigation.navigate('Subscription');
                               }}>
                                     <Text style={s.ctaTxt}>Subscribe Premium</Text>
-                              </TouchableOpacity>
+                              </TouchableOpacity> */}
                         </View>
 
 

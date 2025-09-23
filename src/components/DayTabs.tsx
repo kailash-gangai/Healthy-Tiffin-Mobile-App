@@ -9,6 +9,8 @@ import {
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 
 import { COLORS } from '../ui/theme';
+import ArrowLeftIcon from '../assets/htf-icon/icon-left.svg';
+import ArrowRightIcon from '../assets/htf-icon/icon-right.svg';
 
 type Props = {
   days: string[]; // e.g. ['Thursday','Friday','Saturday','Sunday']
@@ -93,12 +95,7 @@ export default function DayTabs({ days, onChange }: Props) {
           onPress={() => select(Math.max(0, index - 1))}
           disabled={index === 0}
         >
-          <FontAwesome5
-            iconStyle="solid"
-            name="chevron-left"
-            size={18}
-            color="#F6D873"
-          />
+          <ArrowLeftIcon width={24} height={24} />
         </TouchableOpacity>
 
         <View
@@ -115,12 +112,7 @@ export default function DayTabs({ days, onChange }: Props) {
           onPress={() => select(Math.min(days.length - 1, index + 1))}
           disabled={index === days.length - 1}
         >
-          <FontAwesome5
-            iconStyle="solid"
-            name="chevron-right"
-            size={18}
-            color="#F6D873"
-          />
+          <ArrowRightIcon width={24} height={24} />
         </TouchableOpacity>
       </View>
     );

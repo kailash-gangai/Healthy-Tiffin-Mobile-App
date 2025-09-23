@@ -24,6 +24,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { getValidTokens, getfitBitWater, getfitBitWaterLog, setfitBitWaterGole, setfitBitWaterLog } from "../../config/fitbitService";
 import { showToastError } from "../../config/ShowToastMessages";
+import PlusIcon from '../../assets/htf-icon/icon-add.svg';
+import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
 
 type TabKey = "today" | "weekly" | "monthly";
 
@@ -136,13 +138,13 @@ export default function WaterTrackerScreen() {
 
                               <View style={styles.row}>
                                     <Pressable style={styles.circleBtn} onPress={() => updateCount(-1)}>
-                                          <FontAwesome5 iconStyle="solid" name="minus" size={16} color={COLORS.black} />
+                                          <MinusIcon width={24} height={24} />
 
                                     </Pressable>
                                     <Glass />
                                     <Pressable style={styles.circleBtn} onPress={() => updateCount(1)}>
 
-                                          <FontAwesome5 iconStyle="solid" name="plus" size={16} color={COLORS.black} />
+                                          <PlusIcon width={24} height={24} />
                                     </Pressable>
                               </View>
                         </View>

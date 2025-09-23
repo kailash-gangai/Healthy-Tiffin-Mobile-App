@@ -13,7 +13,6 @@ import {
 import Video from 'react-native-video';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { COLORS as C, SHADOW } from '../ui/theme';
-
 export type Feed = {
   id: string;
   title: string;
@@ -24,7 +23,9 @@ export type Feed = {
   content?: string;
   excerpt: string;
 };
-
+import HeartIcon from '../assets/htf-icon/icon-heart.svg';
+import ShearIcon from '../assets/htf-icon/icon-shre.svg';
+import CloseIcon from '../assets/htf-icon/icon-close.svg';
 export const formatDate = (d: string | number | Date, locale = 'en-US') => {
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return '';
@@ -104,7 +105,7 @@ export default function HealthFeedModal({
             <View style={s.stats}>
               <Text style={s.views}>84,212 views</Text>
               <View style={{ flexDirection: 'row', gap: 14 }}>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   onPress={() => setLiked(v => !v)}
                   style={s.iconBtn}
                 >
@@ -113,14 +114,9 @@ export default function HealthFeedModal({
                     size={22}
                     color={liked ? C.green : C.black}
                   />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 <TouchableOpacity style={s.iconBtn}>
-                  <FontAwesome5
-                    iconStyle="solid"
-                    name="share"
-                    size={22}
-                    color={C.black}
-                  />
+                  <ShearIcon width={24} height={24} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -189,12 +185,7 @@ export default function HealthFeedModal({
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
-            <FontAwesome5
-              iconStyle="solid"
-              name="times"
-              size={18}
-              color="#FFF"
-            />
+            <CloseIcon width={30} height={30} />
           </TouchableOpacity>
         </View>
       </View>
@@ -302,10 +293,8 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+
+
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 20,

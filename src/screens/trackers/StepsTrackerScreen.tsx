@@ -24,6 +24,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { getValidTokens, getfitBitData, setActivityGoal } from "../../config/fitbitService";
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 
 const { width } = Dimensions.get("window");
 const SIZE = Math.min(width * 0.7, 280);
@@ -165,7 +166,7 @@ export default function StepsTrackerScreen() {
                                                 setOpen(true);
                                           }}
                                     >
-                                          <Text style={styles.ctaText}>Update Goal   <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} /></Text>
+                                          <Text style={styles.ctaText}>Update Goal  <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} /></Text>
                                     </TouchableOpacity>
                               </View>
                         </View>
