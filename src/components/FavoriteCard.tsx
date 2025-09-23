@@ -8,6 +8,7 @@ import {
   selectIsWishlisted,
 } from '../store/slice/favoriteSlice';
 import { EMPTY_STATE_URL } from '../constants';
+import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 
 type Dish = {
   id: string;
@@ -84,12 +85,7 @@ export default function FavoriteCard({ item }: { item: Dish }) {
 
         <View style={s.rightCol}>
           <TouchableOpacity onPress={onHeartPress} hitSlop={10} style={s.heart}>
-            <FontAwesome5
-              name="heart"
-              size={18}
-              iconStyle="solid"
-              color="#fff"
-            />
+            <HeartIcon width={24} height={24}  />
           </TouchableOpacity>
           <View
             style={[

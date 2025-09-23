@@ -7,13 +7,14 @@ import {
   StyleSheet,
   Animated,
 } from 'react-native';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import DishDetailModal from './DishDetailModal';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   selectIsWishlisted,
   toggleWishlist,
 } from '../store/slice/favoriteSlice';
+import EyeShow from '../assets/htf-icon/icon-eye.svg';
+import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import SkeletonLoading from './SkeletonLoading';
 type Dish = {
   id: string;
@@ -171,12 +172,7 @@ export default function DishCard({
           accessibilityRole="button"
           accessibilityLabel="View details"
         >
-          <FontAwesome5
-            iconStyle="solid"
-            name="eye"
-            size={18}
-            color={COLORS.sub}
-          />
+          <EyeShow width={24} height={24} />
         </TouchableOpacity>
 
         {/* Favorite stays as-is */}
@@ -189,12 +185,7 @@ export default function DishCard({
             isFav ? 'Remove from favorites' : 'Add to favorites'
           }
         >
-          <FontAwesome5
-            iconStyle="solid"
-            name="heart"
-            size={18}
-            color={isFav ? COLORS.accent : COLORS.divider}
-          />
+          <HeartIcon width={24} height={24} fill={isFav ? '#FF0000' : '#CCCCCC'} />
         </TouchableOpacity>
       </TouchableOpacity>
 

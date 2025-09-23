@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import Toast from 'react-native-toast-message';
-
+import CartIcon from '../assets/htf-icon/icon-cart.svg';
 type ToastProps = {
   type?: 'success' | 'error' | 'info';
   title?: string;
@@ -31,12 +31,12 @@ type Props = {
 const compact = (arr: string[] = [], keep = 3) =>
   arr.length <= keep
     ? arr
-        .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
-        .join(', ')
+      .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
+      .join(', ')
     : `${arr
-        .slice(0, keep)
-        .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
-        .join(', ')} +${arr.length - keep} more`;
+      .slice(0, keep)
+      .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
+      .join(', ')} +${arr.length - keep} more`;
 
 export default function CTAButton({
   isDisabled,
@@ -96,14 +96,8 @@ export default function CTAButton({
             </Text>
           )}
         </View>
+          <CartIcon width={24} height={24} />
 
-        <FontAwesome5
-          iconStyle="solid"
-          name={iconName as any}
-          size={18}
-          color="#000"
-          style={s.icon}
-        />
       </View>
     </TouchableOpacity>
   );

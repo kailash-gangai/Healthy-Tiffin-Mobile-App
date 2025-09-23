@@ -7,12 +7,11 @@ import {
     TextInputProps,
     TouchableOpacity,
 } from 'react-native';
-import { FontAwesome5 } from "@react-native-vector-icons/fontawesome5";
-import { Fontisto } from '@react-native-vector-icons/fontisto';
-
+import EyeHide from '../assets/htf-icon/icon-eye-hide.svg';
+import EyeShow from '../assets/htf-icon/icon-eye.svg';
 type Props = {
     label: string;
-    icon: React.ComponentProps<typeof Fontisto>['name'];
+    icon: any;
     secure?: boolean;
 } & Omit<TextInputProps, 'style' | 'placeholderTextColor'>;
 
@@ -26,13 +25,12 @@ const FormInput: React.FC<Props> = ({ label, icon, secure, ...inputProps }) => {
         <View style={styles.block}>
             {/* Label with right-extending thin line (your screenshot style) */}
             <View style={styles.labelRow}>
-                <Text style={styles.label}>{label}</Text>
-
+                <Text style={styles.label}>{label }</Text>
             </View>
 
             {/* Field */}
             <View style={styles.inputRow}>
-                <Fontisto name={icon} size={20} color={COLORS.green} style={styles.leftIcon} />
+                <View style={styles.leftIcon}>{icon}</View>
                 <TextInput
                     {...inputProps}
                     placeholderTextColor={COLORS.placeholder}
@@ -44,7 +42,8 @@ const FormInput: React.FC<Props> = ({ label, icon, secure, ...inputProps }) => {
                         onPress={() => setShow((s) => !s)}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                        <FontAwesome5 name={show ? 'eye' : 'eye-slash'} size={20} color={COLORS.green} />
+                        {show ? <EyeShow width={24} height={24} /> : <EyeHide width={24} height={24} />}
+
                     </TouchableOpacity>
                 )}
             </View>

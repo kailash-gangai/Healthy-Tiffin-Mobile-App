@@ -15,6 +15,9 @@ import { EMPTY_STATE_URL } from '../constants';
 import Toast from 'react-native-toast-message';
 import { addItem } from '../store/slice/cartSlice';
 import { useAppDispatch } from '../store/hooks';
+import HeartIcon from '../assets/htf-icon/icon-heart.svg';
+import ShareIcon from '../assets/htf-icon/icon-shre.svg';
+import CancleIcon from '../assets/htf-icon/icon-close.svg';
 
 type Item = {
   id: string;
@@ -63,12 +66,7 @@ export default function FavoriteDetailModal({
             onPress={onClose}
             activeOpacity={0.9}
           >
-            <FontAwesome5
-              iconStyle="solid"
-              name="times"
-              size={18}
-              color="#fff"
-            />
+            <CancleIcon width={30} height={30} />
           </TouchableOpacity>
           <View style={s.imgFrame}>
             <Image
@@ -84,19 +82,13 @@ export default function FavoriteDetailModal({
             </Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity onPress={onShare} hitSlop={8}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="share"
-                  size={18}
-                  color={COLORS.accent}
-                />
+                <ShareIcon width={24} height={24} />
               </TouchableOpacity>
               <TouchableOpacity onPress={onToggleLike} hitSlop={8}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="heart"
-                  size={18}
-                  color={COLORS.accent}
+                <HeartIcon
+                  width={24}
+                  height={24}
+                  fill={COLORS.oranger}
                 />
               </TouchableOpacity>
             </View>
@@ -176,15 +168,12 @@ const s = StyleSheet.create({
     // bottom: 'auto',
     top: -14,
     right: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.green,
+    
+  
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-    borderColor: '#fff',
-    borderWidth: 2,
+    
   },
 
   imgFrame: {

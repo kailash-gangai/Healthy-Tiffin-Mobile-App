@@ -16,6 +16,9 @@ import { Dimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import FormInput from '../../components/FormInput';
+import PasswoedIcon from '../../assets/htf-icon/icon-passwoed.svg';
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
+
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -82,7 +85,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
 
         <FormInput
           label="New Password"
-          icon="unlocked"
+          icon={<PasswoedIcon width={24} height={24} />}
           placeholder="********"
           value={pwd}
           secure
@@ -100,7 +103,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
 
         <FormInput
           label="Confirm Password"
-          icon="unlocked"
+          icon={<PasswoedIcon width={24} height={24} />}
           secure
           placeholder="********"
           value={confirm}
@@ -125,7 +128,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Save</Text>
-            <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+            <ContinueIcon width={24} height={24} style={{ marginLeft: 8 }} />
           </LinearGradient>
         </TouchableOpacity>
       </View>

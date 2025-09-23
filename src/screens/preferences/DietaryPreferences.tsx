@@ -19,6 +19,8 @@ import { RootState } from '../../store';
 import AppHeader from '../../components/AppHeader';
 import { getCustomerMetaField } from '../../shopify/query/CustomerQuery';
 import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
+import CheckIcon from '../../assets/htf-icon/icon-check1.svg'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
@@ -126,8 +128,8 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                                                 ]}
                                           >
                                                 {/* Left check */}
-                                                <View style={[styles.check, isOn && styles.checkOn]}>
-                                                      {isOn && <FontAwesome5 iconStyle='solid' name="check" size={10} color={COLORS.white} />}
+                                                <View style={[styles.check ]}>
+                                                      {isOn && <CheckIcon height={24} width={24}  />}
                                                 </View>
 
                                                 {/* Label */}
@@ -165,7 +167,7 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                                     style={styles.ctaGradient}
                               >
                                     <Text style={styles.ctaText}>Continue</Text>
-                                    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                                    <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} />
                               </LinearGradient>
                         </TouchableOpacity>
                   </View>
@@ -203,10 +205,7 @@ const styles = StyleSheet.create({
             marginRight: 12,
             backgroundColor: '#fff',
       },
-      checkOn: {
-            borderColor: COLORS.green,
-            backgroundColor: COLORS.green,
-      },
+     
       label: { flex: 1, fontSize: 16, color: COLORS.text, fontWeight: '600' },
       rightIcon: {
             width: 44,

@@ -27,6 +27,12 @@ import {
   removeItem,
 } from '../../store/slice/cartSlice';
 import MissingCategoryModal from '../../components/MissingCategoryModal';
+import PlusIcon from '../../assets/htf-icon/icon-add.svg';
+import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
+import RemoveIcon from '../../assets/htf-icon/icon-cross.svg';
+import CartIcon from '../../assets/htf-icon/icon-cart.svg';
+import TrashIcon from '../../assets/htf-icon/icon-trans.svg';
+import InfoIcon from '../../assets/htf-icon/icon-info.svg';
 
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -288,12 +294,7 @@ export default function CartScreen({ navigation }: any) {
           <View style={s.emptyBox}>
             <View style={s.emptyInner}>
               <View style={s.emptyIconWrap}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="shopping-bag"
-                  size={28}
-                  color="#0B5733"
-                />
+                <CartIcon height={64} width={64} />
               </View>
               <Text style={s.emptyTitle}>Your cart is empty</Text>
               <Text style={s.emptySub}>No items in cart</Text>
@@ -316,12 +317,7 @@ export default function CartScreen({ navigation }: any) {
                   activeOpacity={0.9}
                 >
                   <Text style={s.dayTitle}>{day} Summary</Text>
-                  <FontAwesome5
-                    iconStyle="solid"
-                    name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={C.black}
-                  />
+                  {isOpen(day) ? (<MinusIcon height={24} width={24} />) : (<PlusIcon height={24} width={24} />)}
                 </TouchableOpacity>
 
                 {isOpen(day) && (
@@ -335,12 +331,7 @@ export default function CartScreen({ navigation }: any) {
                             onPress={() => onRemoveDayMains(day)}
                             style={s.hdrTrashBtn}
                           >
-                            <FontAwesome5
-                              iconStyle="solid"
-                              name="trash"
-                              size={16}
-                              color={C.red}
-                            />
+                            <TrashIcon height={24} width={24} />
                           </TouchableOpacity>
                         </View>
 
@@ -359,12 +350,7 @@ export default function CartScreen({ navigation }: any) {
                               accessibilityRole="button"
                               accessibilityLabel="Remove item"
                             >
-                              <FontAwesome5
-                                iconStyle="solid"
-                                name="times"
-                                size={20}
-                                color={C.red}
-                              />
+                              <RemoveIcon height={24} width={24} />
                             </TouchableOpacity>
 
                             <Image source={{ uri: it.image }} style={s.img} />
@@ -569,12 +555,7 @@ export default function CartScreen({ navigation }: any) {
           {missingInfo && (
             <View style={s.missRow}>
               <View style={s.missIcon}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="exclamation-circle"
-                  size={18}
-                  color="#8A5A00"
-                />
+                <InfoIcon height={24} width={24} />
               </View>
 
               <View style={s.missTxtWrap}>
@@ -652,15 +633,12 @@ export default function CartScreen({ navigation }: any) {
             disabled={payDisabled}
             onPress={() => navigation.navigate('OrderTrack')}
           >
-            <Text style={[s.payTxt, payDisabled && s.payBtnDisabled]}>
-              To Payment{' '}
-              <FontAwesome5
-                iconStyle="solid"
-                name="arrow-right"
-                size={16}
-                color={C.white}
-              />
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[s.payTxt, payDisabled && s.payBtnDisabled]}>
+                To Payment{' '}
+              </Text>
+              <CartIcon height={24} width={24} style={{ marginLeft: 6 }} />
+            </View>
           </TouchableOpacity>
         </View>
       )}

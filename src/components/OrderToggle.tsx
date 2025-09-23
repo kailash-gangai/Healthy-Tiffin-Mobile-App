@@ -41,13 +41,7 @@ export default function OrderToggle({ index = 0, onChange }: Props) {
         <Text style={[s.text, rightActive ? s.textOn : s.textRightOff]}>
           A La Carte
         </Text>
-        <FontAwesome5
-          iconStyle="solid"
-          name="globe"
-          size={14}
-          color={rightActive ? COLORS.white : COLORS.green}
-          style={{ marginLeft: 8 }}
-        />
+        
       </Pressable>
     </View>
   );

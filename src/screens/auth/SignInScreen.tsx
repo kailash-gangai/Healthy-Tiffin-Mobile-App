@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { Dimensions } from 'react-native';
 import FormInput from '../../components/FormInput';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -25,6 +24,16 @@ import { loginCustomer } from '../../shopify/mutation/CustomerAuth';
 import { useDispatch } from 'react-redux';
 import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { setUser } from '../../store/slice/userSlice';
+import Facebook from '../../assets/htf-icon/fb.svg';
+import Insta from '../../assets/htf-icon/insta.svg';
+import Google from '../../assets/htf-icon/google.svg';
+import Apple from '../../assets/htf-icon/apple.svg';
+import PasswoedIcon from '../../assets/htf-icon/icon-passwoed.svg';
+import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
+import UserIcon from '../../assets/htf-icon/icon-user.svg';
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
+
+import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
     navigation: NavigationProp;
@@ -125,7 +134,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.card}>
                 <FormInput
                     label="Email Address"
-                    icon="email"
+                    icon={<EmailIcon width={24} height={24} />}
                     placeholder="Enter email address"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -139,7 +148,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
 
                 <FormInput
                     label="Password"
-                    icon="unlocked"
+                    icon={<PasswoedIcon width={24} height={24} />}
                     placeholder="Enter password"
                     secure
                     value={pass}
@@ -168,7 +177,8 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                         {isloading ? (
                             <ActivityIndicator size="small" style={{ marginLeft: 8 }} color={COLORS.white} />
                         ) : (
-                            <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                            <ContinueIcon width={24} height={24}  style={{ marginLeft: 8 }} />
+                        
                         )}
                     </LinearGradient>
                 </Pressable>
@@ -184,18 +194,18 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                 <View style={styles.socialRow}>
                     <CircleBtn
                         bg="#1877F2"
-                        icon={<Fontisto name="facebook" size={18} color={COLORS.white} />}
+                        icon={<Facebook width={30} height={30} />}
                         onPress={() => { }}
                     />
                     <InstaBtn onPress={() => { }} />
                     <CircleBtn
                         bg="#EA4335"
-                        icon={<Fontisto name="google" size={18} color={COLORS.white} />}
+                        icon={<Google width={30} height={30} />}
                         onPress={() => { }}
                     />
                     <CircleBtn
                         bg="#000000"
-                        icon={<Fontisto name="apple" size={20} color={COLORS.white} />}
+                        icon={<Apple height={30} width={30}/>}
                         onPress={() => { }}
                     />
                 </View>
@@ -236,7 +246,7 @@ const InstaBtn: React.FC<InstaBtnProps> = ({ onPress }) => (
             ]}
             style={styles.circle}
         >
-            <Fontisto name="instagram" size={20} color="#ffffff" />
+            <Insta width={30} height={30} />
         </LinearGradient>
     </TouchableOpacity>
 );

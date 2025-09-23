@@ -20,6 +20,8 @@ import { getProductsByIds } from '../../shopify/queries/getProducts';
 import { addItems, cartFLag } from '../../store/slice/cartSlice';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { getAllArticles } from '../../shopify/queries/blogs';
+import HeartIcon from '../../assets/htf-icon/icon-heart.svg';
+import EyeShow from '../../assets/htf-icon/icon-eye-show.svg';
 
 interface CategoriesProps {
   key: string;
@@ -266,7 +268,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         </View>
 
         {/* Tab 0: Daily order */}
-        {tab === 0 && (
+        {tab === 0 && ( 
           <View style={{ backgroundColor: COLORS.white }}>
             <View style={styles.container}>
               <Text style={styles.heading}>Main</Text>

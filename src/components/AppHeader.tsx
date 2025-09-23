@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { COLORS } from '../ui/theme';
-
+import LeftArrow from '../assets/htf-icon/icon-left-arrow.svg';
 type Props = {
   title: string;
   onBack?: () => void;
@@ -15,15 +14,9 @@ export default function AppHeader({ title, onBack, right }: Props) {
     <View style={s.topbar}>
       <TouchableOpacity
         onPress={onBack}
-        style={s.back}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <FontAwesome5
-          iconStyle="solid"
-          name="chevron-left"
-          size={18}
-          color='#fff'
-        />
+        <LeftArrow width={24} height={24} />
       </TouchableOpacity>
 
       <View style={s.titleWrapper}>

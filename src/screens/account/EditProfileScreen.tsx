@@ -15,7 +15,8 @@ import AppHeader from '../../components/AppHeader';
 import { COLORS, SPACING } from '../../ui/theme';
 import FormInput from '../../components/FormInput';
 import LinearGradient from 'react-native-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import CameraIcon from '../../assets/htf-icon/icon-camera.svg';
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 import {
   launchImageLibrary,
   launchCamera,
@@ -30,11 +31,6 @@ import { customerMetafieldUpdate, customerUpsert } from '../../shopify/mutation/
 import { setUser } from '../../store/slice/userSlice';
 import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 
-import {
-  STORE_ADMIN_API_KEY,
-  STORE_ADMIN_API_URL,
-  STORE_DOMAIN,
-} from '../../shopify/ShopifyConfig';
 import {
   showToastError,
   showToastSuccess,
@@ -54,9 +50,7 @@ export default function EditProfile({ navigation }: Props) {
   const user = useSelector((state: RootState) => state.user);
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [avatar, setAvatar] = useState<string | undefined>(
-    user?.avatar || undefined,
-  );
+  const [avatar, setAvatar] = useState<string | undefined>();
   const [name, setName] = useState<string | undefined>(user?.name || undefined);
   const [email, setEmail] = useState<string | undefined>(
     user?.email || undefined,
@@ -120,6 +114,7 @@ export default function EditProfile({ navigation }: Props) {
   };
   const media = async (user: any) => {
     const medias = await previewImage(user.avatar);
+    
     setAvatar(medias.nodes[0]?.preview.image.url);
   };
   useEffect(() => {
@@ -144,11 +139,11 @@ export default function EditProfile({ navigation }: Props) {
         },
         user.avatar ?? '',
       );
-      console.log('uploaded:', fileId, previewUrl);
+     
       const response = await customerMetafieldUpdate([
         { key: 'image', value: fileId, type: 'file_reference' },
       ], user?.id ?? '');
-      console.log('response', response);
+      
     }
     // optional: persist previewUrl/mediaId where you need them
     // return;
@@ -187,12 +182,7 @@ export default function EditProfile({ navigation }: Props) {
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.cameraBtn} onPress={pickImage}>
-              <FontAwesome5
-                iconStyle="solid"
-                name="camera"
-                size={16}
-                color="#000"
-              />
+             <CameraIcon width={24} height={24} />
             </TouchableOpacity>
           </View>
         </View>
@@ -243,13 +233,7 @@ export default function EditProfile({ navigation }: Props) {
             {loading ? (
               <ActivityIndicator style={{ marginLeft: 8 }} size="small" color={COLORS.white} />
             ) : (
-              <FontAwesome5
-                iconStyle="solid"
-                name="sign-in-alt"
-                size={18}
-                color={COLORS.white}
-                style={{ marginLeft: 8 }}
-              />
+              <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} />
             )}
           </LinearGradient>
         </TouchableOpacity>

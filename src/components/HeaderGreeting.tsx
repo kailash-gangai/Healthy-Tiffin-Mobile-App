@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
-
 import { COLORS, RADIUS, SPACING, SHADOW } from '../ui/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +8,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectCount } from '../store/slice/cartSlice';
 import { RootState } from '../store';
 import { previewImage } from '../shopify/mutation/FileUpload';
+import AddToCartIcon from '../assets/htf-icon/icon-cart.svg';
+import NotificationIcon from '../assets/htf-icon/icon-notification.svg';
 
 export default function HeaderGreeting({ name }: { name: string }) {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -35,12 +35,12 @@ export default function HeaderGreeting({ name }: { name: string }) {
 
                               <View style={s.right}>
                                     <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
-                                          <FontAwesome5 name="bell" size={20} color={COLORS.white} />
+                                          <NotificationIcon width={24} height={24} />
                                     </TouchableOpacity>
 
                                     <View style={s.iconWrap}>
                                           <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
-                                                <FontAwesome5 iconStyle='solid' name="shopping-bag" size={20} color={COLORS.white} />
+                                                <AddToCartIcon width={24} height={24} />
                                           </TouchableOpacity>
 
                                           <View style={s.badge}>

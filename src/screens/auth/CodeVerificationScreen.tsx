@@ -12,11 +12,10 @@ import {
   StatusBar,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { Dimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: AboutScreenNavigationProp };
 
@@ -153,7 +152,7 @@ const CodeVerificationScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Continue</Text>
-            <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+            <ContinueIcon width={24} height={24} style={{ marginLeft: 8 }} />
           </LinearGradient>
         </TouchableOpacity>
 

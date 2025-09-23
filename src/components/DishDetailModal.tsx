@@ -13,6 +13,9 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useAppDispatch } from '../store/hooks';
 import { addItem } from '../store/slice/cartSlice';
 import Toast from 'react-native-toast-message';
+import HeartIcon from '../assets/htf-icon/icon-heart.svg';
+import ShearIcon from '../assets/htf-icon/icon-shre.svg';
+import CloseIcon from '../assets/htf-icon/icon-close.svg';
 
 type Dish = {
   title: string;
@@ -67,12 +70,7 @@ export default function DishDetailModal({
             onPress={onClose}
             activeOpacity={0.9}
           >
-            <FontAwesome5
-              iconStyle="solid"
-              name="times"
-              size={18}
-              color="#fff"
-            />
+            <CloseIcon width={33} height={33} />
           </TouchableOpacity>
           {/* image with white frame + shadow */}
           <View style={s.imgFrame}>
@@ -91,20 +89,10 @@ export default function DishDetailModal({
             </Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity onPress={onShare} hitSlop={8}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="share"
-                  size={18}
-                  color={COLORS.accent}
-                />
+               <ShearIcon width={24} height={24} />
               </TouchableOpacity>
               <TouchableOpacity onPress={onToggleLike} hitSlop={8}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="heart"
-                  size={18}
-                  color={COLORS.accent}
-                />
+               <HeartIcon width={30} height={30} fill={liked ? '#FF0000' : '#CCCCCC'} />
               </TouchableOpacity>
             </View>
           </View>
@@ -174,15 +162,12 @@ const s = StyleSheet.create({
     // bottom: 'auto',
     top: -14,
     right: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.green,
+    
+    
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-    borderColor: '#fff',
-    borderWidth: 2,
+   
   },
 
   imgFrame: {

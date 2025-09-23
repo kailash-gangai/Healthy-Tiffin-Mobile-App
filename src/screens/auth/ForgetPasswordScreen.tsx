@@ -12,8 +12,6 @@ import {
     Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { Fontisto } from '@react-native-vector-icons/fontisto';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { Dimensions } from 'react-native';
 import FormInput from '../../components/FormInput';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -21,6 +19,8 @@ import { RootStackParamList } from "../navigation/types";
 import { customerRecover } from '../../shopify/mutation/CustomerAuth';
 import { COLORS } from '../../ui/theme';
 import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
+import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -82,7 +82,7 @@ const ForgetPasswordScreen: React.FC<Props> = ({ navigation }) => {
 
                 <FormInput
                     label="Email Address"
-                    icon="email"
+                    icon={<EmailIcon width={24} height={24} />}
                     placeholder="Enter email address"
                     value={email}
                     onChangeText={setEmail}
@@ -103,7 +103,7 @@ const ForgetPasswordScreen: React.FC<Props> = ({ navigation }) => {
                         style={styles.ctaGradient}
                     >
                         <Text style={styles.ctaText}>Continue </Text>
-                        <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                        <ContinueIcon width={24} height={24} style={{ marginLeft: 8 }} />
                     </LinearGradient>
                 </TouchableOpacity>
 

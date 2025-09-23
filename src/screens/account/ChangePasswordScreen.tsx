@@ -15,6 +15,8 @@ import { RootState } from '../../store';
 import { checkCustomerTokens, saveCustomerTokens } from '../../store/Keystore/customerDetailsStore';
 import { setUser } from '../../store/slice/userSlice';
 import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
+import PasswordIcon from '../../assets/htf-icon/icon-passwoed.svg';
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -72,7 +74,7 @@ export default function ChangePassword({ navigation }: Props) {
                   <AppHeader title="Change Password" onBack={() => navigation.goBack()} />
                   <View style={styles.wrap}>
                         <FormInput label="Current Password"
-                              icon="unlocked"
+                              icon={<PasswordIcon width={24} height={24} />}
                               placeholder="Enter password"
                               secure
                               value={currentPass}
@@ -83,7 +85,7 @@ export default function ChangePassword({ navigation }: Props) {
                         )}
 
                         <FormInput label="New Password"
-                              icon="unlocked"
+                              icon={<PasswordIcon width={24} height={24} />}
                               placeholder="Enter password"
                               secure
                               value={pass}
@@ -94,7 +96,7 @@ export default function ChangePassword({ navigation }: Props) {
                         )}
 
                         <FormInput label="Confirm New Password"
-                              icon="unlocked"
+                              icon={<PasswordIcon width={24} height={24} />}
                               placeholder="Enter password"
                               secure
                               value={confirmPass}
@@ -117,13 +119,7 @@ export default function ChangePassword({ navigation }: Props) {
                                     style={styles.ctaGradient}
                               >
                                     <Text style={styles.ctaText}>Save</Text>
-                                    <FontAwesome5
-                                          iconStyle="solid"
-                                          name="sign-in-alt"
-                                          size={18}
-                                          color={COLORS.white}
-                                          style={{ marginLeft: 8 }}
-                                    />
+                                    <ContinueIcon width={24} height={24} style={{ marginLeft: 8 }} />
                               </LinearGradient>
                         </Pressable>
 
