@@ -40,6 +40,7 @@ export const createCart = async (
           { key: 'DayDate', value: item.date },
           { key: 'Day', value: item.day },
           { key: 'Type', value: item.type },
+          { key: 'TiffinPlan', value: item.tiffinPlan },
         ],
       })),
     },

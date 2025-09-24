@@ -31,12 +31,12 @@ type Props = {
 const compact = (arr: string[] = [], keep = 3) =>
   arr.length <= keep
     ? arr
-      .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
-      .join(', ')
+        .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
+        .join(', ')
     : `${arr
-      .slice(0, keep)
-      .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
-      .join(', ')} +${arr.length - keep} more`;
+        .slice(0, keep)
+        .map(t => t?.slice(0, 1).toUpperCase() + t?.slice(1).toLowerCase())
+        .join(', ')} +${arr.length - keep} more`;
 
 export default function CTAButton({
   isDisabled,
@@ -50,7 +50,9 @@ export default function CTAButton({
   const lbl = typeof label === 'string' ? { message: label } : label || {};
   const ok: boolean = lbl?.result?.ok ?? lbl?.ok ?? true;
   const missing: string[] = lbl?.result?.missing ?? lbl?.missing ?? [];
-  const primary = ok ? lbl?.message?.trim() || 'Add to cart' : label.message;
+  const primary = ok
+    ? lbl?.message?.trim() || 'Add to cart'
+    : label.message || 'Add to cart';
 
   const secondary = !ok && missing?.length ? compact(missing) : '';
 
@@ -93,8 +95,7 @@ export default function CTAButton({
             </Text>
           )}
         </View>
-          <CartIcon width={24} height={24} />
-
+        <CartIcon width={24} height={24} />
       </View>
     </TouchableOpacity>
   );

@@ -5,6 +5,7 @@ import fitbitAvailability from './slice/fitbitAvailabilitySlice';
 import fitbitConnection from './slice/fitbitConnectionSlice';
 import days from './slice/daySlice';
 import favorite from './slice/favoriteSlice';
+import catalog from './slice/catalogSlice';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persistReducer, persistStore } from 'redux-persist';
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   fitbitConnection,
   days,
   favorite,
+  catalog,
 });
 
 const persistConfig = {

@@ -1,4 +1,5 @@
-import React from 'react';
+// components/MissingCategoryModal.tsx
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +10,16 @@ import {
   ScrollView,
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { COLORS as C, SHADOW } from '../ui/theme';
+import { COLORS as C } from '../ui/theme';
+
+type DayName =
+  | 'Monday'
+  | 'Tuesday'
+  | 'Wednesday'
+  | 'Thursday'
+  | 'Friday'
+  | 'Saturday'
+  | 'Sunday';
 
 type CatalogItem = {
   id: string;
@@ -20,21 +30,23 @@ type CatalogItem = {
   image: string | null;
   price: string | number;
 };
-type CatalogGroup = { key: string; value: CatalogItem[] };
+type CatalogGroup = {
+  key: 'probiotics' | 'protein' | 'sides' | 'veggies';
+  value: CatalogItem[];
+};
+type MissingRow = { day: DayName; tiffinPlan: number; missing: string[] };
 
 export default function MissingCategoryModal({
   visible,
   onClose,
-  day,
-  missingCats, // e.g. ['PROTEIN','VEGGIES']
-  catalog, // CatalogGroup[]
-  onAdd, // (payload) => void
+  dataByDay,
+  missingList,
+  onAdd,
 }: {
   visible: boolean;
   onClose: () => void;
-  day: string;
-  missingCats: string[];
-  catalog: CatalogGroup[];
+  dataByDay: Partial<Record<DayName, CatalogGroup[]>>;
+  missingList: MissingRow[];
   onAdd: (payload: {
     id: string;
     variantId: string;
@@ -44,16 +56,71 @@ export default function MissingCategoryModal({
     image: string | null;
     price: string | number;
     type: 'main';
-    category: string; // UPPER
+    category: string;
     qty: number;
-    day: string;
-    date: string;
+    day: DayName;
+    tiffinPlan: number;
   }) => void;
 }) {
-  const setUpper = (s: string) => String(s || '').toUpperCase();
+  const days = useMemo(
+    () => Array.from(new Set(missingList.map(m => m.day))),
+    [missingList],
+  );
 
-  const groups = catalog.filter(g =>
-    missingCats.map(setUpper).includes(setUpper(g.key)),
+  const [day, setDay] = useState<DayName>(days[0] || 'Wednesday');
+  const plansForDay = useMemo(
+    () =>
+      missingList
+        .filter(m => m.day === day)
+        .map(m => m.tiffinPlan)
+        .sort((a, b) => a - b),
+    [missingList, day],
+  );
+  const [plan, setPlan] = useState<number>(plansForDay[0] || 1);
+
+  const missingCats = useMemo(() => {
+    const row = missingList.find(m => m.day === day && m.tiffinPlan === plan);
+    return (row?.missing ?? []).map(s => String(s).toUpperCase());
+  }, [missingList, day, plan]);
+
+  const groups = useMemo(() => {
+    const src = dataByDay[day] ?? [];
+    const want = new Set(missingCats);
+    return src.filter(g => want.has(String(g.key).toUpperCase()));
+  }, [dataByDay, day, missingCats]);
+
+  const Chip = ({
+    label,
+    active,
+    icon,
+    onPress,
+  }: {
+    label: string;
+    active: boolean;
+    icon?: string;
+    onPress: () => void;
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[s.chip, active && s.chipOn]}
+      activeOpacity={0.9}
+    >
+      {icon ? (
+        <FontAwesome5
+          iconStyle="solid"
+          name={icon as any}
+          size={12}
+          color={active ? '#FFF' : '#0B5733'}
+        />
+      ) : null}
+      <Text
+        style={[s.chipTxt, active && s.chipTxtOn]}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
   );
 
   return (
@@ -65,51 +132,128 @@ export default function MissingCategoryModal({
     >
       <View style={s.backdrop}>
         <View style={s.sheet}>
-          <View style={s.header}>
-            <Text style={s.title}>Complete your {day}</Text>
+          <View style={s.grabberWrap}>
+            <View style={s.grabber} />
+          </View>
+
+          <View style={s.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.h1}>Finish your box</Text>
+              <Text style={s.subH}>
+                {day} • Tiffin {plan}
+              </Text>
+            </View>
             <TouchableOpacity
               onPress={onClose}
-              style={s.close}
-              hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }}
+              style={s.iconBtn}
+              hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
             >
               <FontAwesome5
                 iconStyle="solid"
                 name="times"
                 size={18}
-                color="#FFF"
+                color="#1C1C1C"
               />
             </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.rowChips}
+          >
+            {days.map(d => (
+              <Chip
+                key={d}
+                label={d}
+                icon="calendar-day"
+                active={d === day}
+                onPress={() => {
+                  setDay(d);
+                  const first =
+                    missingList.find(m => m.day === d)?.tiffinPlan ?? 1;
+                  setPlan(first);
+                }}
+              />
+            ))}
+          </ScrollView>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[s.rowChips, { paddingTop: 6 }]}
+          >
+            {plansForDay.map(p => (
+              <Chip
+                key={p}
+                label={`Tiffin ${p}`}
+                icon="box"
+                active={p === plan}
+                onPress={() => setPlan(p)}
+              />
+            ))}
+          </ScrollView>
+
+          <View style={s.notice}>
+            <FontAwesome5
+              iconStyle="solid"
+              name="info-circle"
+              size={14}
+              color="#8A5A00"
+            />
+            {missingCats.length ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.missRow}
+              >
+                {missingCats.map(c => (
+                  <View key={c} style={s.missPill}>
+                    <Text
+                      style={s.missPillTxt}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {c}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={s.allSet}>All set for this tiffin.</Text>
+            )}
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 12 }}>
             {groups.map(g => (
               <View key={g.key} style={s.group}>
-                <Text style={s.groupTitle}>{setUpper(g.key)}</Text>
+                <View style={s.groupHdr}>
+                  <Text style={s.groupTitle}>
+                    {String(g.key).toUpperCase()}
+                  </Text>
+                  <View style={s.groupUnderline} />
+                </View>
 
                 {g.value.map(it => (
-                  <View key={`${it.id}-${it.variantId}`} style={s.card}>
+                  <View key={`${it.id}-${it.variantId}`} style={s.cardSm}>
                     <Image
                       source={
                         it.image
                           ? { uri: it.image }
                           : require('../assets/LOGO.png')
                       }
-                      style={s.img}
+                      style={s.imgSm}
                     />
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={s.itemTitle} numberOfLines={2}>
                         {it.title}
                       </Text>
-                      <Text style={s.price}>${it.price}</Text>
+                      <Text style={s.priceInline}>${it.price}</Text>
                     </View>
-
                     <TouchableOpacity
-                      style={s.addBtn}
-                      activeOpacity={0.85}
-                      onPress={() => {
-                        const date = new Intl.DateTimeFormat('en-US').format(
-                          new Date(),
-                        );
+                      style={s.addBtnSm}
+                      activeOpacity={0.92}
+                      onPress={() =>
                         onAdd({
                           id: it.id,
                           variantId: it.variantId,
@@ -118,14 +262,20 @@ export default function MissingCategoryModal({
                           tags: it.tags,
                           image: it.image,
                           price: it.price,
-                          type: 'main', // fulfill required main cat
-                          category: setUpper(g.key), // map group key
+                          type: 'main',
+                          category: String(g.key).toUpperCase(),
                           qty: 1,
                           day,
-                          date,
-                        });
-                      }}
+                          tiffinPlan: plan,
+                        })
+                      }
                     >
+                      <FontAwesome5
+                        iconStyle="solid"
+                        name="plus"
+                        size={14}
+                        color="#FFF"
+                      />
                       <Text style={s.addTxt}>Add</Text>
                     </TouchableOpacity>
                   </View>
@@ -135,7 +285,15 @@ export default function MissingCategoryModal({
 
             {!groups.length && (
               <View style={s.empty}>
-                <Text style={s.emptyTxt}>No suggestions available.</Text>
+                <FontAwesome5
+                  iconStyle="solid"
+                  name="inbox"
+                  size={16}
+                  color="#8A5A00"
+                />
+                <Text style={s.emptyTxt}>
+                  No suggestions for selected tiffin.
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -146,71 +304,187 @@ export default function MissingCategoryModal({
 }
 
 const s = StyleSheet.create({
+  // backdrop + sheet
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: C.white,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    maxHeight: '85%',
-    ...SHADOW,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: -6 },
+    shadowRadius: 16,
+    elevation: 8,
   },
-  header: {
-    padding: 14,
-    backgroundColor: '#0B5733',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+  grabberWrap: { alignItems: 'center', paddingTop: 8 },
+  grabber: {
+    width: 54,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#E8EAE9',
   },
-  title: { color: '#FFF', fontWeight: '800', fontSize: 18 },
-  close: {
-    position: 'absolute',
-    right: 12,
-    top: 12,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+
+  // header
+  headerRow: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  h1: { fontSize: 18, fontWeight: '900', color: '#111' },
+  subH: { marginTop: 2, color: '#66736B', fontWeight: '700', fontSize: 12 },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#F3F5F4',
   },
-  group: { marginBottom: 14 },
-  groupTitle: {
+
+  // chips
+  rowChips: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#D6E5DC',
+    backgroundColor: '#F6FBF8',
+    gap: 6,
+  },
+  chipOn: { backgroundColor: '#0B5733', borderColor: '#0B5733' },
+  chipTxt: {
     fontWeight: '800',
-    color: C.black,
-    fontSize: 16,
-    marginBottom: 8,
+    color: '#0B5733',
+    fontSize: 12,
+    lineHeight: 16,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
-  card: {
+  chipTxtOn: { color: '#FFF' },
+
+  // notice
+  notice: {
+    marginTop: 8,
+    marginHorizontal: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#FFF6E5',
+    borderWidth: 1,
+    borderColor: '#FFD699',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  missRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  missPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#FFEFD1',
+    borderWidth: 1,
+    borderColor: '#FFE0A6',
+    alignSelf: 'flex-start',
+  },
+  missPillTxt: {
+    color: '#8A5A00',
+    fontWeight: '800',
+    fontSize: 12,
+    lineHeight: 16,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    maxWidth: '100%',
+    flexShrink: 1,
+  },
+  allSet: { color: '#8A5A00', fontWeight: '800' },
+
+  // groups
+  group: { marginTop: 12 },
+  groupHdr: { paddingHorizontal: 12, marginBottom: 8 },
+  groupTitle: {
+    fontWeight: '900',
+    color: '#0B5733',
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+  groupUnderline: {
+    height: 2,
+    width: 40,
+    backgroundColor: '#CBE8D7',
+    borderRadius: 2,
+    marginTop: 6,
+  },
+
+  // compact card
+  cardSm: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginHorizontal: 12,
+    marginBottom: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E6EAE7',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
-    backgroundColor: '#FBFBFB',
+    padding: 8,
   },
-  img: {
+  imgSm: {
     width: 60,
     height: 52,
     borderRadius: 8,
-    marginRight: 6,
-    backgroundColor: '#EEE',
+    backgroundColor: '#EEF2EF',
   },
-  itemTitle: { color: C.black, fontWeight: '700', fontSize: 13 },
-  price: { color: C.green, fontWeight: '800', marginTop: 4 },
-  addBtn: {
+  itemTitle: {
+    color: C.black,
+    fontWeight: '800',
+    fontSize: 13,
+    lineHeight: 16,
+    includeFontPadding: false,
+  },
+  priceInline: {
+    marginTop: 4,
+    color: C.green,
+    fontWeight: '800',
+    fontSize: 13,
+    lineHeight: 16,
+  },
+
+  addBtnSm: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
     backgroundColor: '#0B5733',
-    marginLeft: 8,
   },
-  addTxt: { color: '#FFF', fontWeight: '800' },
-  empty: { padding: 16, alignItems: 'center' },
-  emptyTxt: { color: C.sub },
+  addTxt: { color: '#FFF', fontWeight: '900', fontSize: 12 },
+
+  // empty
+  empty: {
+    marginTop: 8,
+    marginHorizontal: 12,
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: '#FFF6E5',
+    borderWidth: 1,
+    borderColor: '#FFD699',
+    alignItems: 'center',
+    gap: 6,
+  },
+  emptyTxt: { color: '#8A5A00', fontWeight: '800' },
 });

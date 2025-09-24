@@ -10,11 +10,13 @@ type AddPayload = {
   type: 'main' | 'addon';
   qty: number;
   image?: string;
+  tiffinPlan?: number;
+
   variantId: string; // e.g., size/color
 };
 
 type SetQtyPayload = { id: string; variantId?: string; qty: number };
-type RemovePayload = { id: string; variantId?: string };
+type RemovePayload = { id: string; variantId?: string; tiffinPlan: number };
 
 type RemoveByDayPayload = { day: string };
 
@@ -29,6 +31,7 @@ export type CartLine = {
   price: number | string;
   qty: number;
   image?: string;
+  tiffinPlan?: number;
 };
 
 type CartState = { isCartCleared: boolean; lines: CartLine[] };
@@ -41,43 +44,38 @@ const cartSlice = createSlice({
   reducers: {
     // Add multiple items to the cart
     addItems: (s, a: PayloadAction<AddPayload[]>) => {
-      a.payload.forEach(
-        ({
-          id,
-          variantId,
-          title,
-          price,
-          image,
-          type,
-          qty = 1,
-          category,
-          date,
-          day,
-        }) => {
-          const existing = s.lines.find(
-            line => line.id === id && line.variantId === variantId,
-          );
-          s.isCartCleared = false;
-          if (existing) {
-            // If the item already exists, increase the quantity
-            existing.qty += qty;
-          } else {
-            // Otherwise, add the new item with qty = 1 by default
-            s.lines.push({
-              id,
-              variantId,
-              title,
-              price,
-              image,
-              qty,
-              type,
-              category,
-              date,
-              day,
-            });
-          }
-        },
-      );
+      s.isCartCleared = false;
+
+      const keyOf = (x: {
+        day: string;
+        tiffinPlan?: number;
+        id: string;
+        variantId: string;
+      }) => `${x.day}::${x.tiffinPlan ?? ''}::${x.id}::${x.variantId}`;
+
+      // existing keys in cart
+      const seen = new Set(s.lines.map(keyOf));
+
+      // also prevent duplicates within the same incoming batch
+      for (const p of a.payload) {
+        const k = keyOf(p);
+        if (seen.has(k)) continue; // already in cart -> ignore
+
+        seen.add(k);
+        s.lines.push({
+          id: p.id,
+          variantId: p.variantId,
+          title: p.title,
+          price: p.price,
+          image: p.image,
+          qty: p.qty ?? 1,
+          type: p.type,
+          category: p.category,
+          date: p.date,
+          day: p.day,
+          tiffinPlan: p.tiffinPlan,
+        });
+      }
     },
 
     // Add a single item to the cart
@@ -93,6 +91,7 @@ const cartSlice = createSlice({
         category,
         date,
         day,
+        tiffinPlan,
       } = a.payload;
       const existing = s.lines.find(
         line => line.id === id && line.variantId === variantId,
@@ -105,6 +104,7 @@ const cartSlice = createSlice({
           id,
           variantId,
           title,
+          tiffinPlan,
           price,
           image,
           qty,
@@ -135,11 +135,14 @@ const cartSlice = createSlice({
 
     // Increase the quantity of an item
     increaseItem: (s, a: PayloadAction<RemovePayload>) => {
-      const { id, variantId } = a.payload;
+      const { id, variantId, tiffinPlan } = a.payload;
       console.log({ id, variantId });
 
       const existing = s.lines.find(
-        line => line.id === id && line.variantId === variantId,
+        line =>
+          line.id === id &&
+          line.variantId === variantId &&
+          line.tiffinPlan === tiffinPlan,
       );
 
       if (existing) {
@@ -165,10 +168,13 @@ const cartSlice = createSlice({
 
     // Remove an item from the cart
     removeItem: (s, a: PayloadAction<RemovePayload>) => {
-      const { id, variantId } = a.payload;
+      const { id, variantId, tiffinPlan } = a.payload;
 
       s.lines = s.lines.filter(
-        line => line.id !== id || line.variantId !== variantId,
+        line =>
+          line.id !== id ||
+          line.variantId !== variantId ||
+          line.tiffinPlan !== tiffinPlan,
       );
     },
 

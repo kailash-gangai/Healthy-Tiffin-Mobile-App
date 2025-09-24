@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { ScrollView, View, StyleSheet, Text } from 'react-native';
+import {
+  ScrollView,
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import { COLORS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
 import StatChips from '../../components/StatChips';
@@ -22,6 +28,7 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { getAllArticles } from '../../shopify/queries/blogs';
 import HeartIcon from '../../assets/htf-icon/icon-heart.svg';
 import EyeShow from '../../assets/htf-icon/icon-eye-show.svg';
+import { upsertDay } from '../../store/slice/catalogSlice';
 
 interface CategoriesProps {
   key: string;
@@ -69,7 +76,7 @@ interface BlogProp {
   content?: string | null;
   excerpt?: string;
 }
-const HomeScreen: React.FC = ({ navigation }: any) => {
+const HomeScreen: React.FC = ({ navigation, route }: any) => {
   const dispatch = useAppDispatch();
   const { isCartCleared } = useAppSelector(state => state.cart);
 
@@ -87,7 +94,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [priceThreshold, setPriceThreshold] = useState<any[]>([]);
   const [filteredIndex, setFilteredIndex] = useState(0); // index within filtered list
   const [openByKey, setOpenByKey] = React.useState<Record<string, boolean>>({});
-
+  const [tiffinPlan, setTiffinPlan] = useState<number>(1);
   // ui helpers
   const isOpen = (k: string) => openByKey[k] ?? true;
   const setOpen = (k: string, v: boolean) =>
@@ -225,6 +232,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           currentDayMetaObjectId,
         );
         setCategories(mainCategoryData);
+        dispatch(
+          upsertDay({ catalog: mainCategoryData, day: currentDay as any }),
+        );
       } else {
         setCategories([]);
       }
@@ -294,7 +304,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     // nothing selected
     result = { ok: false, missing: [], message: '' };
   }
-
   // effects
   useEffect(() => {
     if (isCartCleared) {
@@ -302,16 +311,14 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     }
     dispatch(cartFLag());
     fetchMetaObjects();
+    setTiffinPlan(1);
   }, [currentDayMetaObjectId, addonsMetaObjectId, isCartCleared]);
 
-  // usage and logs
-  // console.log(isCartCleared, 'is cart cleared');
-  // console.log(selectedItemsToAddOnCart, 'sel');
-  // console.log(categories, 'all categories');
-  // console.log(addonCategories, 'all caddon categories');
-  // console.log(priceThreshold, 'state');
-  // console.log(updatedCategory, 'updago');
-
+  const handleAddNewTiffin = () => {
+    setTiffinPlan(tiffinPlan + 1);
+    dispatch(addItems(selectedItemsToAddOnCart as any));
+    setSelectedItemsToAddOnCart([]);
+  };
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScrollView bounces={false}>
@@ -331,7 +338,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         </View>
 
         {/* Tab 0: Daily order */}
-        {tab === 0 && ( 
+        {tab === 0 && (
           <View style={{ backgroundColor: COLORS.white }}>
             <View style={styles.container}>
               <Text style={styles.heading}>Main</Text>
@@ -432,7 +439,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                   open={isOpen(key)}
                   setOpen={(v: boolean) => setOpen(key, v)}
                 >
-                  {cat.value.map(d => (
+                  {cat.value.map((d: any) => (
                     <DishCard
                       key={d.id}
                       category={cat.key.toUpperCase()}
@@ -442,6 +449,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                       setSelectedItemsToAddOnCart={
                         setSelectedItemsToAddOnCart as any
                       }
+                      tiffinPlan={tiffinPlan}
                       selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
                       isLoading={isLoading}
                       onChange={picked => {
@@ -496,7 +504,19 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             })}
           </>
         )}
-
+        {result?.ok && (
+          <TouchableOpacity
+            onPress={handleAddNewTiffin}
+            style={styles.addNewTiffin}
+          >
+            <FontAwesome5
+              name="plus"
+              iconStyle="solid"
+              style={styles.circleIcon}
+            />
+            <Text style={styles.newTiffinText}>Add new tiffin</Text>
+          </TouchableOpacity>
+        )}
         <View
           style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}
         >
@@ -540,5 +560,29 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+  },
+  addNewTiffin: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderColor: 'green',
+    borderWidth: 2,
+    padding: 10,
+    borderRadius: 40,
+    backgroundColor: 'white',
+    width: 350,
+    margin: 'auto',
+  },
+  circleIcon: {
+    fontSize: 20,
+    color: 'green',
+  },
+  newTiffinText: {
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    fontSize: 16,
+    color: 'green',
   },
 });

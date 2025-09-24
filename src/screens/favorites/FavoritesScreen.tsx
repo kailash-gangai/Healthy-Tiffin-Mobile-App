@@ -69,7 +69,7 @@ export default function FavoritesScreen({ navigation }: { navigation?: any }) {
               <View
                 style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
               >
-                <CTAButton
+                {/* <CTAButton
                   label="Add to cart"
                   disabled={!items.length}
                   onPress={() => dispatch(addItems(items as any))}
@@ -79,7 +79,7 @@ export default function FavoritesScreen({ navigation }: { navigation?: any }) {
                     message: 'Items added to cart',
                     position: 'bottom',
                   }}
-                />
+                /> */}
               </View>
             </View>
           )}

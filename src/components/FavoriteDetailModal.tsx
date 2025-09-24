@@ -85,11 +85,7 @@ export default function FavoriteDetailModal({
                 <ShareIcon width={24} height={24} />
               </TouchableOpacity>
               <TouchableOpacity onPress={onToggleLike} hitSlop={8}>
-                <HeartIcon
-                  width={24}
-                  height={24}
-                  fill={COLORS.oranger}
-                />
+                <HeartIcon width={24} height={24} fill={COLORS.oranger} />
               </TouchableOpacity>
             </View>
           </View>
@@ -99,7 +95,7 @@ export default function FavoriteDetailModal({
             <Text style={s.kcalNum}>{item.calories}</Text>
             <Text style={s.kcalUnit}> CALORIES</Text>
           </Text>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             activeOpacity={0.6}
             onPress={() => {
               dispatch(addItem(item as any));
@@ -122,7 +118,7 @@ export default function FavoriteDetailModal({
             <Text style={{ color: '#ffffffff', fontWeight: '700' }}>
               Add to cart
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* tags */}
           <View style={s.tags}>
@@ -168,12 +164,10 @@ const s = StyleSheet.create({
     // bottom: 'auto',
     top: -14,
     right: 12,
-    
-  
+
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-    
   },
 
   imgFrame: {

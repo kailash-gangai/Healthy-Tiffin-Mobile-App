@@ -37,157 +37,6 @@ import InfoIcon from '../../assets/htf-icon/icon-info.svg';
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 
-const CATALOG = [
-  {
-    key: 'probiotics',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796777775346',
-        variantId: 'gid://shopify/ProductVariant/47804110242034',
-        title: 'Basmati Rice',
-        description:
-          'This traditional cooking method of boiling basmati rice and discarding excess water helps reduce starch content, making it lighter on digestion and lower in glycemic load. Rich in essential carbohydrates for sustained energy, this method preserves the rice’s aromatic flavor while promoting gut health and better blood sugar balance. A wholesome, heart-healthy choice for everyday meals! Calories (8 oz serving): 210 kcalPortion Size: 16 ozaromatic | low-fat | easily digestible',
-        tags: ['Gluten free', 'plate method', 'satvik', 'veg', 'VG'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/BasmatiRice.jpg?v=1753780861',
-        price: '6.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796775186674',
-        variantId: 'gid://shopify/ProductVariant/47804105130226',
-        title: 'Organic Plain Yogurt (12oz)',
-        description:
-          'Calories (6 oz serving): 80 kcalPortion Size: 12 ozprobiotic | gut-friendly | calcium-rich | hormone-free | unprocessed dairy',
-        tags: ['Dairy', 'Gluten free', 'VG'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Screenshot_2025-07-19_at_9.38.54_AM.png?v=1753780650',
-        price: '6.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763324658',
-        variantId: 'gid://shopify/ProductVariant/47804074721522',
-        title: 'Add-on! Tamatar Ka Soup',
-        description:
-          'Tamatar Ka Soup is a light, comforting North Indian-style tomato soup made without cream, onion, or garlic. Simmered with cumin, black pepper, and minimal cold-pressed oil, it’s rich in vitamin C, lycopene, and antioxidants—supporting immunity, digestion, and skin health in a clean, satvik-friendly form. Calories (8 oz serving): 120 kcalPortion Size: 16 ozNorth Indian | antioxidant-rich | hydrating | light | home-style',
-        tags: [],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/TamatarKaSoup.jpg?v=1753779961',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796780888306',
-        variantId: 'gid://shopify/ProductVariant/47804115583218',
-        title: 'Malai Chicken kebab',
-        description:
-          'A creamy, melt-in-the-mouth kebab, marinated in hung curd and light spices, offering calcium-rich, digestion-friendly protein, perfect for a low-oil indulgence. North Indian | Malai | Creamy Texture | High-Protein | Calcium-Rich | Low-Oil | Digestion-Friendly | Indulgent | Organic | Fresh | Local',
-        tags: ['fresh', 'Kebab', 'NV', 'organic'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Murghmalaitikka.jpg?v=1753781168',
-        price: '4.5',
-      },
-    ],
-  },
-  {
-    key: 'protein',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796772892914',
-        variantId: 'gid://shopify/ProductVariant/47804094808306',
-        title: 'Besan Chilla (2pc)',
-        description:
-          'Rooted in Rajasthani and Punjabi households, this gram flour pancake is packed with plant protein, iron, and fiber. Low in oil and spiced gently, it aids digestion and blood sugar stability, making it a protein-rich, gluten-free choice for breakfasts and light meals.',
-        tags: ['Gluten free', 'VG'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/BesanKaChilla.jpg?v=1753780523',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796781478130',
-        variantId: 'gid://shopify/ProductVariant/47804116402418',
-        title: 'Chicken Changezi',
-        description:
-          "A Mughlai-style curry with marinated chicken simmered in a rich yogurt, cream, and spice blend. High in protein and flavor, it's indulgent, aromatic, and festive. Calories (8 oz serving): 310 kcalPortion Size: 16 ozMughlai | high-protein | yogurt-based | creamy | slow-cooked",
-        tags: ['fresh', 'NV', 'Old Delhi', 'organic'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/LOGO_4e14745a-b8ca-4dbb-9b50-146d25f2fad6.png?v=1753781227',
-        price: '18.0',
-      },
-    ],
-  },
-  {
-    key: 'sides',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796763488498',
-        variantId: 'gid://shopify/ProductVariant/47804074885362',
-        title: 'Add-on! Moroccan Couscous Chickpea Salad',
-        description:
-          "Couscous & Chickpea Salad is a Mediterranean-inspired bowl of balanced nutrition. Combining fluffy couscous, protein-rich chickpeas, and crisp vegetables, it's tossed with lemon juice and herbs for a light, oil-optional finish. High in fiber, plant protein, and complex carbs, it supports digestion, satiety, and clean, energizing meals.",
-        tags: ['VGN'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/CouscousSalad.jpg?v=1753779973',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763521266',
-        variantId: 'gid://shopify/ProductVariant/47804074918130',
-        title: 'Add-on! Nutritious! Ashgourd Soup',
-        description: '',
-        tags: [],
-        image: null,
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796782461170',
-        variantId: 'gid://shopify/ProductVariant/47804117385458',
-        title: 'Punjabi! Chicken Tariwala',
-        description:
-          "Indulge in the wholesome flavors of Punjabi Chicken Tariwala, a nutritious delight that combines succulent chicken pieces with a rich tomato-based curry. Packed with aromatic spices like cumin, coriander, and garam masala, this dish offers a burst of authentic Punjabi taste. Loaded with lean protein and an array of vitamins from fresh tomatoes, it's a healthy twist to a classic favorite. Enjoy a guilt-free, satisfying meal that nourishes your body and tantalizes your taste buds Punjabi | Organic | Local | Fresh",
-        tags: ['fresh', 'NV', 'organic', 'Punjabi'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Screenshot_2025-07-20_at_10.11.21_AM.png?v=1753781307',
-        price: '4.5',
-      },
-    ],
-  },
-  {
-    key: 'veggies',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796762898674',
-        variantId: 'gid://shopify/ProductVariant/47804074295538',
-        title: 'Add-on! Persian Shirazi Salad',
-        description:
-          'A light, hydrating Persian classic, this finely diced mix of cucumbers, tomatoes, and red onions is tossed with fresh mint, lemon juice, and olive oil. Rich in vitamin C and antioxidants, it’s a cooling, detoxifying, and naturally low-calorie choice. Calories (8 oz serving): 70 kcalPortion Size: 16 ozPersian | hydrating | digestive support | refreshing | low-calorie',
-        tags: ['VGN'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/PersianShiraziSalad.jpg?v=1753779931',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763226354',
-        variantId: 'gid://shopify/ProductVariant/47804074623218',
-        title: 'Add-on! Sweet Corn Soup',
-        description: '',
-        tags: [],
-        image: null,
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763029746',
-        variantId: 'gid://shopify/ProductVariant/47804074426610',
-        title: 'Add-on! Pumpkin Soup',
-        description:
-          'Inspired by global wellness cuisine, this pumpkin soup is gently simmered with ginger, herbs, and a touch of cold-pressed olive oil—no cream or heavy seasoning. Naturally rich in beta-carotene, fiber, and vitamin C, it supports immunity, digestion, and skin health while staying light, warming, and comforting. Calories (8 oz serving): 110 kcalPortion Size: 16 ozseasonal | beta-carotene | immune support | gut-soothing',
-        tags: [],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Pumpkinsoup.jpg?v=1753779944',
-        price: '10.0',
-      },
-    ],
-  },
-];
-
 const catRank = (c?: string) => {
   const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
   return i === -1 ? 1e9 : i;
@@ -210,12 +59,13 @@ const rotateFromToday = (arr: string[]) => {
 
 export default function CartScreen({ navigation }: any) {
   const [missingOpen, setMissingOpen] = useState(false);
+  const { byDay } = useAppSelector(state => state.catalog);
   const { lines } = useAppSelector(state => state.cart);
+
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
-
   const handleAddFromModal = (payload: any) => {
     dispatch(addItems([payload]));
   };
@@ -254,12 +104,33 @@ export default function CartScreen({ navigation }: any) {
   const grouped = useMemo(
     () =>
       days.map(d => {
-        const mains = lines
-          .filter(x => x.day === d && x.type === 'main')
-          .slice()
-          .sort((a, b) => catRank(a.category) - catRank(b.category));
+        const allMains = lines.filter(x => x.day === d && x.type === 'main');
         const addons = lines.filter(x => x.day === d && x.type === 'addon');
-        return { day: d, mains, addons };
+
+        const plansMap = allMains.reduce((acc: any, item: any) => {
+          if (!acc[item.tiffinPlan]) {
+            acc[item.tiffinPlan] = [];
+          }
+          acc[item.tiffinPlan].push(item);
+          return acc;
+        }, {});
+
+        // Convert to sorted array
+        const tiffinPlans = Object.entries(plansMap)
+          .map(([planNumber, items]: any) => ({
+            plan: parseInt(planNumber),
+            items: items.sort(
+              (a: any, b: any) => catRank(a.category) - catRank(b.category),
+            ),
+          }))
+          .sort((a, b) => a.plan - b.plan);
+
+        return {
+          day: d,
+          mains: allMains,
+          tiffinPlans,
+          addons,
+        };
       }),
     [days, lines],
   );
@@ -272,18 +143,44 @@ export default function CartScreen({ navigation }: any) {
       Boolean,
     ) as string[];
     const scan = ring.filter(d => daysInCart.includes(d));
-    for (const d of scan) {
-      const catsPresent = new Set(
-        lines
-          .filter(l => l.day === d && l.type === 'main')
-          .map(l => String(l.category).toUpperCase()),
-      );
-      const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
-      if (missing.length > 0) return { day: d, missing };
-    }
-    return null;
-  }, [lines, hasAnyMain]);
 
+    const allMissing = [];
+
+    for (const d of scan) {
+      // Get all tiffin plans for this day
+      const tiffinPlans = [
+        ...new Set(
+          lines
+            .filter(l => l.day === d && l.type === 'main')
+            .map(l => l.tiffinPlan),
+        ),
+      ].sort();
+
+      // Check each tiffin plan separately
+      for (const plan of tiffinPlans) {
+        const catsPresent = new Set(
+          lines
+            .filter(
+              l => l.day === d && l.type === 'main' && l.tiffinPlan === plan,
+            )
+            .map(l => String(l.category).toUpperCase()),
+        );
+
+        const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
+
+        if (missing.length > 0) {
+          allMissing.push({
+            day: d,
+            tiffinPlan: plan,
+            missing,
+          });
+        }
+      }
+    }
+
+    // Return all missing info, not just the first one found
+    return allMissing.length > 0 ? allMissing : null;
+  }, [lines, hasAnyMain]);
   // NEW: Add-ons minimum validation when there are only add-ons
   const ADDONS_MIN = 29;
   const addonsOnly = hasAnyAddon && !hasAnyMain;
@@ -308,8 +205,8 @@ export default function CartScreen({ navigation }: any) {
     dispatch(removeDayAddons({ day: d }));
 
   const payDisabled = isEmpty || !!missingInfo || !!addonsMinInfo;
-
   const fmt = (n: number) => n.toFixed(2);
+  const uniqueDays = [...new Set(missingInfo && missingInfo.map(m => m.day))];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
@@ -338,7 +235,7 @@ export default function CartScreen({ navigation }: any) {
           </View>
         ) : (
           <>
-            {grouped.map(({ day, mains, addons }) => {
+            {grouped.map(({ day, mains, addons, tiffinPlans }) => {
               const dayAddonsTotal = addons.reduce(
                 (s, x) => s + +x.price * x.qty,
                 0,
@@ -367,7 +264,7 @@ export default function CartScreen({ navigation }: any) {
                         {mains.length > 0 && (
                           <View style={s.block}>
                             <View style={s.blockHdRow}>
-                              <Text style={s.blockChip}>Main</Text>
+                              <Text style={s.blockChip}>Main </Text>
                               <TouchableOpacity
                                 onPress={() => onRemoveDayMains(day)}
                                 style={s.hdrTrashBtn}
@@ -381,92 +278,118 @@ export default function CartScreen({ navigation }: any) {
                               </TouchableOpacity>
                             </View>
 
-                            {mains.map(it => (
-                              <View
-                                key={`${it.id}-${it.variantId}`}
-                                style={s.card}
-                              >
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    dispatch(
-                                      removeItem({
-                                        id: it.id,
-                                        variantId: it.variantId,
-                                      }),
-                                    )
-                                  }
-                                  style={s.priceTrashBtn}
-                                  accessibilityRole="button"
-                                  accessibilityLabel="Remove item"
-                                >
-                                  <FontAwesome5
-                                    iconStyle="solid"
-                                    name="times"
-                                    size={20}
-                                    color={C.red}
-                                  />
-                                </TouchableOpacity>
-
-                                <Image
-                                  source={{ uri: it.image }}
-                                  style={s.img}
-                                />
-
-                                <View style={s.cardContent}>
-                                  {/* type + category */}
-                                  <View style={s.titleRowTight}>
-                                    <Text style={s.typeBadge}>
-                                      Type: {it.type}
-                                    </Text>
-                                    <Text style={s.catPill}>{it.category}</Text>
-                                  </View>
-
-                                  {/* title */}
-                                  <Text style={s.itemTitle} numberOfLines={2}>
-                                    {it.title}
+                            {tiffinPlans.map(plan => (
+                              <View key={`tiffin-${plan.plan}`}>
+                                {/* Tiffin Plan Header */}
+                                <View style={s.tiffinPlanHeader}>
+                                  <Text style={s.tiffinPlanTitle}>
+                                    Tiffin {plan.plan}
                                   </Text>
-
-                                  {/* price below title */}
-                                  <Text style={s.priceUnder}>${it.price}</Text>
-
-                                  {/* qty row */}
-                                  <View style={s.qtyRow}>
-                                    <Round
-                                      onPress={() => {
-                                        if (it.qty === 1) return;
-                                        dispatch(
-                                          decreaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                          }),
-                                        );
-                                      }}
-                                    >
-                                      <Text style={s.sign}>−</Text>
-                                    </Round>
-                                    <Text style={s.qty}>{it.qty}</Text>
-                                    <Round
-                                      onPress={() =>
-                                        dispatch(
-                                          increaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                          }),
-                                        )
-                                      }
-                                    >
-                                      <Text style={s.sign}>＋</Text>
-                                    </Round>
-                                  </View>
                                 </View>
+
+                                {/* Items for this tiffin plan */}
+                                {plan.items.map((it: any, i: number) => {
+                                  return (
+                                    <View key={i} style={s.card}>
+                                      <TouchableOpacity
+                                        onPress={() =>
+                                          dispatch(
+                                            removeItem({
+                                              id: it.id,
+                                              variantId: it.variantId,
+                                              tiffinPlan:
+                                                it.tiffinPlan as number,
+                                            }),
+                                          )
+                                        }
+                                        style={s.priceTrashBtn}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Remove item"
+                                      >
+                                        <FontAwesome5
+                                          iconStyle="solid"
+                                          name="times"
+                                          size={20}
+                                          color={C.red}
+                                        />
+                                      </TouchableOpacity>
+
+                                      <Image
+                                        source={{ uri: it.image }}
+                                        style={s.img}
+                                      />
+
+                                      <View style={s.cardContent}>
+                                        <View style={s.titleRowTight}>
+                                          <Text style={s.typeBadge}>
+                                            Type: {it.type}
+                                          </Text>
+                                          <Text style={s.catPill}>
+                                            {it.category}
+                                          </Text>
+                                        </View>
+
+                                        {/* title */}
+                                        <Text
+                                          style={s.itemTitle}
+                                          numberOfLines={2}
+                                        >
+                                          {it.title}
+                                        </Text>
+
+                                        {/* price below title */}
+                                        <Text style={s.priceUnder}>
+                                          ${it.price}
+                                        </Text>
+
+                                        {/* qty row */}
+                                        <View style={s.qtyRow}>
+                                          <Round
+                                            onPress={() => {
+                                              if (it.qty === 1) return;
+                                              dispatch(
+                                                decreaseItem({
+                                                  id: it.id,
+                                                  variantId: it.variantId,
+                                                  tiffinPlan:
+                                                    it.tiffinPlan as number,
+                                                }),
+                                              );
+                                            }}
+                                          >
+                                            <Text style={s.sign}>−</Text>
+                                          </Round>
+                                          <Text style={s.qty}>{it.qty}</Text>
+                                          <Round
+                                            onPress={() =>
+                                              dispatch(
+                                                increaseItem({
+                                                  id: it.id,
+                                                  tiffinPlan:
+                                                    it.tiffinPlan as number,
+
+                                                  variantId: it.variantId,
+                                                }),
+                                              )
+                                            }
+                                          >
+                                            <Text style={s.sign}>＋</Text>
+                                          </Round>
+                                        </View>
+                                      </View>
+                                    </View>
+                                  );
+                                })}
                               </View>
                             ))}
-                            <View style={s.tiffinTotalBox}>
-                              <Text style={s.tiffinTotalTxt}>
-                                Total for {day} Tiffin 1 : ${tiffinPrice} + ($
-                                {mealCost}) = ${mealCost + tiffinPrice}
-                              </Text>
-                            </View>
+                            {!missingInfo && (
+                              <View style={s.tiffinTotalBox}>
+                                <Text style={s.tiffinTotalTxt}>
+                                  Total for {day} ${tiffinPrice} + ($
+                                  {mealCost}) = ${mealCost + tiffinPrice}
+                                </Text>
+                              </View>
+                            )}
                           </View>
                         )}
 
@@ -490,7 +413,7 @@ export default function CartScreen({ navigation }: any) {
 
                             {addons.map(it => (
                               <View
-                                key={`${it.id}-${it.variantId}`}
+                                key={`${it.id}-${it.variantId}-${it.tiffinPlan}-${it.day}`}
                                 style={s.cardAlt}
                               >
                                 <TouchableOpacity
@@ -499,6 +422,7 @@ export default function CartScreen({ navigation }: any) {
                                       removeItem({
                                         id: it.id,
                                         variantId: it.variantId,
+                                        tiffinPlan: it.tiffinPlan as number,
                                       }),
                                     )
                                   }
@@ -548,6 +472,7 @@ export default function CartScreen({ navigation }: any) {
                                           decreaseItem({
                                             id: it.id,
                                             variantId: it.variantId,
+                                            tiffinPlan: it.tiffinPlan as number,
                                           }),
                                         );
                                       }}
@@ -561,6 +486,7 @@ export default function CartScreen({ navigation }: any) {
                                           increaseItem({
                                             id: it.id,
                                             variantId: it.variantId,
+                                            tiffinPlan: it.tiffinPlan as number,
                                           }),
                                         )
                                       }
@@ -607,12 +533,14 @@ export default function CartScreen({ navigation }: any) {
               placeholderTextColor={C.sub}
             />
 
-            <View style={s.summary}>
-              <Row k="Meal box price" v={`$${mealCost + tiffinPrice}`} />
-              <Row k="Add on's" v={`$${addons}`} />
-              {/* <Row k="Non member shipping" v={`$${nonMember}`} /> */}
-              <Row k="Total" v={`$${subtotal + tiffinPrice}`} bold />
-            </View>
+            {!missingInfo && (
+              <View style={s.summary}>
+                <Row k="Meal box price" v={`$${mealCost + tiffinPrice}`} />
+                <Row k="Add on's" v={`$${addons}`} />
+                {/* <Row k="Non member shipping" v={`$${nonMember}`} /> */}
+                <Row k="Total" v={`$${subtotal + tiffinPrice}`} bold />
+              </View>
+            )}
           </>
         )}
       </ScrollView>
@@ -628,23 +556,17 @@ export default function CartScreen({ navigation }: any) {
 
               <View style={s.missTxtWrap}>
                 <Text style={s.missTitle}>
-                  Missing meal for {String(missingInfo.day).toLowerCase()}
+                  Missing meal for {uniqueDays.join(', ')}
                 </Text>
 
-                <View style={s.missChipsRow}>
-                  {missingInfo.missing.map(x => (
-                    <View key={x} style={s.missChip}>
-                      <Text style={s.missChipTxt}>{x.toLowerCase()}</Text>
-                    </View>
-                  ))}
-                </View>
+                <View style={s.missChipsRow}></View>
               </View>
 
               <TouchableOpacity
                 style={s.missCta}
                 activeOpacity={0.9}
                 onPress={() => {
-                  navigation.navigate('Home');
+                  setMissingOpen(!missingOpen);
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Open suggestions to add items"
@@ -652,6 +574,18 @@ export default function CartScreen({ navigation }: any) {
                 <Text style={s.missCtaTxt}>Add</Text>
               </TouchableOpacity>
             </View>
+          )}
+          {missingInfo && (
+            <MissingCategoryModal
+              visible={missingOpen}
+              onClose={() => setMissingOpen(false)}
+              dataByDay={byDay}
+              missingList={missingInfo as any}
+              onAdd={payload => {
+                // add to cart and keep modal open for more picks, or close if you want
+                dispatch(addItems([payload] as any));
+              }}
+            />
           )}
 
           {/* NEW: Add-ons minimum notice (when only add-ons and < $29) */}
@@ -697,7 +631,11 @@ export default function CartScreen({ navigation }: any) {
 
           <View style={s.totalRow}>
             <Text style={s.totalK}>TOTAL:</Text>
-            <Text style={s.totalV}>${subtotal + tiffinPrice}</Text>
+            <Text style={[s.totalV, { fontSize: missingInfo ? 15 : 24 }]}>
+              {missingInfo
+                ? 'Please select missing item'
+                : `$ ${subtotal + tiffinPrice}`}{' '}
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -1038,7 +976,7 @@ const s = StyleSheet.create({
     marginVertical: 12,
   },
   totalK: { color: C.sub, fontWeight: '700' },
-  totalV: { color: C.black, fontWeight: '900', fontSize: 24 },
+  totalV: { color: C.black, fontWeight: '900' },
 
   payBtn: {
     height: 52,
@@ -1173,5 +1111,77 @@ const s = StyleSheet.create({
     fontWeight: '800',
     fontSize: 16,
     color: '#1B4FBF',
+  },
+
+  tiffinSection: {
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 10,
+  },
+  tiffinHeader: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  tiffinHeaderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  itemCard: {
+    backgroundColor: '#fff',
+    padding: 10,
+    marginBottom: 5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+
+  itemCategory: {
+    fontSize: 14,
+    color: '#666',
+  },
+  itemPrice: {
+    fontSize: 14,
+    color: '#2ecc71',
+    fontWeight: 'bold',
+  },
+  itemQty: {
+    fontSize: 12,
+    color: '#999',
+  },
+  planTotal: {
+    backgroundColor: '#e8f5e8',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  planTotalText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#27ae60',
+  },
+
+  tiffinPlanBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  tiffinPlanHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tiffinPlanTitle: {
+    borderColor: 'green',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    fontSize: 10,
+    borderWidth: 2,
+    borderRadius: 5,
   },
 });
