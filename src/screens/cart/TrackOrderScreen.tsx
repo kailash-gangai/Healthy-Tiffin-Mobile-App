@@ -52,7 +52,7 @@ export default function TrackOrderScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
   const { customerToken, email } = useAppSelector(state => state.user);
   const shopifyCheckout = useShopifyCheckoutSheet();
-
+  console.log(lines, 'lines');
   const dispatch = useAppDispatch();
   const cart = async () => {
     try {

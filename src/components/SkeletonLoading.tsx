@@ -1,5 +1,6 @@
 import React from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+
 const COLORS = {
   text: '#232323',
   sub: '#9E9E9E',
@@ -11,7 +12,11 @@ const COLORS = {
   white: '#FFFFFF',
 };
 
-const SkeletonLoading = () => {
+/**
+ * Optional prop `count` replicates the skeleton rows.
+ * Backwards compatible: <SkeletonLoading /> renders 1 row.
+ */
+const SkeletonLoading = ({ count = 1 }: { count?: number }) => {
   const anim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -38,7 +43,7 @@ const SkeletonLoading = () => {
     outputRange: [0.45, 1],
   });
 
-  return (
+  const Row = () => (
     <View style={[s.row, { backgroundColor: COLORS.white }]}>
       <Animated.View style={[s.skelBox, s.skelCheckbox, { opacity }]} />
       <Animated.View style={[s.skelBox, s.skelThumb, { opacity }]} />
@@ -56,9 +61,20 @@ const SkeletonLoading = () => {
       <Animated.View style={[s.skelBox, s.skelHeart, { opacity }]} />
     </View>
   );
+
+  if (count <= 1) return <Row />;
+
+  return (
+    <>
+      {Array.from({ length: Math.max(1, Math.floor(count)) }).map((_, i) => (
+        <Row key={`skel-${i}`} />
+      ))}
+    </>
+  );
 };
 
 export default SkeletonLoading;
+
 const s = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -73,6 +89,14 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   textContainer: { flex: 1 },
+
+  // skeleton
+  skelBox: { backgroundColor: '#E8F2EC', borderRadius: 8 },
+  skelCheckbox: { width: 20, height: 20, borderRadius: 4, marginRight: 10 },
+  skelThumb: { width: 44, height: 44, borderRadius: 8, marginRight: 10 },
+  skelHeart: { width: 30, height: 30, borderRadius: 15 },
+
+  // (kept from original for compatibility)
   checkbox: {
     width: 20,
     height: 20,
@@ -103,13 +127,7 @@ const s = StyleSheet.create({
   },
   price: { fontSize: 14, color: 'gray', marginTop: 4 },
 
-  // skeleton
-  skelBox: { backgroundColor: '#E8F2EC', borderRadius: 8 },
-  skelCheckbox: { width: 20, height: 20, borderRadius: 4, marginRight: 10 },
-  skelThumb: { width: 44, height: 44, borderRadius: 8, marginRight: 10 },
-  skelHeart: { width: 30, height: 30, borderRadius: 15 },
-
-  // modal
+  // modal leftovers (unchanged)
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: COLORS.backdrop,

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -199,7 +200,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   }
   const GoogleSingUp = async () => {
     try {
-      console.log('GoogleSingUp');
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
@@ -207,68 +207,34 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
       // Get the users ID token
       const signInResult = await GoogleSignin.signIn();
       console.log('signInResult', signInResult);
-      // Try the new style of google-sign in result, from v13+ of that module
-      let idToken = signInResult.data?.idToken;
-      if (!idToken) {
-        idToken = signInResult.idToken;
-      }
-      if (!idToken) {
-        throw new Error('No ID token found');
-      }
+      const user = signInResult?.data?.user;
+      const payload = {
+        email: user?.email,
+        first_name: user?.givenName,
+        last_name: user?.familyName,
+      };
 
-      // Create a Google credential with the token
-      const googleCredential = GoogleAuthProvider.credential(
-        signInResult.data.idToken,
-      );
-      console.log('googleCredential', googleCredential);
-      // Sign-in the user with the credential
-      return signInWithCredential(getAuth(), googleCredential);
+      const baseURL =
+        'http://healthyfood-dev.cartmade.com/api/shopify/multipass-token';
+
+      const { data } = await axios.post(baseURL, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const customerToken = data?.customerAccessToken;
+      const tokenExpire = data?.expiresAt;
+      saveCustomerTokens({ customerToken, tokenExpire });
+      let customerdetails = checkCustomerTokens();
+      customerdetails.then(async result => {
+        if (result) {
+          dispatch(setUser(result));
+          navigation.navigate('Home');
+        }
+      });
     } catch (error) {
       console.log('error: ', error);
     }
-    // try {
-    //     await GoogleSignin.hasPlayServices();
-    //     const userInfo = await GoogleSignin.signIn();
-    //     // Send userInfo.idToken to your backend for verification
-    //     console.log(userInfo);
-
-    //     const customerData = {
-    //         email: userInfo?.data.user.email,
-    //         first_name: userInfo?.data.user.givenName,
-    //         last_name: userInfo?.data.user.familyName,
-    //     };
-    //     var Multipassify = require('multipassify');
-
-    //     const multipass = new Multipassify('2456b37a3afcb621ee972127be9c6024');
-    //     const mpToken = multipass.encode({
-    //         email: userInfo?.data.user.email,
-    //         first_name: userInfo?.data.user.givenName,
-    //         last_name: userInfo?.data.user.familyName,
-    //         return_to: 'https://healthytiffin.com',
-    //     });
-    //     const query = `
-    //         mutation($token: String!) {
-    //           customerAccessTokenCreateWithMultipass(multipassToken: $token) {
-    //             customerAccessToken { accessToken expiresAt }
-    //             customerUserErrors { field message code }
-    //           }
-    //         }`;
-
-    //     const res = await fetch(STORE_API_URL!, {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //             'X-Shopify-Storefront-Access-Token': STOREFRONT_PUBLIC_TOKEN!,
-    //         },
-    //         body: JSON.stringify({ query, variables: { token: mpToken } }),
-    //     });
-
-    //     const json = await res.json();
-    //     console.log('customerData', customerData);
-
-    // } catch (error) {
-    //     console.error(error);
-    // }
   };
   return (
     <KeyboardAvoidingView

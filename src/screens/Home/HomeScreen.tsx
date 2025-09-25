@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   View,
@@ -6,6 +6,8 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+
 import { COLORS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
 import StatChips from '../../components/StatChips';
@@ -16,19 +18,21 @@ import DishCard from '../../components/DishCard';
 import PriceSummary from '../../components/PriceSummary';
 import CTAButton from '../../components/CTAButton';
 import FitnessCarousel from '../../components/FitnessCarousel';
+
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { addItems, cartFLag } from '../../store/slice/cartSlice';
+import { upsertDay } from '../../store/slice/catalogSlice';
 
 import {
   getAllMetaobjects,
   getMetaObjectByHandle,
 } from '../../shopify/queries/getMetaObject';
 import { getProductsByIds } from '../../shopify/queries/getProducts';
-import { addItems, cartFLag } from '../../store/slice/cartSlice';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { getAllArticles } from '../../shopify/queries/blogs';
-import HeartIcon from '../../assets/htf-icon/icon-heart.svg';
-import EyeShow from '../../assets/htf-icon/icon-eye-show.svg';
-import { upsertDay } from '../../store/slice/catalogSlice';
+import AddonDishCard from '../../components/AddonDishCard';
+import SkeletonLoading from '../../components/SkeletonLoading';
+
+type SectionKey = string;
 
 interface CategoriesProps {
   key: string;
@@ -38,6 +42,7 @@ interface CategoriesProps {
     description: string;
     tags: string[];
     image: string;
+    price: string | number;
   }[];
 }
 
@@ -54,6 +59,17 @@ export type Item = {
   price: string | number;
 };
 
+interface BlogProp {
+  id: string;
+  title: string;
+  image?: { url: string | null };
+  date: string;
+  video?: string | null;
+  author?: string;
+  content?: string | null;
+  excerpt?: string;
+}
+
 const ALL_DAYS = [
   'Monday',
   'Tuesday',
@@ -62,263 +78,312 @@ const ALL_DAYS = [
   'Friday',
   'Saturday',
   'Sunday',
-];
+] as const;
+const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
+const A_LA_CARTE_RANK = ['paranthas', 'drinks', 'desserts', 'kids', 'oatmeal'];
 
-interface BlogProp {
-  id: string;
-  title: string;
-  image?: {
-    url: string | null;
-  };
-  date: string;
-  video?: string | null;
-  author?: string;
-  content?: string | null;
-  excerpt?: string;
+function keepDecimals(from: string | number, num: number) {
+  const s = String(from);
+  const decs = (s.split('.')[1] ?? '').length;
+  return decs > 0 ? Number(num.toFixed(decs)) : Math.trunc(num);
 }
-const HomeScreen: React.FC = ({ navigation, route }: any) => {
+
+function rankOf(key: string, ordered: string[]) {
+  const i = ordered.indexOf(key.toLowerCase());
+  return i === -1 ? 1e9 : i;
+}
+
+function getAbsoluteTodayIndex() {
+  const js = new Date().getDay(); // 0..6 Sun..Sat
+  const week = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
+  return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
+}
+
+function toMoney(n: number) {
+  return `$${Number.isFinite(n) ? n : 0}`;
+}
+
+async function expandCategoryFields(metaObjectId: string) {
+  const single: any[] = await getMetaObjectByHandle(metaObjectId);
+  const expanded = await Promise.all(
+    single
+      .filter(d => d.value?.startsWith('[') && d.value?.endsWith(']'))
+      .map(async d => {
+        if (d.value) d.value = (await getProductsByIds(d.value)) ?? [];
+        return d;
+      }),
+  );
+  return expanded.filter(Boolean) as CategoriesProps[];
+}
+
+function applyPriceThresholds(
+  categories: CategoriesProps[],
+  thresholds: any[],
+): CategoriesProps[] {
+  const map: Record<string, number> = {};
+  for (const t of thresholds) {
+    const prefix = t.key.split('_')[0]?.trim();
+    if (!prefix) continue;
+    const v = parseFloat(t.value);
+    if (Number.isFinite(v)) map[prefix] = v;
+  }
+  return categories.map(cat => {
+    const thr = map[cat.key];
+    if (!Number.isFinite(thr)) return cat;
+    const nextItems = cat.value.map(it => {
+      const priceNum = parseFloat(String(it.price));
+      if (!Number.isFinite(priceNum)) return it;
+      const newNum = Math.max(priceNum - thr, 0);
+      return { ...it, price: keepDecimals(it.price, newNum) };
+    });
+    return { ...cat, value: nextItems };
+  });
+}
+
+const HomeScreen: React.FC = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
   const { isCartCleared } = useAppSelector(state => state.cart);
 
-  // state
   const [tab, setTab] = useState<0 | 1>(0);
-  const [categories, setCategories] = useState<CategoriesProps[]>([]);
-  const [addonCategories, setAddonCategories] = useState<CategoriesProps[]>([]);
   const [daysMeta, setDaysMeta] = useState<any[]>([]);
   const [addonsMeta, setAddonsMeta] = useState<any[]>([]);
-  const [isLoading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<CategoriesProps[]>([]);
+  const [addonCategories, setAddonCategories] = useState<CategoriesProps[]>([]);
+  const [priceThreshold, setPriceThreshold] = useState<any[]>([]);
   const [blogs, setBlogs] = useState<BlogProp[]>([]);
+  const [isLoading, setLoading] = useState(false);
+
   const [selectedItemsToAddOnCart, setSelectedItemsToAddOnCart] = useState<
     Item[]
   >([]);
-  const [priceThreshold, setPriceThreshold] = useState<any[]>([]);
-  const [filteredIndex, setFilteredIndex] = useState(0); // index within filtered list
-  const [openByKey, setOpenByKey] = React.useState<Record<string, boolean>>({});
+  const [filteredIndex, setFilteredIndex] = useState(0);
+  const [openByKey, setOpenByKey] = useState<Record<SectionKey, boolean>>({});
   const [tiffinPlan, setTiffinPlan] = useState<number>(1);
-  // ui helpers
-  const isOpen = (k: string) => openByKey[k] ?? true;
-  const setOpen = (k: string, v: boolean) =>
+
+  const isOpen = (k: SectionKey) => openByKey[k] ?? true;
+  const setOpen = (k: SectionKey, v: boolean) =>
     setOpenByKey(s => ({ ...s, [k]: v }));
 
-  // day indexes
-  const absoluteTodayIndex = useMemo(() => {
-    const js = new Date().getDay(); // 0=Sun..6=Sat
-    const week = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ];
-    return ALL_DAYS.indexOf(week[js]); // 0..6
-  }, []);
-
+  const absoluteTodayIndex = useMemo(() => getAbsoluteTodayIndex(), []);
   const FILTERED_DAYS = useMemo(() => {
-    if (absoluteTodayIndex < 0) return ALL_DAYS;
-    return ALL_DAYS.slice(absoluteTodayIndex); // e.g. ['Thursday','Friday','Saturday','Sunday']
+    if (absoluteTodayIndex < 0) return ALL_DAYS as unknown as string[];
+    return ALL_DAYS.slice(absoluteTodayIndex) as unknown as string[];
   }, [absoluteTodayIndex]);
-
   const absoluteDayIndex = useMemo(
     () => Math.min(ALL_DAYS.length - 1, absoluteTodayIndex + filteredIndex),
     [absoluteTodayIndex, filteredIndex],
   );
-
   const currentDay = ALL_DAYS[absoluteDayIndex];
-  const order = ['protein', 'veggies', 'sides', 'probiotics'];
 
-  // metaobject ids
-  const currentDayMetaObjectId = daysMeta.find(
-    d => d.handle.toLowerCase() === currentDay.toLowerCase(),
-  )?.id;
+  const currentDayMetaObjectId = useMemo(
+    () =>
+      daysMeta.find(d => d.handle.toLowerCase() === currentDay.toLowerCase())
+        ?.id,
+    [daysMeta, currentDay],
+  );
+  const addonsMetaObjectId = useMemo(
+    () =>
+      addonsMeta.find(
+        (d: any) => d.handle.toLowerCase() === currentDay.toLowerCase(),
+      )?.id,
+    [addonsMeta, currentDay],
+  );
 
-  const addonsMetaObjectId = addonsMeta.find(
-    (d: any) => d.handle.toLowerCase() === currentDay.toLowerCase(),
-  )?.id;
+  const sortedCategories = useMemo(
+    () =>
+      categories
+        .slice()
+        .sort((a, b) => rankOf(a.key, ORDER_RANK) - rankOf(b.key, ORDER_RANK)),
+    [categories],
+  );
+  const sortedAddons = useMemo(
+    () =>
+      addonCategories
+        .slice()
+        .sort(
+          (a, b) =>
+            rankOf(a.key, A_LA_CARTE_RANK) - rankOf(b.key, A_LA_CARTE_RANK),
+        ),
+    [addonCategories],
+  );
 
-  // costs
-  const mealCost = selectedItemsToAddOnCart
-    .filter(item => item.type === 'main')
-    .reduce((total, item) => total + parseFloat(String(item.price)), 0);
+  const updatedCategory = useMemo(
+    () => applyPriceThresholds(sortedCategories, priceThreshold),
+    [sortedCategories, priceThreshold],
+  );
 
-  const addonCost = selectedItemsToAddOnCart
-    .filter(item => item.type === 'addon')
-    .reduce((total, item) => total + parseFloat(String(item.price)), 0);
+  // merged list: updated main first, then addons
+  const mergedCatalog = useMemo(
+    () => [...updatedCategory, ...sortedAddons],
+    [updatedCategory, sortedAddons],
+  );
 
-  // pricing helper
-  function applyPriceThresholds(categories: any[], thresholds: any[]): any[] {
-    const map: Record<string, number> = {};
+  const idToCat = useMemo(() => {
+    const m = new Map<string, string>();
+    categories.forEach(s =>
+      s.value.forEach(v => m.set(v.id, s.key.toLowerCase())),
+    );
+    return m;
+  }, [categories]);
 
-    for (const t of thresholds) {
-      const prefix = t.key.split('_')[0]?.trim();
-      if (!prefix) continue;
-      const v = parseFloat(t.value);
-      if (Number.isFinite(v)) map[prefix] = v;
+  const mainCats = useMemo(
+    () => categories.map(s => s.key.toLowerCase()),
+    [categories],
+  );
+
+  const hasAnyMain = useMemo(
+    () => selectedItemsToAddOnCart.some(i => i.type === 'main'),
+    [selectedItemsToAddOnCart],
+  );
+  const hasAnyAddon = useMemo(
+    () => selectedItemsToAddOnCart.some(i => i.type === 'addon'),
+    [selectedItemsToAddOnCart],
+  );
+
+  const mealCost = useMemo(
+    () =>
+      selectedItemsToAddOnCart
+        .filter(item => item.type === 'main')
+        .reduce((total, item) => total + parseFloat(String(item.price)), 0),
+    [selectedItemsToAddOnCart],
+  );
+
+  console.log(mealCost, 'mcost');
+  const addonCost = useMemo(
+    () =>
+      selectedItemsToAddOnCart
+        .filter(i => i.type === 'addon')
+        .reduce((sum, i) => {
+          const price = Number.parseFloat(String(i.price)) || 0;
+          const qty = Number.isFinite(Number(i.qty)) ? Number(i.qty) : 1;
+          return sum + price * qty;
+        }, 0),
+    [selectedItemsToAddOnCart],
+  );
+
+  const validation = useMemo(() => {
+    if (!hasAnyMain && hasAnyAddon) {
+      if (addonCost < 29)
+        return {
+          ok: false,
+          missing: [],
+          message: 'A La Carte Minimum $29 for ' + currentDay,
+        };
+      return { ok: true, missing: [], message: '' };
     }
+    if (hasAnyMain) {
+      const missing = mainCats.filter(
+        c =>
+          !selectedItemsToAddOnCart.some(
+            i => (i.category || idToCat.get(i.id) || '').toLowerCase() === c,
+          ),
+      );
+      return {
+        ok: missing.length === 0,
+        missing,
+        message: missing.length
+          ? `Missing meal for: ${missing.join(', ')}`
+          : '',
+      };
+    }
+    return { ok: false, missing: [], message: '' };
+  }, [
+    hasAnyMain,
+    hasAnyAddon,
+    addonCost,
+    currentDay,
+    mainCats,
+    selectedItemsToAddOnCart,
+    idToCat,
+  ]);
 
-    const keepDecimals = (orig: string, num: number) => {
-      const decs = (orig.split('.')[1] ?? '').length;
-      return decs > 0 ? num.toFixed(decs) : String(Math.trunc(num));
-    };
+  const handleAddNewTiffin = useCallback(() => {
+    setTiffinPlan(p => p + 1);
+    dispatch(addItems(selectedItemsToAddOnCart as any));
+    setSelectedItemsToAddOnCart([]);
+  }, [dispatch, selectedItemsToAddOnCart]);
 
-    return categories.map(cat => {
-      const thr = map[cat.key];
-      if (!Number.isFinite(thr)) return cat;
-
-      const nextItems = cat.value.map((it: any) => {
-        const priceNum = parseFloat(it.price);
-        if (!Number.isFinite(priceNum)) return it;
-        const newNum = Math.max(priceNum - thr, 0);
-        return { ...it, price: keepDecimals(it.price, newNum) };
-      });
-
-      return { ...cat, value: nextItems };
-    });
-  }
-
-  // fetchers
-  const fetchMetaObjects = async () => {
+  const fetchMetaAndData = useCallback(async () => {
     setLoading(true);
     try {
-      const listOfMetaobjects = await getAllMetaobjects('main_menus');
-      const priceThreshold = await getAllMetaobjects('price_threshold');
-      const priceMetaobject: any = await getMetaObjectByHandle(
-        priceThreshold?.[0]?.id,
-      );
-      setPriceThreshold(priceMetaobject);
+      const [mainList, addonList, thresholdList, blogResp] = await Promise.all([
+        getAllMetaobjects('main_menus'),
+        getAllMetaobjects('addon_menu'),
+        getAllMetaobjects('price_threshold'),
+        getAllArticles(),
+      ]);
 
-      const resultBlogs = await getAllArticles();
-      const articles: any = resultBlogs?.articles;
-      const blog: any = articles?.map((blog: any) => ({
-        id: blog?.id,
-        title: blog?.title,
-        image: blog?.image?.url,
-        content: blog?.content,
-        video: blog?.video || null,
-        author: blog.authorV2?.name,
-        date: blog?.publishedAt,
-        excerpt: blog?.excerpt,
-      }));
+      setDaysMeta(mainList ?? []);
+      setAddonsMeta(addonList ?? []);
+
+      // thresholds
+      if (thresholdList?.[0]?.id) {
+        const priceMetaobject: any = await getMetaObjectByHandle(
+          thresholdList[0].id,
+        );
+        setPriceThreshold(priceMetaobject ?? []);
+      } else {
+        setPriceThreshold([]);
+      }
+
+      // blogs
+      const articles: any = blogResp?.articles;
+      const blog: BlogProp[] =
+        articles?.map((b: any) => ({
+          id: b?.id,
+          title: b?.title,
+          image: b?.image?.url,
+          content: b?.content,
+          video: b?.video || null,
+          author: b?.authorV2?.name,
+          date: b?.publishedAt,
+          excerpt: b?.excerpt,
+        })) ?? [];
       setBlogs(blog);
 
-      const listOfAddons = await getAllMetaobjects('addon_menu');
-      if (!listOfMetaobjects || !listOfAddons)
-        throw new Error('Failed to fetch metaobjects.');
+      // per-day expansions
+      const [mainCat, addOnCat] = await Promise.all([
+        currentDayMetaObjectId
+          ? expandCategoryFields(currentDayMetaObjectId)
+          : Promise.resolve([]),
+        addonsMetaObjectId
+          ? expandCategoryFields(addonsMetaObjectId)
+          : Promise.resolve([]),
+      ]);
 
-      setDaysMeta(listOfMetaobjects);
-      setAddonsMeta(listOfAddons);
+      setCategories(mainCat);
+      setAddonCategories(addOnCat);
 
-      const fetchCategoryData = async (metaObjectId: string) => {
-        const singleMetaObject: any = await getMetaObjectByHandle(metaObjectId);
-        const expanded: any = await Promise.all(
-          singleMetaObject
-            .filter(
-              (d: any) => d.value?.startsWith('[') && d.value?.endsWith(']'),
-            )
-            .map(async (d: any) => {
-              if (d?.value) {
-                const products = await getProductsByIds(d.value);
-                d.value = products ?? [];
-              }
-              return d;
-            }),
-        );
-        return expanded.filter((x: any) => x);
-      };
-
-      if (currentDayMetaObjectId) {
-        const mainCategoryData = await fetchCategoryData(
-          currentDayMetaObjectId,
-        );
-        setCategories(mainCategoryData);
+      if (mainCat.length)
         dispatch(
-          upsertDay({ catalog: mainCategoryData, day: currentDay as any }),
+          upsertDay({ catalog: mainCat as any, day: currentDay as any }),
         );
-      } else {
-        setCategories([]);
-      }
-
-      if (addonsMetaObjectId) {
-        const addonCategoryData = await fetchCategoryData(addonsMetaObjectId);
-        setAddonCategories(addonCategoryData);
-      } else {
-        setAddonCategories([]);
-      }
     } catch (e) {
       console.error('Error fetching metaobjects:', e);
+      setCategories([]);
+      setAddonCategories([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentDay, currentDayMetaObjectId, addonsMetaObjectId, dispatch]);
 
-  // derived ordering and maps
-  const rank = (k: string) => {
-    const i = order.indexOf(k.toLowerCase());
-    return i === -1 ? 1e9 : i; // unknowns go last
-  };
-
-  const sortedCategories = categories
-    .slice()
-    .sort((a, b) => rank(a.key) - rank(b.key));
-
-  const idToCat = categories.reduce(
-    (m, s) => (s.value.forEach(v => m.set(v.id, s.key.toLowerCase())), m),
-    new Map<string, string>(),
-  );
-
-  const mainCats = categories.map(s => s.key.toLowerCase());
-  const hasAnyMain = selectedItemsToAddOnCart.some(i => i.type === 'main');
-  const hasAnyAddon = selectedItemsToAddOnCart.some(i => i.type === 'addon');
-
-  // apply thresholds
-  const updatedCategory = applyPriceThresholds(
-    sortedCategories,
-    priceThreshold,
-  );
-  // selection validation
-  let result: { ok: boolean; missing: string[]; message: string };
-  if (!hasAnyMain && hasAnyAddon) {
-    if (addonCost < 29) {
-      result = {
-        ok: false,
-        missing: [],
-        message: 'A La Carte Minimum $29 for ' + currentDay,
-      };
-    } else {
-      result = { ok: true, missing: [], message: '' };
-    }
-  } else if (hasAnyMain) {
-    const missing = mainCats.filter(
-      c =>
-        !selectedItemsToAddOnCart.some(
-          i => (i.category || idToCat.get(i.id) || '').toLowerCase() === c,
-        ),
-    );
-    result = {
-      ok: missing.length === 0,
-      missing,
-      message: missing.length ? `Missing meal for: ${missing.join(', ')}` : '',
-    };
-  } else {
-    // nothing selected
-    result = { ok: false, missing: [], message: '' };
-  }
-  // effects
   useEffect(() => {
-    if (isCartCleared) {
-      setSelectedItemsToAddOnCart([]);
-    }
+    if (isCartCleared) setSelectedItemsToAddOnCart([]);
     dispatch(cartFLag());
-    fetchMetaObjects();
     setTiffinPlan(1);
-  }, [currentDayMetaObjectId, addonsMetaObjectId, isCartCleared]);
+    currentDay !== 'Saturday' && currentDay !== 'Sunday'
+      ? fetchMetaAndData()
+      : setCategories([]);
+  }, [isCartCleared, dispatch, fetchMetaAndData]);
 
-  const handleAddNewTiffin = () => {
-    setTiffinPlan(tiffinPlan + 1);
-    dispatch(addItems(selectedItemsToAddOnCart as any));
-    setSelectedItemsToAddOnCart([]);
-  };
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScrollView bounces={false}>
@@ -333,17 +398,20 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
             padding: 4,
           }}
         >
-          <DayTabs days={FILTERED_DAYS} onChange={setFilteredIndex} />
+          <DayTabs
+            days={FILTERED_DAYS as string[]}
+            onChange={setFilteredIndex}
+          />
           <OrderToggle index={tab} onChange={setTab} />
         </View>
 
-        {/* Tab 0: Daily order */}
+        {!categories.length &&
+          currentDay !== 'Saturday' &&
+          currentDay !== 'Sunday' && <SkeletonLoading count={5} />}
+        {/* Tab 0: show merged list as requested (updated main first, then addons) */}
         {tab === 0 && (
           <View style={{ backgroundColor: COLORS.white }}>
-            <View style={styles.container}>
-              <Text style={styles.heading}>Main</Text>
-            </View>
-            {!updatedCategory.length && (
+            {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
               <View
                 style={{
                   marginHorizontal: 16,
@@ -383,13 +451,11 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
                     No menu for {currentDay}
                   </Text>
                 </View>
-
                 <Text
                   style={{ fontSize: 13, color: '#2E7D32', lineHeight: 18 }}
                 >
                   Please check our weekday menu. Available Monday to Friday.
                 </Text>
-
                 <View
                   style={{
                     flexDirection: 'row',
@@ -429,7 +495,8 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
             )}
 
             {updatedCategory.map(cat => {
-              const key = `main:${cat.key}`;
+              const sectionType = (cat as any)._sectionType as 'main' | 'addon';
+              const key = `${sectionType}:${cat.key}`;
               return (
                 <Section
                   key={key}
@@ -460,18 +527,13 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
                 </Section>
               );
             })}
-            {/* Move OrderToggle directly below categories.map */}
           </View>
         )}
 
-        {/* Addons are shown regardless of tab selection per original layout */}
+        {/* Tab 1: addons only */}
         {tab === 1 && (
           <>
-            <View style={styles.container}>
-              <Text style={styles.heading}>Addons</Text>
-            </View>
-
-            {addonCategories.map(cat => {
+            {mergedCatalog.map(cat => {
               const key = `addon:${cat.key}`;
               return (
                 <Section
@@ -483,7 +545,7 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
                   setOpen={(v: boolean) => setOpen(key, v)}
                 >
                   {cat.value.map(d => (
-                    <DishCard
+                    <AddonDishCard
                       key={d.id}
                       category={cat.key.toUpperCase()}
                       day={currentDay}
@@ -504,7 +566,8 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
             })}
           </>
         )}
-        {result?.ok && (
+
+        {validation.ok && (
           <TouchableOpacity
             onPress={handleAddNewTiffin}
             style={styles.addNewTiffin}
@@ -517,20 +580,21 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
             <Text style={styles.newTiffinText}>Add new tiffin</Text>
           </TouchableOpacity>
         )}
+
         <View
           style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}
         >
           <PriceSummary
             rows={[
-              ['Meal cost', `$${mealCost}`],
-              ['Add on’s', `$${addonCost}`],
-              ['Total', `$${mealCost + addonCost}`],
+              ['Meal cost', toMoney(mealCost)],
+              ['Add on’s', toMoney(addonCost)],
+              ['Total', toMoney(mealCost + addonCost)],
             ]}
           />
           <CTAButton
-            label={result}
+            label={validation}
             day={currentDay}
-            isDisabled={!result?.ok}
+            isDisabled={!validation.ok}
             iconName="shopping-bag"
             onPress={() => {
               dispatch(addItems(selectedItemsToAddOnCart as any));
@@ -545,7 +609,7 @@ const HomeScreen: React.FC = ({ navigation, route }: any) => {
           />
         </View>
 
-        {blogs && <FitnessCarousel items={blogs} />}
+        {blogs?.length > 0 && <FitnessCarousel items={blogs} />}
       </ScrollView>
     </View>
   );
@@ -556,11 +620,7 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: SPACING, marginTop: -34 },
   container: { padding: 10, marginLeft: 10, paddingTop: 15 },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
+  heading: { fontSize: 24, fontWeight: 'bold', color: '#333' },
   addNewTiffin: {
     display: 'flex',
     flexDirection: 'row',
@@ -575,10 +635,7 @@ const styles = StyleSheet.create({
     width: 350,
     margin: 'auto',
   },
-  circleIcon: {
-    fontSize: 20,
-    color: 'green',
-  },
+  circleIcon: { fontSize: 20, color: 'green' },
   newTiffinText: {
     fontWeight: '700',
     letterSpacing: 0.5,

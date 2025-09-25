@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import AppHeader from '../../components/AppHeader';
-import { COLORS as C, SHADOW, SPACING } from '../../ui/theme';
+import { COLORS as C } from '../../ui/theme';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import {
   SafeAreaView,
@@ -27,11 +27,7 @@ import {
   removeItem,
 } from '../../store/slice/cartSlice';
 import MissingCategoryModal from '../../components/MissingCategoryModal';
-import PlusIcon from '../../assets/htf-icon/icon-add.svg';
-import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
-import RemoveIcon from '../../assets/htf-icon/icon-cross.svg';
 import CartIcon from '../../assets/htf-icon/icon-cart.svg';
-import TrashIcon from '../../assets/htf-icon/icon-trans.svg';
 import InfoIcon from '../../assets/htf-icon/icon-info.svg';
 
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -41,6 +37,7 @@ const catRank = (c?: string) => {
   const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
   return i === -1 ? 1e9 : i;
 };
+
 const WEEK = [
   'Monday',
   'Tuesday',
@@ -63,9 +60,10 @@ export default function CartScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
 
   const [note, setNote] = useState('');
-  const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery'); // kept as-is
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
+
   const handleAddFromModal = (payload: any) => {
     dispatch(addItems([payload]));
   };
@@ -73,7 +71,6 @@ export default function CartScreen({ navigation }: any) {
   const mealCost = lines
     .filter(i => i.type === 'main')
     .reduce((s, x) => s + +x.price * x.qty, 0);
-
   const addons = lines
     .filter(i => i.type === 'addon')
     .reduce((s, x) => s + +x.price * x.qty, 0);
@@ -94,11 +91,11 @@ export default function CartScreen({ navigation }: any) {
 
   // unique days in cart
   const days = useMemo(() => {
-    const byDay = [...new Set(lines.map(l => l.day))].filter(
+    const byDaySet = [...new Set(lines.map(l => l.day))].filter(
       Boolean,
     ) as string[];
     const ring = rotateFromToday(WEEK);
-    return byDay.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
+    return byDaySet.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
   }, [lines]);
 
   const grouped = useMemo(
@@ -108,14 +105,11 @@ export default function CartScreen({ navigation }: any) {
         const addons = lines.filter(x => x.day === d && x.type === 'addon');
 
         const plansMap = allMains.reduce((acc: any, item: any) => {
-          if (!acc[item.tiffinPlan]) {
-            acc[item.tiffinPlan] = [];
-          }
+          if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
           acc[item.tiffinPlan].push(item);
           return acc;
         }, {});
 
-        // Convert to sorted array
         const tiffinPlans = Object.entries(plansMap)
           .map(([planNumber, items]: any) => ({
             plan: parseInt(planNumber),
@@ -125,17 +119,12 @@ export default function CartScreen({ navigation }: any) {
           }))
           .sort((a, b) => a.plan - b.plan);
 
-        return {
-          day: d,
-          mains: allMains,
-          tiffinPlans,
-          addons,
-        };
+        return { day: d, mains: allMains, tiffinPlans, addons };
       }),
     [days, lines],
   );
 
-  // first missing day per required categories (only when mains exist)
+  // missing categories per plan
   const missingInfo = useMemo(() => {
     if (!hasAnyMain) return null;
     const ring = rotateFromToday(WEEK);
@@ -143,11 +132,8 @@ export default function CartScreen({ navigation }: any) {
       Boolean,
     ) as string[];
     const scan = ring.filter(d => daysInCart.includes(d));
-
-    const allMissing = [];
-
+    const allMissing: any[] = [];
     for (const d of scan) {
-      // Get all tiffin plans for this day
       const tiffinPlans = [
         ...new Set(
           lines
@@ -155,8 +141,6 @@ export default function CartScreen({ navigation }: any) {
             .map(l => l.tiffinPlan),
         ),
       ].sort();
-
-      // Check each tiffin plan separately
       for (const plan of tiffinPlans) {
         const catsPresent = new Set(
           lines
@@ -165,23 +149,15 @@ export default function CartScreen({ navigation }: any) {
             )
             .map(l => String(l.category).toUpperCase()),
         );
-
         const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
-
-        if (missing.length > 0) {
-          allMissing.push({
-            day: d,
-            tiffinPlan: plan,
-            missing,
-          });
-        }
+        if (missing.length)
+          allMissing.push({ day: d, tiffinPlan: plan, missing });
       }
     }
-
-    // Return all missing info, not just the first one found
-    return allMissing.length > 0 ? allMissing : null;
+    return allMissing.length ? allMissing : null;
   }, [lines, hasAnyMain]);
-  // NEW: Add-ons minimum validation when there are only add-ons
+
+  // add-ons minimum when only addons
   const ADDONS_MIN = 29;
   const addonsOnly = hasAnyAddon && !hasAnyMain;
   const addonsMinInfo = useMemo(() => {
@@ -195,10 +171,17 @@ export default function CartScreen({ navigation }: any) {
     };
   }, [addonsOnly, addons]);
 
+  // collapsers
   const [openByDay, setOpenByDay] = useState<Record<string, boolean>>({});
+  const [openByPlan, setOpenByPlan] = useState<Record<string, boolean>>({});
   const isOpen = (d: string) => openByDay[d] ?? true;
   const toggleDay = (d: string) =>
     setOpenByDay(p => ({ ...p, [d]: !isOpen(d) }));
+  const keyPlan = (d: string, p: number) => `${d}:${p}`;
+  const isPlanOpen = (d: string, p: number) =>
+    openByPlan[keyPlan(d, p)] ?? true;
+  const togglePlan = (d: string, p: number) =>
+    setOpenByPlan(s => ({ ...s, [keyPlan(d, p)]: !isPlanOpen(d, p) }));
 
   const onRemoveDayMains = (d: string) => dispatch(removeDayMains({ day: d }));
   const onRemoveDayAddons = (d: string) =>
@@ -206,14 +189,16 @@ export default function CartScreen({ navigation }: any) {
 
   const payDisabled = isEmpty || !!missingInfo || !!addonsMinInfo;
   const fmt = (n: number) => n.toFixed(2);
-  const uniqueDays = [...new Set(missingInfo && missingInfo.map(m => m.day))];
+  const uniqueDays = [
+    ...new Set(missingInfo && (missingInfo as any).map((m: any) => m.day)),
+  ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
       <AppHeader title="My Cart" onBack={() => navigation.goBack()} />
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: contentBottomPad }}
+        contentContainerStyle={{ padding: 12, paddingBottom: contentBottomPad }}
         showsVerticalScrollIndicator
       >
         {isEmpty ? (
@@ -225,7 +210,6 @@ export default function CartScreen({ navigation }: any) {
               <Text style={s.emptyTitle}>Your cart is empty</Text>
               <Text style={s.emptySub}>No items in cart</Text>
             </View>
-
             <TouchableOpacity
               style={s.emptyCta}
               onPress={() => navigation.navigate('Home')}
@@ -242,55 +226,72 @@ export default function CartScreen({ navigation }: any) {
               );
 
               return (
-                <View key={day}>
-                  <View key={day} style={s.dayCard}>
-                    <TouchableOpacity
-                      style={s.dayHdr}
-                      onPress={() => toggleDay(day)}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={s.dayTitle}>{day} Summary</Text>
-                      <FontAwesome5
-                        iconStyle="solid"
-                        name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
-                        size={16}
-                        color={C.black}
-                      />
-                    </TouchableOpacity>
+                <View key={day} style={s.dayCard}>
+                  <TouchableOpacity
+                    style={s.dayHdr}
+                    onPress={() => toggleDay(day)}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={s.dayTitle}>{day} Summary</Text>
+                    <FontAwesome5
+                      iconStyle="solid"
+                      name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
+                      size={16}
+                      color={C.black}
+                    />
+                  </TouchableOpacity>
 
-                    {isOpen(day) && (
-                      <>
-                        {/* Main block */}
-                        {mains.length > 0 && (
-                          <View style={s.block}>
-                            <View style={s.blockHdRow}>
-                              <Text style={s.blockChip}>Main </Text>
+                  {isOpen(day) && (
+                    <>
+                      {/* Mains block with collapsible tiffin plans */}
+                      {mains.length > 0 && (
+                        <View style={s.block}>
+                          <View style={s.blockHdRow}>
+                            <Text style={s.blockChip}>Main</Text>
+                            <TouchableOpacity
+                              onPress={() => onRemoveDayMains(day)}
+                              style={s.hdrTrashBtn}
+                            >
+                              <FontAwesome5
+                                iconStyle="solid"
+                                name="trash"
+                                size={16}
+                                color={C.red}
+                              />
+                            </TouchableOpacity>
+                          </View>
+
+                          {tiffinPlans.map(plan => (
+                            <View
+                              key={`tiffin-${plan.plan}`}
+                              style={s.planWrap}
+                            >
                               <TouchableOpacity
-                                onPress={() => onRemoveDayMains(day)}
-                                style={s.hdrTrashBtn}
+                                style={s.planHdr}
+                                onPress={() => togglePlan(day, plan.plan)}
                               >
+                                <Text style={s.planTitle}>
+                                  Tiffin {plan.plan}
+                                </Text>
                                 <FontAwesome5
                                   iconStyle="solid"
-                                  name="trash"
-                                  size={16}
-                                  color={C.red}
+                                  name={
+                                    isPlanOpen(day, plan.plan)
+                                      ? 'chevron-up'
+                                      : 'chevron-down'
+                                  }
+                                  size={14}
+                                  color={C.black}
                                 />
                               </TouchableOpacity>
-                            </View>
 
-                            {tiffinPlans.map(plan => (
-                              <View key={`tiffin-${plan.plan}`}>
-                                {/* Tiffin Plan Header */}
-                                <View style={s.tiffinPlanHeader}>
-                                  <Text style={s.tiffinPlanTitle}>
-                                    Tiffin {plan.plan}
-                                  </Text>
-                                </View>
-
-                                {/* Items for this tiffin plan */}
-                                {plan.items.map((it: any, i: number) => {
-                                  return (
-                                    <View key={i} style={s.card}>
+                              {isPlanOpen(day, plan.plan) && (
+                                <View style={{ gap: 6 }}>
+                                  {plan.items.map((it: any) => (
+                                    <View
+                                      key={`${it.id}-${it.variantId}-${it.tiffinPlan}`}
+                                      style={s.cardMini}
+                                    >
                                       <TouchableOpacity
                                         onPress={() =>
                                           dispatch(
@@ -302,49 +303,46 @@ export default function CartScreen({ navigation }: any) {
                                             }),
                                           )
                                         }
-                                        style={s.priceTrashBtn}
+                                        style={s.closeBtn}
                                         accessibilityRole="button"
                                         accessibilityLabel="Remove item"
                                       >
                                         <FontAwesome5
                                           iconStyle="solid"
                                           name="times"
-                                          size={20}
+                                          size={16}
                                           color={C.red}
                                         />
                                       </TouchableOpacity>
 
-                                      <Image
-                                        source={{ uri: it.image }}
-                                        style={s.img}
-                                      />
-
-                                      <View style={s.cardContent}>
-                                        <View style={s.titleRowTight}>
-                                          <Text style={s.typeBadge}>
-                                            Type: {it.type}
+                                      <View style={s.thumbWrap}>
+                                        <Image
+                                          source={{ uri: it.image }}
+                                          style={s.imgMini}
+                                        />
+                                        <View style={s.priceBadge}>
+                                          <Text style={s.priceText}>
+                                            ${it.price}
                                           </Text>
+                                        </View>
+                                      </View>
+
+                                      <View style={s.cardContentMini}>
+                                        <View style={s.rowTop}>
                                           <Text style={s.catPill}>
                                             {it.category}
                                           </Text>
                                         </View>
 
-                                        {/* title */}
                                         <Text
-                                          style={s.itemTitle}
+                                          style={s.itemTitleMini}
                                           numberOfLines={2}
                                         >
                                           {it.title}
                                         </Text>
 
-                                        {/* price below title */}
-                                        <Text style={s.priceUnder}>
-                                          ${it.price}
-                                        </Text>
-
-                                        {/* qty row */}
-                                        <View style={s.qtyRow}>
-                                          <Round
+                                        <View style={s.qtyPill}>
+                                          <TouchableOpacity
                                             onPress={() => {
                                               if (it.qty === 1) return;
                                               dispatch(
@@ -356,165 +354,164 @@ export default function CartScreen({ navigation }: any) {
                                                 }),
                                               );
                                             }}
+                                            style={s.pillBtn}
                                           >
-                                            <Text style={s.sign}>−</Text>
-                                          </Round>
-                                          <Text style={s.qty}>{it.qty}</Text>
-                                          <Round
+                                            <Text style={s.pillBtnTxt}>−</Text>
+                                          </TouchableOpacity>
+                                          <Text style={s.qtyNum}>{it.qty}</Text>
+                                          <TouchableOpacity
                                             onPress={() =>
                                               dispatch(
                                                 increaseItem({
                                                   id: it.id,
                                                   tiffinPlan:
                                                     it.tiffinPlan as number,
-
                                                   variantId: it.variantId,
                                                 }),
                                               )
                                             }
+                                            style={s.pillBtn}
                                           >
-                                            <Text style={s.sign}>＋</Text>
-                                          </Round>
+                                            <Text style={s.pillBtnTxt}>+</Text>
+                                          </TouchableOpacity>
                                         </View>
                                       </View>
                                     </View>
-                                  );
-                                })}
-                              </View>
-                            ))}
-                            {!missingInfo && (
-                              <View style={s.tiffinTotalBox}>
-                                <Text style={s.tiffinTotalTxt}>
-                                  Total for {day} ${tiffinPrice} + ($
-                                  {mealCost}) = ${mealCost + tiffinPrice}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-                        )}
+                                  ))}
+                                </View>
+                              )}
+                            </View>
+                          ))}
 
-                        {/* Add-ons block */}
-                        {addons.length > 0 && (
-                          <View style={s.block}>
-                            <View style={s.blockHdRow}>
-                              <Text style={s.blockChipAlt}>Add-ons</Text>
+                          {!missingInfo && (
+                            <View style={s.tiffinTotalBox}>
+                              <Text style={s.tiffinTotalTxt}>
+                                Total for {day} ${tiffinPrice} + (${mealCost}) =
+                                ${mealCost + tiffinPrice}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+
+                      {/* Add-ons block: flat compact cards */}
+                      {addons.length > 0 && (
+                        <View style={s.block}>
+                          <View style={s.blockHdRow}>
+                            <Text style={s.blockChipAlt}>Add-ons</Text>
+                            <TouchableOpacity
+                              onPress={() => onRemoveDayAddons(day)}
+                              style={s.hdrTrashBtn}
+                            >
+                              <FontAwesome5
+                                iconStyle="solid"
+                                name="trash"
+                                size={16}
+                                color={C.red}
+                              />
+                            </TouchableOpacity>
+                          </View>
+
+                          {addons.map(it => (
+                            <View
+                              key={`${it.id}-${it.variantId}-${it.tiffinPlan}-${it.day}`}
+                              style={s.cardMiniAlt}
+                            >
                               <TouchableOpacity
-                                onPress={() => onRemoveDayAddons(day)}
-                                style={s.hdrTrashBtn}
+                                onPress={() =>
+                                  dispatch(
+                                    removeItem({
+                                      id: it.id,
+                                      variantId: it.variantId,
+                                      tiffinPlan: it.tiffinPlan as number,
+                                    }),
+                                  )
+                                }
+                                style={s.closeBtn}
+                                accessibilityRole="button"
+                                accessibilityLabel="Remove add-on"
                               >
                                 <FontAwesome5
                                   iconStyle="solid"
-                                  name="trash"
+                                  name="times"
                                   size={16}
                                   color={C.red}
                                 />
                               </TouchableOpacity>
-                            </View>
 
-                            {addons.map(it => (
-                              <View
-                                key={`${it.id}-${it.variantId}-${it.tiffinPlan}-${it.day}`}
-                                style={s.cardAlt}
-                              >
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    dispatch(
-                                      removeItem({
-                                        id: it.id,
-                                        variantId: it.variantId,
-                                        tiffinPlan: it.tiffinPlan as number,
-                                      }),
-                                    )
-                                  }
-                                  style={s.priceTrashBtn}
-                                  accessibilityRole="button"
-                                  accessibilityLabel="Remove add-on"
-                                >
-                                  <FontAwesome5
-                                    iconStyle="solid"
-                                    name="times"
-                                    size={20}
-                                    color={C.red}
-                                  />
-                                </TouchableOpacity>
-
+                              <View style={s.thumbWrap}>
                                 <Image
                                   source={{ uri: it.image }}
-                                  style={s.imgSmall}
+                                  style={s.imgMini}
                                 />
-
-                                <View style={s.cardContent}>
-                                  {/* type + category */}
-                                  <View style={s.titleRowTight}>
-                                    <Text style={s.typeBadgeAlt}>
-                                      Type: {it.type}
-                                    </Text>
-                                    <Text style={s.catPillAlt}>
-                                      {it.category}
-                                    </Text>
-                                  </View>
-
-                                  {/* title */}
-                                  <Text style={s.itemTitleSm} numberOfLines={2}>
-                                    {it.title}
-                                  </Text>
-
-                                  {/* price under title */}
-                                  <Text style={s.priceSmUnder}>
-                                    ${it.price}
-                                  </Text>
-
-                                  <View style={s.qtyRowSm}>
-                                    <Round
-                                      onPress={() => {
-                                        if (it.qty === 1) return;
-                                        dispatch(
-                                          decreaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                            tiffinPlan: it.tiffinPlan as number,
-                                          }),
-                                        );
-                                      }}
-                                    >
-                                      <Text style={s.sign}>−</Text>
-                                    </Round>
-                                    <Text style={s.qty}>{it.qty}</Text>
-                                    <Round
-                                      onPress={() =>
-                                        dispatch(
-                                          increaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                            tiffinPlan: it.tiffinPlan as number,
-                                          }),
-                                        )
-                                      }
-                                    >
-                                      <Text style={s.sign}>＋</Text>
-                                    </Round>
-                                  </View>
+                                <View style={s.priceBadgeAlt}>
+                                  <Text style={s.priceText}>${it.price}</Text>
                                 </View>
                               </View>
-                            ))}
-                            {addons.length > 0 && (
-                              <View style={s.addonTotalBox}>
-                                <Text style={s.addonTotalTxt}>
-                                  Total for {day} A La Carte: $
-                                  {fmt(dayAddonsTotal)}
+
+                              <View style={s.cardContentMini}>
+                                <View style={s.rowTop}>
+                                  <Text style={s.catPillAlt}>
+                                    {it.category}
+                                  </Text>
+                                </View>
+
+                                <Text style={s.itemTitleMini} numberOfLines={2}>
+                                  {it.title}
                                 </Text>
+
+                                <View style={s.qtyPillAlt}>
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      if (it.qty === 1) return;
+                                      dispatch(
+                                        decreaseItem({
+                                          id: it.id,
+                                          variantId: it.variantId,
+                                          tiffinPlan: it.tiffinPlan as number,
+                                        }),
+                                      );
+                                    }}
+                                    style={s.pillBtnAlt}
+                                  >
+                                    <Text style={s.pillBtnTxtAlt}>−</Text>
+                                  </TouchableOpacity>
+                                  <Text style={s.qtyNumAlt}>{it.qty}</Text>
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      dispatch(
+                                        increaseItem({
+                                          id: it.id,
+                                          variantId: it.variantId,
+                                          tiffinPlan: it.tiffinPlan as number,
+                                        }),
+                                      )
+                                    }
+                                    style={s.pillBtnAlt}
+                                  >
+                                    <Text style={s.pillBtnTxtAlt}>+</Text>
+                                  </TouchableOpacity>
+                                </View>
                               </View>
-                            )}
-                          </View>
-                        )}
-                      </>
-                    )}
-                  </View>
+                            </View>
+                          ))}
+
+                          {addons.length > 0 && (
+                            <View style={s.addonTotalBox}>
+                              <Text style={s.addonTotalTxt}>
+                                Total for {day} A La Carte: $
+                                {fmt(dayAddonsTotal)}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </>
+                  )}
                 </View>
               );
             })}
 
-            {/* Clear cart + notes + summary + upsell */}
             <TouchableOpacity
               onPress={() => dispatch(clearCart())}
               activeOpacity={0.9}
@@ -537,7 +534,6 @@ export default function CartScreen({ navigation }: any) {
               <View style={s.summary}>
                 <Row k="Meal box price" v={`$${mealCost + tiffinPrice}`} />
                 <Row k="Add on's" v={`$${addons}`} />
-                {/* <Row k="Non member shipping" v={`$${nonMember}`} /> */}
                 <Row k="Total" v={`$${subtotal + tiffinPrice}`} bold />
               </View>
             )}
@@ -547,29 +543,23 @@ export default function CartScreen({ navigation }: any) {
 
       {!isEmpty && (
         <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
-          {/* Missing categories (when mains exist) */}
           {missingInfo && (
             <View style={s.missRow}>
               <View style={s.missIcon}>
                 <InfoIcon height={24} width={24} />
               </View>
-
               <View style={s.missTxtWrap}>
-                <Text style={s.missTitle}>
-                  Missing meal for {uniqueDays.join(', ')}
+                <Text>
+                  Missing meal for{' '}
+                  {[
+                    ...new Set((missingInfo as any).map((m: any) => m.day)),
+                  ].join(', ')}
                 </Text>
-
-                <View style={s.missChipsRow}></View>
               </View>
-
               <TouchableOpacity
                 style={s.missCta}
                 activeOpacity={0.9}
-                onPress={() => {
-                  setMissingOpen(!missingOpen);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Open suggestions to add items"
+                onPress={() => setMissingOpen(!missingOpen)}
               >
                 <Text style={s.missCtaTxt}>Add</Text>
               </TouchableOpacity>
@@ -581,14 +571,10 @@ export default function CartScreen({ navigation }: any) {
               onClose={() => setMissingOpen(false)}
               dataByDay={byDay}
               missingList={missingInfo as any}
-              onAdd={payload => {
-                // add to cart and keep modal open for more picks, or close if you want
-                dispatch(addItems([payload] as any));
-              }}
+              onAdd={payload => dispatch(addItems([payload] as any))}
             />
           )}
 
-          {/* NEW: Add-ons minimum notice (when only add-ons and < $29) */}
           {!missingInfo && addonsMinInfo && (
             <View style={s.missRow}>
               <View style={s.missIcon}>
@@ -599,10 +585,8 @@ export default function CartScreen({ navigation }: any) {
                   color="#8A5A00"
                 />
               </View>
-
               <View style={s.missTxtWrap}>
-                <Text style={s.missTitle}>{addonsMinInfo.message}</Text>
-
+                <Text>{addonsMinInfo.message}</Text>
                 <View style={s.missChipsRow}>
                   <View style={s.missChip}>
                     <Text style={s.missChipTxt}>
@@ -616,13 +600,10 @@ export default function CartScreen({ navigation }: any) {
                   </View>
                 </View>
               </View>
-
               <TouchableOpacity
                 style={s.missCta}
                 activeOpacity={0.9}
                 onPress={() => navigation.navigate('Home')}
-                accessibilityRole="button"
-                accessibilityLabel="Add more items"
               >
                 <Text style={s.missCtaTxt}>Add</Text>
               </TouchableOpacity>
@@ -631,23 +612,29 @@ export default function CartScreen({ navigation }: any) {
 
           <View style={s.totalRow}>
             <Text style={s.totalK}>TOTAL:</Text>
-            <Text style={[s.totalV, { fontSize: missingInfo ? 15 : 24 }]}>
+            <Text style={[s.totalV, { fontSize: missingInfo ? 15 : 22 }]}>
               {missingInfo
                 ? 'Please select missing item'
-                : `$ ${subtotal + tiffinPrice}`}{' '}
+                : `$ ${subtotal + tiffinPrice}`}
             </Text>
           </View>
 
           <TouchableOpacity
             style={s.payBtn}
-            disabled={payDisabled}
+            disabled={isEmpty || !!missingInfo || !!addonsMinInfo}
             onPress={() => navigation.navigate('OrderTrack')}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[s.payTxt, payDisabled && s.payBtnDisabled]}>
-                To Payment{' '}
+              <Text
+                style={[
+                  s.payTxt,
+                  (isEmpty || !!missingInfo || !!addonsMinInfo) &&
+                    s.payBtnDisabled,
+                ]}
+              >
+                To Payment
               </Text>
-              <CartIcon height={24} width={24} style={{ marginLeft: 6 }} />
+              <CartIcon height={22} width={22} style={{ marginLeft: 6 }} />
             </View>
           </TouchableOpacity>
         </View>
@@ -656,7 +643,6 @@ export default function CartScreen({ navigation }: any) {
   );
 }
 
-/* small bits */
 function Row({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
   return (
     <View
@@ -665,66 +651,55 @@ function Row({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
         bold && { borderTopWidth: 1, borderTopColor: C.border, paddingTop: 8 },
       ]}
     >
-      <Text style={[s.k, bold && { fontWeight: '800', fontSize: 22 }]}>
+      <Text style={[s.k, bold && { fontWeight: '800', fontSize: 20 }]}>
         {k}
       </Text>
-      <Text style={[s.v, bold && { fontWeight: '800', fontSize: 22 }]}>
+      <Text style={[s.v, bold && { fontWeight: '800', fontSize: 20 }]}>
         {v}
       </Text>
     </View>
   );
 }
-function Round({ children, onPress }: any) {
-  return (
-    <TouchableOpacity style={s.round} onPress={onPress} activeOpacity={0.8}>
-      {children}
-    </TouchableOpacity>
-  );
-}
 
 /* styles */
 const s = StyleSheet.create({
-  wrap: { padding: 16, paddingBottom: 24 },
-
   footer: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: C.white,
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
   },
 
-  /* day grouping */
   dayCard: {
     backgroundColor: '#F7F8F7',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: C.border,
-    marginBottom: 12,
+    marginBottom: 10,
     overflow: 'hidden',
   },
   dayHdr: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: '#EFEFEF',
   },
-  dayTitle: { fontWeight: '800', color: C.black, fontSize: 16 },
+  dayTitle: { fontWeight: '800', color: C.black, fontSize: 15 },
 
-  /* section blocks */
   block: {
-    margin: 10,
+    margin: 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#DDE3DE',
     backgroundColor: C.white,
-    padding: 8,
+    padding: 6,
   },
   blockHdRow: {
     flexDirection: 'row',
@@ -739,7 +714,6 @@ const s = StyleSheet.create({
     backgroundColor: '#EAF6EF',
     color: C.green,
     fontWeight: '800',
-    overflow: 'hidden',
   },
   blockChipAlt: {
     paddingHorizontal: 10,
@@ -748,40 +722,74 @@ const s = StyleSheet.create({
     backgroundColor: '#FFF4E8',
     color: C.oranger,
     fontWeight: '800',
-    overflow: 'hidden',
   },
   hdrTrashBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  /* main item card (smaller, detailed) */
-  card: {
+  /* tiffin collapsers */
+  planWrap: { marginBottom: 6 },
+  planHdr: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    backgroundColor: '#F4F5F4',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E7EBE8',
+  },
+  planTitle: { fontSize: 12, fontWeight: '800', color: C.black },
+
+  /* compact item card */
+  cardMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: C.white,
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
+    borderRadius: 10,
+    padding: 8,
     borderWidth: 1,
     borderColor: '#E6EAE7',
   },
-  priceTrashBtn: {
-    position: 'absolute',
-    right: -2,
-    top: -9,
-  },
-  img: {
-    width: 80,
-    height: 68,
+  cardMiniAlt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
     borderRadius: 10,
-    marginRight: 10,
-    resizeMode: 'cover',
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#EEE',
   },
-  cardContent: { flex: 1, justifyContent: 'flex-start' },
-  titleRowTight: {
+  closeBtn: { position: 'absolute', right: -2, top: -4, padding: 6 },
+  thumbWrap: { position: 'relative', marginRight: 8 },
+  imgMini: { width: 56, height: 48, borderRadius: 8, resizeMode: 'cover' },
+  priceBadge: {
+    position: 'absolute',
+    right: 3,
+    bottom: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#0B5733',
+  },
+  priceBadgeAlt: {
+    position: 'absolute',
+    right: 3,
+    bottom: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#1B4FBF',
+  },
+  priceText: { color: '#FFF', fontSize: 10, fontWeight: '800' },
+
+  cardContentMini: { flex: 1 },
+  rowTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -792,59 +800,8 @@ const s = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#F0F0F0',
     color: C.black,
-    overflow: 'hidden',
     fontWeight: '700',
-    fontSize: 11,
-  },
-  catPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: '#EAF1FF',
-    color: '#3A6AE3',
-    overflow: 'hidden',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  itemTitle: { color: C.black, fontWeight: '800', fontSize: 14, marginTop: 6 },
-  priceUnder: { color: C.green, fontWeight: '800', fontSize: 16, marginTop: 4 },
-
-  /* qty */
-  qtyRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 12 },
-  round: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: C.lightOrange,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sign: { color: C.oranger, fontSize: 16, fontWeight: '800' },
-  qty: {
-    minWidth: 16,
-    textAlign: 'center',
-    fontWeight: '800',
-    color: C.oranger,
-    fontSize: 16,
-  },
-
-  /* addon item card (smaller, price under title) */
-  cardAlt: {
-    flexDirection: 'row',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    padding: 10,
-    paddingTop: 18,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#EEE',
-  },
-  imgSmall: {
-    width: 64,
-    height: 56,
-    borderRadius: 8,
-    marginRight: 10,
-    resizeMode: 'cover',
+    fontSize: 10,
   },
   typeBadgeAlt: {
     paddingHorizontal: 8,
@@ -852,9 +809,17 @@ const s = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#F6F6F6',
     color: C.black,
-    overflow: 'hidden',
     fontWeight: '700',
-    fontSize: 11,
+    fontSize: 10,
+  },
+  catPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: '#EAF1FF',
+    color: '#3A6AE3',
+    fontWeight: '700',
+    fontSize: 10,
   },
   catPillAlt: {
     paddingHorizontal: 8,
@@ -862,44 +827,82 @@ const s = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFF0F0',
     color: '#C44',
-    overflow: 'hidden',
+    fontWeight: '700',
+    fontSize: 10,
+  },
+  itemTitleMini: {
+    color: C.black,
     fontWeight: '700',
     fontSize: 12,
-  },
-  itemTitleSm: {
-    color: C.black,
-    fontWeight: '700',
-    fontSize: 13,
-    marginTop: 6,
-  },
-  priceSmUnder: {
-    color: C.black,
-    fontWeight: '800',
-    fontSize: 15,
     marginTop: 4,
   },
-  qtyRowSm: {
+
+  qtyPill: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F2F7F4',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    gap: 12,
+    paddingHorizontal: 6,
+    gap: 6,
+  },
+  pillBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: '#D9E3DC',
+  },
+  pillBtnTxt: { fontSize: 13, fontWeight: '800', color: C.green },
+  qtyNum: {
+    minWidth: 16,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '800',
+    color: C.black,
   },
 
-  /* existing */
-  detailsRow: {
+  qtyPillAlt: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F6F7FF',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 10,
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    gap: 6,
   },
-  detailText: { color: C.sub, fontSize: 14, marginTop: 4 },
-  detailLabel: { fontWeight: '700', color: C.black },
+  pillBtnAlt: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: '#D9E3FC',
+  },
+  pillBtnTxtAlt: { fontSize: 13, fontWeight: '800', color: '#1B4FBF' },
+  qtyNumAlt: {
+    minWidth: 16,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '800',
+    color: C.black,
+  },
 
+  /* totals and misc */
   caption: {
     color: C.black,
     marginTop: 6,
     marginBottom: 6,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
   },
   note: {
@@ -907,85 +910,52 @@ const s = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: C.border,
-    padding: 12,
+    padding: 10,
     color: C.black,
-    marginBottom: 12,
+    marginBottom: 10,
   },
-
   summary: {
     backgroundColor: C.gray,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    padding: 10,
+    marginBottom: 10,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 6,
   },
-  k: { color: C.black, fontWeight: '600', fontSize: 16 },
-  v: { color: C.black, fontWeight: '800', fontSize: 16 },
-
-  upsellText: {
-    textAlign: 'center',
-    color: C.sub,
-    marginTop: 6,
-    marginBottom: 10,
-  },
-  subBtn: {
-    height: 60,
-    borderRadius: 12,
-    borderColor: C.green,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  subBtnTxt: { color: C.green, fontWeight: '800', fontSize: 22 },
+  k: { color: C.black, fontWeight: '600', fontSize: 15 },
+  v: { color: C.black, fontWeight: '800', fontSize: 15 },
 
   clearCartBtn: {
-    height: 60,
+    height: 48,
     borderRadius: 12,
     borderColor: C.red,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  clearCart: { color: C.red, fontWeight: '700', fontSize: 18 },
-
-  segment: {
-    flexDirection: 'row',
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: C.chip,
-    overflow: 'hidden',
-    marginBottom: 8,
-    fontSize: 16,
-  },
-  segBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  segOn: { backgroundColor: C.green },
-  segTxt: { color: C.black, fontWeight: '700' },
-  segTxtOn: { color: C.white },
-
-  saveNote: { textAlign: 'center', color: C.sub, marginBottom: 10 },
+  clearCart: { color: C.red, fontWeight: '700', fontSize: 16 },
 
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 12,
+    marginVertical: 10,
   },
   totalK: { color: C.sub, fontWeight: '700' },
   totalV: { color: C.black, fontWeight: '900' },
 
   payBtn: {
-    height: 52,
+    height: 50,
     borderRadius: 12,
     backgroundColor: C.oranger,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  payTxt: { fontWeight: '800', color: C.white, fontSize: 20 },
+  payTxt: { fontWeight: '800', color: C.white, fontSize: 18 },
+  payBtnDisabled: { opacity: 0.5 },
 
   emptyBox: { backgroundColor: '#FAFAFA', padding: 16, borderRadius: 16 },
   emptyInner: { alignItems: 'center', paddingVertical: 28 },
@@ -1009,36 +979,6 @@ const s = StyleSheet.create({
   },
   emptyCtaTxt: { color: '#FFFFFF', fontWeight: '800' },
 
-  emptyCartText: {
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
-    color: C.sub,
-    marginTop: 20,
-  },
-
-  /* missing/validation notice */
-  missWrap: {
-    backgroundColor: '#FFF6E5',
-    borderColor: '#FFD699',
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 8,
-  },
-  missTitle: { fontWeight: '800', color: '#8A5A00', fontSize: 14 },
-  missCats: { marginTop: 2, color: '#8A5A00', fontSize: 13 },
-  missBtn: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: '#0B5733',
-  },
-  missBtnTxt: { color: '#FFF', fontWeight: '800' },
-
-  payBtnDisabled: { opacity: 0.5 },
   missRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1074,7 +1014,6 @@ const s = StyleSheet.create({
     borderColor: '#FFE0A6',
   },
   missChipTxt: { color: '#8A5A00', fontWeight: '700', fontSize: 12 },
-
   missCta: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -1084,104 +1023,24 @@ const s = StyleSheet.create({
   },
   missCtaTxt: { color: '#FFF', fontWeight: '800' },
 
-  /* total cards */
   tiffinTotalBox: {
     backgroundColor: '#FFF6E5',
     borderColor: '#FFD699',
     borderWidth: 1,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    padding: 10,
+    marginTop: 6,
   },
-  tiffinTotalTxt: {
-    fontWeight: '800',
-    fontSize: 16,
-    color: '#8A5A00',
-  },
+  tiffinTotalTxt: { fontWeight: '800', fontSize: 14, color: '#8A5A00' },
 
   addonTotalBox: {
     backgroundColor: '#EAF1FF',
     borderColor: '#CFE0FF',
     borderWidth: 1,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-  },
-  addonTotalTxt: {
-    fontWeight: '800',
-    fontSize: 16,
-    color: '#1B4FBF',
-  },
-
-  tiffinSection: {
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
     padding: 10,
+    marginTop: 6,
+    marginBottom: 8,
   },
-  tiffinHeader: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  tiffinHeaderText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  itemCard: {
-    backgroundColor: '#fff',
-    padding: 10,
-    marginBottom: 5,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-
-  itemCategory: {
-    fontSize: 14,
-    color: '#666',
-  },
-  itemPrice: {
-    fontSize: 14,
-    color: '#2ecc71',
-    fontWeight: 'bold',
-  },
-  itemQty: {
-    fontSize: 12,
-    color: '#999',
-  },
-  planTotal: {
-    backgroundColor: '#e8f5e8',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  planTotalText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#27ae60',
-  },
-
-  tiffinPlanBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  tiffinPlanHeader: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tiffinPlanTitle: {
-    borderColor: 'green',
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    fontSize: 10,
-    borderWidth: 2,
-    borderRadius: 5,
-  },
+  addonTotalTxt: { fontWeight: '800', fontSize: 14, color: '#1B4FBF' },
 });

@@ -21,7 +21,6 @@ export const createCart = async (
   input?.forEach(i => {
     uniqueDays.add(i.day);
   });
-
   const variables = {
     input: {
       attributes: [
@@ -40,12 +39,12 @@ export const createCart = async (
           { key: 'DayDate', value: item.date },
           { key: 'Day', value: item.day },
           { key: 'Type', value: item.type },
-          { key: 'TiffinPlan', value: item.tiffinPlan },
+          { key: 'TiffinPlan', value: item.tiffinPlan.toString() },
         ],
       })),
     },
   };
-
+  console.log(variables, 'variables');
   try {
     // Call Shopify API with the mutation query and variables
     const data = await callShopifyApiWithVariable(mutation, variables);

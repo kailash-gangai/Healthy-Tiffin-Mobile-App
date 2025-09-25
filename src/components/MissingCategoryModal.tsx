@@ -113,11 +113,7 @@ export default function MissingCategoryModal({
           color={active ? '#FFF' : '#0B5733'}
         />
       ) : null}
-      <Text
-        style={[s.chipTxt, active && s.chipTxtOn]}
-        numberOfLines={1}
-        ellipsizeMode="tail"
-      >
+      <Text style={[s.chipTxt, active && s.chipTxtOn]} numberOfLines={1}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -157,6 +153,7 @@ export default function MissingCategoryModal({
             </TouchableOpacity>
           </View>
 
+          {/* day selector */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -178,6 +175,7 @@ export default function MissingCategoryModal({
             ))}
           </ScrollView>
 
+          {/* plan selector */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -194,6 +192,7 @@ export default function MissingCategoryModal({
             ))}
           </ScrollView>
 
+          {/* notice */}
           <View style={s.notice}>
             <FontAwesome5
               iconStyle="solid"
@@ -209,11 +208,7 @@ export default function MissingCategoryModal({
               >
                 {missingCats.map(c => (
                   <View key={c} style={s.missPill}>
-                    <Text
-                      style={s.missPillTxt}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
+                    <Text style={s.missPillTxt} numberOfLines={1}>
                       {c}
                     </Text>
                   </View>
@@ -224,6 +219,7 @@ export default function MissingCategoryModal({
             )}
           </View>
 
+          {/* suggestions */}
           <ScrollView contentContainerStyle={{ padding: 12 }}>
             {groups.map(g => (
               <View key={g.key} style={s.group}>
@@ -236,20 +232,26 @@ export default function MissingCategoryModal({
 
                 {g.value.map(it => (
                   <View key={`${it.id}-${it.variantId}`} style={s.cardSm}>
-                    <Image
-                      source={
-                        it.image
-                          ? { uri: it.image }
-                          : require('../assets/LOGO.png')
-                      }
-                      style={s.imgSm}
-                    />
+                    <View style={s.imgWrap}>
+                      <Image
+                        source={
+                          it.image
+                            ? { uri: it.image }
+                            : require('../assets/LOGO.png')
+                        }
+                        style={s.imgSm}
+                      />
+                      <View style={s.priceBadge}>
+                        <Text style={s.priceText}>${it.price}</Text>
+                      </View>
+                    </View>
+
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={s.itemTitle} numberOfLines={2}>
                         {it.title}
                       </Text>
-                      <Text style={s.priceInline}>${it.price}</Text>
                     </View>
+
                     <TouchableOpacity
                       style={s.addBtnSm}
                       activeOpacity={0.92}
@@ -319,7 +321,7 @@ const s = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowOffset: { width: 0, height: -6 },
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 10,
   },
   grabberWrap: { alignItems: 'center', paddingTop: 8 },
   grabber: {
@@ -349,16 +351,12 @@ const s = StyleSheet.create({
   },
 
   // chips
-  rowChips: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    gap: 8,
-  },
+  rowChips: { paddingHorizontal: 12, paddingTop: 8, gap: 8 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#D6E5DC',
@@ -370,7 +368,6 @@ const s = StyleSheet.create({
     fontWeight: '800',
     color: '#0B5733',
     fontSize: 12,
-    lineHeight: 16,
     includeFontPadding: false,
     textAlignVertical: 'center',
   },
@@ -406,9 +403,6 @@ const s = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     includeFontPadding: false,
-    textAlignVertical: 'center',
-    maxWidth: '100%',
-    flexShrink: 1,
   },
   allSet: { color: '#8A5A00', fontWeight: '800' },
 
@@ -423,7 +417,7 @@ const s = StyleSheet.create({
   },
   groupUnderline: {
     height: 2,
-    width: 40,
+    width: 44,
     backgroundColor: '#CBE8D7',
     borderRadius: 2,
     marginTop: 6,
@@ -441,26 +435,31 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E6EAE7',
     padding: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
   },
-  imgSm: {
-    width: 60,
-    height: 52,
-    borderRadius: 8,
-    backgroundColor: '#EEF2EF',
+  imgWrap: { position: 'relative' },
+  imgSm: { width: 58, height: 50, borderRadius: 8, backgroundColor: '#EEF2EF' },
+  priceBadge: {
+    position: 'absolute',
+    right: 3,
+    bottom: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#0B5733',
   },
+  priceText: { color: '#FFF', fontSize: 10, fontWeight: '800' },
+
   itemTitle: {
     color: C.black,
     fontWeight: '800',
     fontSize: 13,
     lineHeight: 16,
     includeFontPadding: false,
-  },
-  priceInline: {
-    marginTop: 4,
-    color: C.green,
-    fontWeight: '800',
-    fontSize: 13,
-    lineHeight: 16,
   },
 
   addBtnSm: {

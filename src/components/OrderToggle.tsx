@@ -27,7 +27,9 @@ export default function OrderToggle({ index = 0, onChange }: Props) {
         accessibilityRole="button"
         accessibilityState={{ selected: leftActive }}
       >
-        <Text style={[s.text, leftActive ? s.textOn : s.textOff]}>Tiffin</Text>
+        <Text style={[s.text, leftActive ? s.textOn : s.textOff]}>
+          Tiffin $29 +
+        </Text>
       </Pressable>
 
       <View style={s.divider} />
@@ -41,7 +43,6 @@ export default function OrderToggle({ index = 0, onChange }: Props) {
         <Text style={[s.text, rightActive ? s.textOn : s.textRightOff]}>
           A La Carte
         </Text>
-        
       </Pressable>
     </View>
   );

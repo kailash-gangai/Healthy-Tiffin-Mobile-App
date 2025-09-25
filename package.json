@@ -28,6 +28,7 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@shopify/checkout-sheet-kit": "^3.3.0",
     "apple-signin-auth": "^2.0.0",
+    "axios": "^1.12.2",
     "crypto-js": "^4.2.0",
     "google-auth-library": "^10.3.0",
     "material-icons": "^1.13.14",
