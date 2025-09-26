@@ -64,9 +64,9 @@ export default function TrackOrderScreen({ navigation }: any) {
       console.log(createdCart, 'cart');
       shopifyCheckout.present(createdCart.checkoutUrl);
 
-      if (createdCart && createdCart.id) {
-        dispatch(clearCart());
-      }
+      // if (createdCart && createdCart.id) {
+      //   dispatch(clearCart());
+      // }
     } catch (error) {
       console.log('something went wrong', error);
     }
