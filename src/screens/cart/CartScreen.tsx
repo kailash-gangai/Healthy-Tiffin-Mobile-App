@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import AppHeader from '../../components/AppHeader';
-import { COLORS as C, SHADOW, SPACING } from '../../ui/theme';
+import { COLORS as C } from '../../ui/theme';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import {
   SafeAreaView,
@@ -27,171 +27,17 @@ import {
   removeItem,
 } from '../../store/slice/cartSlice';
 import MissingCategoryModal from '../../components/MissingCategoryModal';
-import PlusIcon from '../../assets/htf-icon/icon-add.svg';
-import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
-import RemoveIcon from '../../assets/htf-icon/icon-cross.svg';
 import CartIcon from '../../assets/htf-icon/icon-cart.svg';
-import TrashIcon from '../../assets/htf-icon/icon-trans.svg';
 import InfoIcon from '../../assets/htf-icon/icon-info.svg';
 
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 
-const CATALOG = [
-  {
-    key: 'probiotics',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796777775346',
-        variantId: 'gid://shopify/ProductVariant/47804110242034',
-        title: 'Basmati Rice',
-        description:
-          'This traditional cooking method of boiling basmati rice and discarding excess water helps reduce starch content, making it lighter on digestion and lower in glycemic load. Rich in essential carbohydrates for sustained energy, this method preserves the rice’s aromatic flavor while promoting gut health and better blood sugar balance. A wholesome, heart-healthy choice for everyday meals! Calories (8 oz serving): 210 kcalPortion Size: 16 ozaromatic | low-fat | easily digestible',
-        tags: ['Gluten free', 'plate method', 'satvik', 'veg', 'VG'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/BasmatiRice.jpg?v=1753780861',
-        price: '6.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796775186674',
-        variantId: 'gid://shopify/ProductVariant/47804105130226',
-        title: 'Organic Plain Yogurt (12oz)',
-        description:
-          'Calories (6 oz serving): 80 kcalPortion Size: 12 ozprobiotic | gut-friendly | calcium-rich | hormone-free | unprocessed dairy',
-        tags: ['Dairy', 'Gluten free', 'VG'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Screenshot_2025-07-19_at_9.38.54_AM.png?v=1753780650',
-        price: '6.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763324658',
-        variantId: 'gid://shopify/ProductVariant/47804074721522',
-        title: 'Add-on! Tamatar Ka Soup',
-        description:
-          'Tamatar Ka Soup is a light, comforting North Indian-style tomato soup made without cream, onion, or garlic. Simmered with cumin, black pepper, and minimal cold-pressed oil, it’s rich in vitamin C, lycopene, and antioxidants—supporting immunity, digestion, and skin health in a clean, satvik-friendly form. Calories (8 oz serving): 120 kcalPortion Size: 16 ozNorth Indian | antioxidant-rich | hydrating | light | home-style',
-        tags: [],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/TamatarKaSoup.jpg?v=1753779961',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796780888306',
-        variantId: 'gid://shopify/ProductVariant/47804115583218',
-        title: 'Malai Chicken kebab',
-        description:
-          'A creamy, melt-in-the-mouth kebab, marinated in hung curd and light spices, offering calcium-rich, digestion-friendly protein, perfect for a low-oil indulgence. North Indian | Malai | Creamy Texture | High-Protein | Calcium-Rich | Low-Oil | Digestion-Friendly | Indulgent | Organic | Fresh | Local',
-        tags: ['fresh', 'Kebab', 'NV', 'organic'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Murghmalaitikka.jpg?v=1753781168',
-        price: '4.5',
-      },
-    ],
-  },
-  {
-    key: 'protein',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796772892914',
-        variantId: 'gid://shopify/ProductVariant/47804094808306',
-        title: 'Besan Chilla (2pc)',
-        description:
-          'Rooted in Rajasthani and Punjabi households, this gram flour pancake is packed with plant protein, iron, and fiber. Low in oil and spiced gently, it aids digestion and blood sugar stability, making it a protein-rich, gluten-free choice for breakfasts and light meals.',
-        tags: ['Gluten free', 'VG'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/BesanKaChilla.jpg?v=1753780523',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796781478130',
-        variantId: 'gid://shopify/ProductVariant/47804116402418',
-        title: 'Chicken Changezi',
-        description:
-          "A Mughlai-style curry with marinated chicken simmered in a rich yogurt, cream, and spice blend. High in protein and flavor, it's indulgent, aromatic, and festive. Calories (8 oz serving): 310 kcalPortion Size: 16 ozMughlai | high-protein | yogurt-based | creamy | slow-cooked",
-        tags: ['fresh', 'NV', 'Old Delhi', 'organic'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/LOGO_4e14745a-b8ca-4dbb-9b50-146d25f2fad6.png?v=1753781227',
-        price: '18.0',
-      },
-    ],
-  },
-  {
-    key: 'sides',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796763488498',
-        variantId: 'gid://shopify/ProductVariant/47804074885362',
-        title: 'Add-on! Moroccan Couscous Chickpea Salad',
-        description:
-          "Couscous & Chickpea Salad is a Mediterranean-inspired bowl of balanced nutrition. Combining fluffy couscous, protein-rich chickpeas, and crisp vegetables, it's tossed with lemon juice and herbs for a light, oil-optional finish. High in fiber, plant protein, and complex carbs, it supports digestion, satiety, and clean, energizing meals.",
-        tags: ['VGN'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/CouscousSalad.jpg?v=1753779973',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763521266',
-        variantId: 'gid://shopify/ProductVariant/47804074918130',
-        title: 'Add-on! Nutritious! Ashgourd Soup',
-        description: '',
-        tags: [],
-        image: null,
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796782461170',
-        variantId: 'gid://shopify/ProductVariant/47804117385458',
-        title: 'Punjabi! Chicken Tariwala',
-        description:
-          "Indulge in the wholesome flavors of Punjabi Chicken Tariwala, a nutritious delight that combines succulent chicken pieces with a rich tomato-based curry. Packed with aromatic spices like cumin, coriander, and garam masala, this dish offers a burst of authentic Punjabi taste. Loaded with lean protein and an array of vitamins from fresh tomatoes, it's a healthy twist to a classic favorite. Enjoy a guilt-free, satisfying meal that nourishes your body and tantalizes your taste buds Punjabi | Organic | Local | Fresh",
-        tags: ['fresh', 'NV', 'organic', 'Punjabi'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Screenshot_2025-07-20_at_10.11.21_AM.png?v=1753781307',
-        price: '4.5',
-      },
-    ],
-  },
-  {
-    key: 'veggies',
-    value: [
-      {
-        id: 'gid://shopify/Product/8796762898674',
-        variantId: 'gid://shopify/ProductVariant/47804074295538',
-        title: 'Add-on! Persian Shirazi Salad',
-        description:
-          'A light, hydrating Persian classic, this finely diced mix of cucumbers, tomatoes, and red onions is tossed with fresh mint, lemon juice, and olive oil. Rich in vitamin C and antioxidants, it’s a cooling, detoxifying, and naturally low-calorie choice. Calories (8 oz serving): 70 kcalPortion Size: 16 ozPersian | hydrating | digestive support | refreshing | low-calorie',
-        tags: ['VGN'],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/PersianShiraziSalad.jpg?v=1753779931',
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763226354',
-        variantId: 'gid://shopify/ProductVariant/47804074623218',
-        title: 'Add-on! Sweet Corn Soup',
-        description: '',
-        tags: [],
-        image: null,
-        price: '10.0',
-      },
-      {
-        id: 'gid://shopify/Product/8796763029746',
-        variantId: 'gid://shopify/ProductVariant/47804074426610',
-        title: 'Add-on! Pumpkin Soup',
-        description:
-          'Inspired by global wellness cuisine, this pumpkin soup is gently simmered with ginger, herbs, and a touch of cold-pressed olive oil—no cream or heavy seasoning. Naturally rich in beta-carotene, fiber, and vitamin C, it supports immunity, digestion, and skin health while staying light, warming, and comforting. Calories (8 oz serving): 110 kcalPortion Size: 16 ozseasonal | beta-carotene | immune support | gut-soothing',
-        tags: [],
-        image:
-          'https://cdn.shopify.com/s/files/1/0772/7094/1938/files/Pumpkinsoup.jpg?v=1753779944',
-        price: '10.0',
-      },
-    ],
-  },
-];
-
 const catRank = (c?: string) => {
   const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
   return i === -1 ? 1e9 : i;
 };
+
 const WEEK = [
   'Monday',
   'Tuesday',
@@ -210,9 +56,11 @@ const rotateFromToday = (arr: string[]) => {
 
 export default function CartScreen({ navigation }: any) {
   const [missingOpen, setMissingOpen] = useState(false);
+  const { byDay } = useAppSelector(state => state.catalog);
   const { lines } = useAppSelector(state => state.cart);
+
   const [note, setNote] = useState('');
-  const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery'); // kept as-is
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
 
@@ -223,7 +71,6 @@ export default function CartScreen({ navigation }: any) {
   const mealCost = lines
     .filter(i => i.type === 'main')
     .reduce((s, x) => s + +x.price * x.qty, 0);
-
   const addons = lines
     .filter(i => i.type === 'addon')
     .reduce((s, x) => s + +x.price * x.qty, 0);
@@ -244,27 +91,40 @@ export default function CartScreen({ navigation }: any) {
 
   // unique days in cart
   const days = useMemo(() => {
-    const byDay = [...new Set(lines.map(l => l.day))].filter(
+    const byDaySet = [...new Set(lines.map(l => l.day))].filter(
       Boolean,
     ) as string[];
     const ring = rotateFromToday(WEEK);
-    return byDay.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
+    return byDaySet.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
   }, [lines]);
 
   const grouped = useMemo(
     () =>
       days.map(d => {
-        const mains = lines
-          .filter(x => x.day === d && x.type === 'main')
-          .slice()
-          .sort((a, b) => catRank(a.category) - catRank(b.category));
+        const allMains = lines.filter(x => x.day === d && x.type === 'main');
         const addons = lines.filter(x => x.day === d && x.type === 'addon');
-        return { day: d, mains, addons };
+
+        const plansMap = allMains.reduce((acc: any, item: any) => {
+          if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
+          acc[item.tiffinPlan].push(item);
+          return acc;
+        }, {});
+
+        const tiffinPlans = Object.entries(plansMap)
+          .map(([planNumber, items]: any) => ({
+            plan: parseInt(planNumber),
+            items: items.sort(
+              (a: any, b: any) => catRank(a.category) - catRank(b.category),
+            ),
+          }))
+          .sort((a, b) => a.plan - b.plan);
+
+        return { day: d, mains: allMains, tiffinPlans, addons };
       }),
     [days, lines],
   );
 
-  // first missing day per required categories (only when mains exist)
+  // missing categories per plan
   const missingInfo = useMemo(() => {
     if (!hasAnyMain) return null;
     const ring = rotateFromToday(WEEK);
@@ -272,19 +132,32 @@ export default function CartScreen({ navigation }: any) {
       Boolean,
     ) as string[];
     const scan = ring.filter(d => daysInCart.includes(d));
+    const allMissing: any[] = [];
     for (const d of scan) {
-      const catsPresent = new Set(
-        lines
-          .filter(l => l.day === d && l.type === 'main')
-          .map(l => String(l.category).toUpperCase()),
-      );
-      const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
-      if (missing.length > 0) return { day: d, missing };
+      const tiffinPlans = [
+        ...new Set(
+          lines
+            .filter(l => l.day === d && l.type === 'main')
+            .map(l => l.tiffinPlan),
+        ),
+      ].sort();
+      for (const plan of tiffinPlans) {
+        const catsPresent = new Set(
+          lines
+            .filter(
+              l => l.day === d && l.type === 'main' && l.tiffinPlan === plan,
+            )
+            .map(l => String(l.category).toUpperCase()),
+        );
+        const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
+        if (missing.length)
+          allMissing.push({ day: d, tiffinPlan: plan, missing });
+      }
     }
-    return null;
+    return allMissing.length ? allMissing : null;
   }, [lines, hasAnyMain]);
 
-  // NEW: Add-ons minimum validation when there are only add-ons
+  // add-ons minimum when only addons
   const ADDONS_MIN = 29;
   const addonsOnly = hasAnyAddon && !hasAnyMain;
   const addonsMinInfo = useMemo(() => {
@@ -298,25 +171,34 @@ export default function CartScreen({ navigation }: any) {
     };
   }, [addonsOnly, addons]);
 
+  // collapsers
   const [openByDay, setOpenByDay] = useState<Record<string, boolean>>({});
+  const [openByPlan, setOpenByPlan] = useState<Record<string, boolean>>({});
   const isOpen = (d: string) => openByDay[d] ?? true;
   const toggleDay = (d: string) =>
     setOpenByDay(p => ({ ...p, [d]: !isOpen(d) }));
+  const keyPlan = (d: string, p: number) => `${d}:${p}`;
+  const isPlanOpen = (d: string, p: number) =>
+    openByPlan[keyPlan(d, p)] ?? true;
+  const togglePlan = (d: string, p: number) =>
+    setOpenByPlan(s => ({ ...s, [keyPlan(d, p)]: !isPlanOpen(d, p) }));
 
   const onRemoveDayMains = (d: string) => dispatch(removeDayMains({ day: d }));
   const onRemoveDayAddons = (d: string) =>
     dispatch(removeDayAddons({ day: d }));
 
   const payDisabled = isEmpty || !!missingInfo || !!addonsMinInfo;
-
   const fmt = (n: number) => n.toFixed(2);
+  const uniqueDays = [
+    ...new Set(missingInfo && (missingInfo as any).map((m: any) => m.day)),
+  ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
       <AppHeader title="My Cart" onBack={() => navigation.goBack()} />
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: contentBottomPad }}
+        contentContainerStyle={{ padding: 12, paddingBottom: contentBottomPad }}
         showsVerticalScrollIndicator
       >
         {isEmpty ? (
@@ -328,7 +210,6 @@ export default function CartScreen({ navigation }: any) {
               <Text style={s.emptyTitle}>Your cart is empty</Text>
               <Text style={s.emptySub}>No items in cart</Text>
             </View>
-
             <TouchableOpacity
               style={s.emptyCta}
               onPress={() => navigation.navigate('Home')}
@@ -338,257 +219,299 @@ export default function CartScreen({ navigation }: any) {
           </View>
         ) : (
           <>
-            {grouped.map(({ day, mains, addons }) => {
+            {grouped.map(({ day, mains, addons, tiffinPlans }) => {
               const dayAddonsTotal = addons.reduce(
                 (s, x) => s + +x.price * x.qty,
                 0,
               );
 
               return (
-                <View key={day}>
-                  <View key={day} style={s.dayCard}>
-                    <TouchableOpacity
-                      style={s.dayHdr}
-                      onPress={() => toggleDay(day)}
-                      activeOpacity={0.9}
-                    >
-                      <Text style={s.dayTitle}>{day} Summary</Text>
-                      <FontAwesome5
-                        iconStyle="solid"
-                        name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
-                        size={16}
-                        color={C.black}
-                      />
-                    </TouchableOpacity>
+                <View key={day} style={s.dayCard}>
+                  <TouchableOpacity
+                    style={s.dayHdr}
+                    onPress={() => toggleDay(day)}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={s.dayTitle}>{day} Summary</Text>
+                    <FontAwesome5
+                      iconStyle="solid"
+                      name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
+                      size={16}
+                      color={C.black}
+                    />
+                  </TouchableOpacity>
 
-                    {isOpen(day) && (
-                      <>
-                        {/* Main block */}
-                        {mains.length > 0 && (
-                          <View style={s.block}>
-                            <View style={s.blockHdRow}>
-                              <Text style={s.blockChip}>Main</Text>
+                  {isOpen(day) && (
+                    <>
+                      {/* Mains block with collapsible tiffin plans */}
+                      {mains.length > 0 && (
+                        <View style={s.block}>
+                          <View style={s.blockHdRow}>
+                            <Text style={s.blockChip}>Main</Text>
+                            <TouchableOpacity
+                              onPress={() => onRemoveDayMains(day)}
+                              style={s.hdrTrashBtn}
+                            >
+                              <FontAwesome5
+                                iconStyle="solid"
+                                name="trash"
+                                size={16}
+                                color={C.red}
+                              />
+                            </TouchableOpacity>
+                          </View>
+
+                          {tiffinPlans.map(plan => (
+                            <View
+                              key={`tiffin-${plan.plan}`}
+                              style={s.planWrap}
+                            >
                               <TouchableOpacity
-                                onPress={() => onRemoveDayMains(day)}
-                                style={s.hdrTrashBtn}
+                                style={s.planHdr}
+                                onPress={() => togglePlan(day, plan.plan)}
                               >
+                                <Text style={s.planTitle}>
+                                  Tiffin {plan.plan}
+                                </Text>
                                 <FontAwesome5
                                   iconStyle="solid"
-                                  name="trash"
-                                  size={16}
-                                  color={C.red}
+                                  name={
+                                    isPlanOpen(day, plan.plan)
+                                      ? 'chevron-up'
+                                      : 'chevron-down'
+                                  }
+                                  size={14}
+                                  color={C.black}
                                 />
                               </TouchableOpacity>
-                            </View>
 
-                            {mains.map(it => (
-                              <View
-                                key={`${it.id}-${it.variantId}`}
-                                style={s.card}
-                              >
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    dispatch(
-                                      removeItem({
-                                        id: it.id,
-                                        variantId: it.variantId,
-                                      }),
-                                    )
-                                  }
-                                  style={s.priceTrashBtn}
-                                  accessibilityRole="button"
-                                  accessibilityLabel="Remove item"
-                                >
-                                  <FontAwesome5
-                                    iconStyle="solid"
-                                    name="times"
-                                    size={20}
-                                    color={C.red}
-                                  />
-                                </TouchableOpacity>
-
-                                <Image
-                                  source={{ uri: it.image }}
-                                  style={s.img}
-                                />
-
-                                <View style={s.cardContent}>
-                                  {/* type + category */}
-                                  <View style={s.titleRowTight}>
-                                    <Text style={s.typeBadge}>
-                                      Type: {it.type}
-                                    </Text>
-                                    <Text style={s.catPill}>{it.category}</Text>
-                                  </View>
-
-                                  {/* title */}
-                                  <Text style={s.itemTitle} numberOfLines={2}>
-                                    {it.title}
-                                  </Text>
-
-                                  {/* price below title */}
-                                  <Text style={s.priceUnder}>${it.price}</Text>
-
-                                  {/* qty row */}
-                                  <View style={s.qtyRow}>
-                                    <Round
-                                      onPress={() => {
-                                        if (it.qty === 1) return;
-                                        dispatch(
-                                          decreaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                          }),
-                                        );
-                                      }}
+                              {isPlanOpen(day, plan.plan) && (
+                                <View style={{ gap: 6 }}>
+                                  {plan.items.map((it: any) => (
+                                    <View
+                                      key={`${it.id}-${it.variantId}-${it.tiffinPlan}`}
+                                      style={s.cardMini}
                                     >
-                                      <Text style={s.sign}>−</Text>
-                                    </Round>
-                                    <Text style={s.qty}>{it.qty}</Text>
-                                    <Round
-                                      onPress={() =>
-                                        dispatch(
-                                          increaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                          }),
-                                        )
-                                      }
-                                    >
-                                      <Text style={s.sign}>＋</Text>
-                                    </Round>
-                                  </View>
+                                      <TouchableOpacity
+                                        onPress={() =>
+                                          dispatch(
+                                            removeItem({
+                                              id: it.id,
+                                              variantId: it.variantId,
+                                              tiffinPlan:
+                                                it.tiffinPlan as number,
+                                            }),
+                                          )
+                                        }
+                                        style={s.closeBtn}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Remove item"
+                                      >
+                                        <FontAwesome5
+                                          iconStyle="solid"
+                                          name="times"
+                                          size={16}
+                                          color={C.red}
+                                        />
+                                      </TouchableOpacity>
+
+                                      <View style={s.thumbWrap}>
+                                        <Image
+                                          source={{ uri: it.image }}
+                                          style={s.imgMini}
+                                        />
+                                        <View style={s.priceBadge}>
+                                          <Text style={s.priceText}>
+                                            ${it.price}
+                                          </Text>
+                                        </View>
+                                      </View>
+
+                                      <View style={s.cardContentMini}>
+                                        <View style={s.rowTop}>
+                                          <Text style={s.catPill}>
+                                            {it.category}
+                                          </Text>
+                                        </View>
+
+                                        <Text
+                                          style={s.itemTitleMini}
+                                          numberOfLines={2}
+                                        >
+                                          {it.title}
+                                        </Text>
+
+                                        <View style={s.qtyPill}>
+                                          <TouchableOpacity
+                                            onPress={() => {
+                                              if (it.qty === 1) return;
+                                              dispatch(
+                                                decreaseItem({
+                                                  id: it.id,
+                                                  variantId: it.variantId,
+                                                  tiffinPlan:
+                                                    it.tiffinPlan as number,
+                                                }),
+                                              );
+                                            }}
+                                            style={s.pillBtn}
+                                          >
+                                            <Text style={s.pillBtnTxt}>−</Text>
+                                          </TouchableOpacity>
+                                          <Text style={s.qtyNum}>{it.qty}</Text>
+                                          <TouchableOpacity
+                                            onPress={() =>
+                                              dispatch(
+                                                increaseItem({
+                                                  id: it.id,
+                                                  tiffinPlan:
+                                                    it.tiffinPlan as number,
+                                                  variantId: it.variantId,
+                                                }),
+                                              )
+                                            }
+                                            style={s.pillBtn}
+                                          >
+                                            <Text style={s.pillBtnTxt}>+</Text>
+                                          </TouchableOpacity>
+                                        </View>
+                                      </View>
+                                    </View>
+                                  ))}
                                 </View>
-                              </View>
-                            ))}
+                              )}
+                            </View>
+                          ))}
+
+                          {!missingInfo && (
                             <View style={s.tiffinTotalBox}>
                               <Text style={s.tiffinTotalTxt}>
-                                Total for {day} Tiffin 1 : ${tiffinPrice} + ($
-                                {mealCost}) = ${mealCost + tiffinPrice}
+                                Total for {day} ${tiffinPrice} + (${mealCost}) =
+                                ${mealCost + tiffinPrice}
                               </Text>
                             </View>
-                          </View>
-                        )}
+                          )}
+                        </View>
+                      )}
 
-                        {/* Add-ons block */}
-                        {addons.length > 0 && (
-                          <View style={s.block}>
-                            <View style={s.blockHdRow}>
-                              <Text style={s.blockChipAlt}>Add-ons</Text>
+                      {/* Add-ons block: flat compact cards */}
+                      {addons.length > 0 && (
+                        <View style={s.block}>
+                          <View style={s.blockHdRow}>
+                            <Text style={s.blockChipAlt}>Add-ons</Text>
+                            <TouchableOpacity
+                              onPress={() => onRemoveDayAddons(day)}
+                              style={s.hdrTrashBtn}
+                            >
+                              <FontAwesome5
+                                iconStyle="solid"
+                                name="trash"
+                                size={16}
+                                color={C.red}
+                              />
+                            </TouchableOpacity>
+                          </View>
+
+                          {addons.map(it => (
+                            <View
+                              key={`${it.id}-${it.variantId}-${it.tiffinPlan}-${it.day}`}
+                              style={s.cardMiniAlt}
+                            >
                               <TouchableOpacity
-                                onPress={() => onRemoveDayAddons(day)}
-                                style={s.hdrTrashBtn}
+                                onPress={() =>
+                                  dispatch(
+                                    removeItem({
+                                      id: it.id,
+                                      variantId: it.variantId,
+                                      tiffinPlan: it.tiffinPlan as number,
+                                    }),
+                                  )
+                                }
+                                style={s.closeBtn}
+                                accessibilityRole="button"
+                                accessibilityLabel="Remove add-on"
                               >
                                 <FontAwesome5
                                   iconStyle="solid"
-                                  name="trash"
+                                  name="times"
                                   size={16}
                                   color={C.red}
                                 />
                               </TouchableOpacity>
-                            </View>
 
-                            {addons.map(it => (
-                              <View
-                                key={`${it.id}-${it.variantId}`}
-                                style={s.cardAlt}
-                              >
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    dispatch(
-                                      removeItem({
-                                        id: it.id,
-                                        variantId: it.variantId,
-                                      }),
-                                    )
-                                  }
-                                  style={s.priceTrashBtn}
-                                  accessibilityRole="button"
-                                  accessibilityLabel="Remove add-on"
-                                >
-                                  <FontAwesome5
-                                    iconStyle="solid"
-                                    name="times"
-                                    size={20}
-                                    color={C.red}
-                                  />
-                                </TouchableOpacity>
-
+                              <View style={s.thumbWrap}>
                                 <Image
                                   source={{ uri: it.image }}
-                                  style={s.imgSmall}
+                                  style={s.imgMini}
                                 />
-
-                                <View style={s.cardContent}>
-                                  {/* type + category */}
-                                  <View style={s.titleRowTight}>
-                                    <Text style={s.typeBadgeAlt}>
-                                      Type: {it.type}
-                                    </Text>
-                                    <Text style={s.catPillAlt}>
-                                      {it.category}
-                                    </Text>
-                                  </View>
-
-                                  {/* title */}
-                                  <Text style={s.itemTitleSm} numberOfLines={2}>
-                                    {it.title}
-                                  </Text>
-
-                                  {/* price under title */}
-                                  <Text style={s.priceSmUnder}>
-                                    ${it.price}
-                                  </Text>
-
-                                  <View style={s.qtyRowSm}>
-                                    <Round
-                                      onPress={() => {
-                                        if (it.qty === 1) return;
-                                        dispatch(
-                                          decreaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                          }),
-                                        );
-                                      }}
-                                    >
-                                      <Text style={s.sign}>−</Text>
-                                    </Round>
-                                    <Text style={s.qty}>{it.qty}</Text>
-                                    <Round
-                                      onPress={() =>
-                                        dispatch(
-                                          increaseItem({
-                                            id: it.id,
-                                            variantId: it.variantId,
-                                          }),
-                                        )
-                                      }
-                                    >
-                                      <Text style={s.sign}>＋</Text>
-                                    </Round>
-                                  </View>
+                                <View style={s.priceBadgeAlt}>
+                                  <Text style={s.priceText}>${it.price}</Text>
                                 </View>
                               </View>
-                            ))}
-                            {addons.length > 0 && (
-                              <View style={s.addonTotalBox}>
-                                <Text style={s.addonTotalTxt}>
-                                  Total for {day} A La Carte: $
-                                  {fmt(dayAddonsTotal)}
+
+                              <View style={s.cardContentMini}>
+                                <View style={s.rowTop}>
+                                  <Text style={s.catPillAlt}>
+                                    {it.category}
+                                  </Text>
+                                </View>
+
+                                <Text style={s.itemTitleMini} numberOfLines={2}>
+                                  {it.title}
                                 </Text>
+
+                                <View style={s.qtyPillAlt}>
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      if (it.qty === 1) return;
+                                      dispatch(
+                                        decreaseItem({
+                                          id: it.id,
+                                          variantId: it.variantId,
+                                          tiffinPlan: it.tiffinPlan as number,
+                                        }),
+                                      );
+                                    }}
+                                    style={s.pillBtnAlt}
+                                  >
+                                    <Text style={s.pillBtnTxtAlt}>−</Text>
+                                  </TouchableOpacity>
+                                  <Text style={s.qtyNumAlt}>{it.qty}</Text>
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      dispatch(
+                                        increaseItem({
+                                          id: it.id,
+                                          variantId: it.variantId,
+                                          tiffinPlan: it.tiffinPlan as number,
+                                        }),
+                                      )
+                                    }
+                                    style={s.pillBtnAlt}
+                                  >
+                                    <Text style={s.pillBtnTxtAlt}>+</Text>
+                                  </TouchableOpacity>
+                                </View>
                               </View>
-                            )}
-                          </View>
-                        )}
-                      </>
-                    )}
-                  </View>
+                            </View>
+                          ))}
+
+                          {addons.length > 0 && (
+                            <View style={s.addonTotalBox}>
+                              <Text style={s.addonTotalTxt}>
+                                Total for {day} A La Carte: $
+                                {fmt(dayAddonsTotal)}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </>
+                  )}
                 </View>
               );
             })}
 
-            {/* Clear cart + notes + summary + upsell */}
             <TouchableOpacity
               onPress={() => dispatch(clearCart())}
               activeOpacity={0.9}
@@ -607,54 +530,51 @@ export default function CartScreen({ navigation }: any) {
               placeholderTextColor={C.sub}
             />
 
-            <View style={s.summary}>
-              <Row k="Meal box price" v={`$${mealCost + tiffinPrice}`} />
-              <Row k="Add on's" v={`$${addons}`} />
-              {/* <Row k="Non member shipping" v={`$${nonMember}`} /> */}
-              <Row k="Total" v={`$${subtotal + tiffinPrice}`} bold />
-            </View>
+            {!missingInfo && (
+              <View style={s.summary}>
+                <Row k="Meal box price" v={`$${mealCost + tiffinPrice}`} />
+                <Row k="Add on's" v={`$${addons}`} />
+                <Row k="Total" v={`$${subtotal + tiffinPrice}`} bold />
+              </View>
+            )}
           </>
         )}
       </ScrollView>
 
       {!isEmpty && (
         <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
-          {/* Missing categories (when mains exist) */}
           {missingInfo && (
             <View style={s.missRow}>
               <View style={s.missIcon}>
                 <InfoIcon height={24} width={24} />
               </View>
-
               <View style={s.missTxtWrap}>
-                <Text style={s.missTitle}>
-                  Missing meal for {String(missingInfo.day).toLowerCase()}
+                <Text>
+                  Missing meal for{' '}
+                  {[
+                    ...new Set((missingInfo as any).map((m: any) => m.day)),
+                  ].join(', ')}
                 </Text>
-
-                <View style={s.missChipsRow}>
-                  {missingInfo.missing.map(x => (
-                    <View key={x} style={s.missChip}>
-                      <Text style={s.missChipTxt}>{x.toLowerCase()}</Text>
-                    </View>
-                  ))}
-                </View>
               </View>
-
               <TouchableOpacity
                 style={s.missCta}
                 activeOpacity={0.9}
-                onPress={() => {
-                  navigation.navigate('Home');
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Open suggestions to add items"
+                onPress={() => setMissingOpen(!missingOpen)}
               >
                 <Text style={s.missCtaTxt}>Add</Text>
               </TouchableOpacity>
             </View>
           )}
+          {missingInfo && (
+            <MissingCategoryModal
+              visible={missingOpen}
+              onClose={() => setMissingOpen(false)}
+              dataByDay={byDay}
+              missingList={missingInfo as any}
+              onAdd={payload => dispatch(addItems([payload] as any))}
+            />
+          )}
 
-          {/* NEW: Add-ons minimum notice (when only add-ons and < $29) */}
           {!missingInfo && addonsMinInfo && (
             <View style={s.missRow}>
               <View style={s.missIcon}>
@@ -665,10 +585,8 @@ export default function CartScreen({ navigation }: any) {
                   color="#8A5A00"
                 />
               </View>
-
               <View style={s.missTxtWrap}>
-                <Text style={s.missTitle}>{addonsMinInfo.message}</Text>
-
+                <Text>{addonsMinInfo.message}</Text>
                 <View style={s.missChipsRow}>
                   <View style={s.missChip}>
                     <Text style={s.missChipTxt}>
@@ -682,13 +600,10 @@ export default function CartScreen({ navigation }: any) {
                   </View>
                 </View>
               </View>
-
               <TouchableOpacity
                 style={s.missCta}
                 activeOpacity={0.9}
                 onPress={() => navigation.navigate('Home')}
-                accessibilityRole="button"
-                accessibilityLabel="Add more items"
               >
                 <Text style={s.missCtaTxt}>Add</Text>
               </TouchableOpacity>
@@ -697,19 +612,29 @@ export default function CartScreen({ navigation }: any) {
 
           <View style={s.totalRow}>
             <Text style={s.totalK}>TOTAL:</Text>
-            <Text style={s.totalV}>${subtotal + tiffinPrice}</Text>
+            <Text style={[s.totalV, { fontSize: missingInfo ? 15 : 22 }]}>
+              {missingInfo
+                ? 'Please select missing item'
+                : `$ ${subtotal + tiffinPrice}`}
+            </Text>
           </View>
 
           <TouchableOpacity
             style={s.payBtn}
-            disabled={payDisabled}
+            disabled={isEmpty || !!missingInfo || !!addonsMinInfo}
             onPress={() => navigation.navigate('OrderTrack')}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[s.payTxt, payDisabled && s.payBtnDisabled]}>
-                To Payment{' '}
+              <Text
+                style={[
+                  s.payTxt,
+                  (isEmpty || !!missingInfo || !!addonsMinInfo) &&
+                    s.payBtnDisabled,
+                ]}
+              >
+                To Payment
               </Text>
-              <CartIcon height={24} width={24} style={{ marginLeft: 6 }} />
+              <CartIcon height={22} width={22} style={{ marginLeft: 6 }} />
             </View>
           </TouchableOpacity>
         </View>
@@ -718,7 +643,6 @@ export default function CartScreen({ navigation }: any) {
   );
 }
 
-/* small bits */
 function Row({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
   return (
     <View
@@ -727,66 +651,55 @@ function Row({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
         bold && { borderTopWidth: 1, borderTopColor: C.border, paddingTop: 8 },
       ]}
     >
-      <Text style={[s.k, bold && { fontWeight: '800', fontSize: 22 }]}>
+      <Text style={[s.k, bold && { fontWeight: '800', fontSize: 20 }]}>
         {k}
       </Text>
-      <Text style={[s.v, bold && { fontWeight: '800', fontSize: 22 }]}>
+      <Text style={[s.v, bold && { fontWeight: '800', fontSize: 20 }]}>
         {v}
       </Text>
     </View>
   );
 }
-function Round({ children, onPress }: any) {
-  return (
-    <TouchableOpacity style={s.round} onPress={onPress} activeOpacity={0.8}>
-      {children}
-    </TouchableOpacity>
-  );
-}
 
 /* styles */
 const s = StyleSheet.create({
-  wrap: { padding: 16, paddingBottom: 24 },
-
   footer: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: C.white,
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
   },
 
-  /* day grouping */
   dayCard: {
     backgroundColor: '#F7F8F7',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: C.border,
-    marginBottom: 12,
+    marginBottom: 10,
     overflow: 'hidden',
   },
   dayHdr: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: '#EFEFEF',
   },
-  dayTitle: { fontWeight: '800', color: C.black, fontSize: 16 },
+  dayTitle: { fontWeight: '800', color: C.black, fontSize: 15 },
 
-  /* section blocks */
   block: {
-    margin: 10,
+    margin: 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#DDE3DE',
     backgroundColor: C.white,
-    padding: 8,
+    padding: 6,
   },
   blockHdRow: {
     flexDirection: 'row',
@@ -801,7 +714,6 @@ const s = StyleSheet.create({
     backgroundColor: '#EAF6EF',
     color: C.green,
     fontWeight: '800',
-    overflow: 'hidden',
   },
   blockChipAlt: {
     paddingHorizontal: 10,
@@ -810,40 +722,74 @@ const s = StyleSheet.create({
     backgroundColor: '#FFF4E8',
     color: C.oranger,
     fontWeight: '800',
-    overflow: 'hidden',
   },
   hdrTrashBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  /* main item card (smaller, detailed) */
-  card: {
+  /* tiffin collapsers */
+  planWrap: { marginBottom: 6 },
+  planHdr: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    backgroundColor: '#F4F5F4',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E7EBE8',
+  },
+  planTitle: { fontSize: 12, fontWeight: '800', color: C.black },
+
+  /* compact item card */
+  cardMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: C.white,
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
+    borderRadius: 10,
+    padding: 8,
     borderWidth: 1,
     borderColor: '#E6EAE7',
   },
-  priceTrashBtn: {
-    position: 'absolute',
-    right: -2,
-    top: -9,
-  },
-  img: {
-    width: 80,
-    height: 68,
+  cardMiniAlt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
     borderRadius: 10,
-    marginRight: 10,
-    resizeMode: 'cover',
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#EEE',
   },
-  cardContent: { flex: 1, justifyContent: 'flex-start' },
-  titleRowTight: {
+  closeBtn: { position: 'absolute', right: -2, top: -4, padding: 6 },
+  thumbWrap: { position: 'relative', marginRight: 8 },
+  imgMini: { width: 56, height: 48, borderRadius: 8, resizeMode: 'cover' },
+  priceBadge: {
+    position: 'absolute',
+    right: 3,
+    bottom: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#0B5733',
+  },
+  priceBadgeAlt: {
+    position: 'absolute',
+    right: 3,
+    bottom: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#1B4FBF',
+  },
+  priceText: { color: '#FFF', fontSize: 10, fontWeight: '800' },
+
+  cardContentMini: { flex: 1 },
+  rowTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -854,59 +800,8 @@ const s = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#F0F0F0',
     color: C.black,
-    overflow: 'hidden',
     fontWeight: '700',
-    fontSize: 11,
-  },
-  catPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: '#EAF1FF',
-    color: '#3A6AE3',
-    overflow: 'hidden',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  itemTitle: { color: C.black, fontWeight: '800', fontSize: 14, marginTop: 6 },
-  priceUnder: { color: C.green, fontWeight: '800', fontSize: 16, marginTop: 4 },
-
-  /* qty */
-  qtyRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 12 },
-  round: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: C.lightOrange,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sign: { color: C.oranger, fontSize: 16, fontWeight: '800' },
-  qty: {
-    minWidth: 16,
-    textAlign: 'center',
-    fontWeight: '800',
-    color: C.oranger,
-    fontSize: 16,
-  },
-
-  /* addon item card (smaller, price under title) */
-  cardAlt: {
-    flexDirection: 'row',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    padding: 10,
-    paddingTop: 18,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#EEE',
-  },
-  imgSmall: {
-    width: 64,
-    height: 56,
-    borderRadius: 8,
-    marginRight: 10,
-    resizeMode: 'cover',
+    fontSize: 10,
   },
   typeBadgeAlt: {
     paddingHorizontal: 8,
@@ -914,9 +809,17 @@ const s = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#F6F6F6',
     color: C.black,
-    overflow: 'hidden',
     fontWeight: '700',
-    fontSize: 11,
+    fontSize: 10,
+  },
+  catPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: '#EAF1FF',
+    color: '#3A6AE3',
+    fontWeight: '700',
+    fontSize: 10,
   },
   catPillAlt: {
     paddingHorizontal: 8,
@@ -924,44 +827,82 @@ const s = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFF0F0',
     color: '#C44',
-    overflow: 'hidden',
+    fontWeight: '700',
+    fontSize: 10,
+  },
+  itemTitleMini: {
+    color: C.black,
     fontWeight: '700',
     fontSize: 12,
-  },
-  itemTitleSm: {
-    color: C.black,
-    fontWeight: '700',
-    fontSize: 13,
-    marginTop: 6,
-  },
-  priceSmUnder: {
-    color: C.black,
-    fontWeight: '800',
-    fontSize: 15,
     marginTop: 4,
   },
-  qtyRowSm: {
+
+  qtyPill: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F2F7F4',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    gap: 12,
+    paddingHorizontal: 6,
+    gap: 6,
+  },
+  pillBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: '#D9E3DC',
+  },
+  pillBtnTxt: { fontSize: 13, fontWeight: '800', color: C.green },
+  qtyNum: {
+    minWidth: 16,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '800',
+    color: C.black,
   },
 
-  /* existing */
-  detailsRow: {
+  qtyPillAlt: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F6F7FF',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 10,
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    gap: 6,
   },
-  detailText: { color: C.sub, fontSize: 14, marginTop: 4 },
-  detailLabel: { fontWeight: '700', color: C.black },
+  pillBtnAlt: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: '#D9E3FC',
+  },
+  pillBtnTxtAlt: { fontSize: 13, fontWeight: '800', color: '#1B4FBF' },
+  qtyNumAlt: {
+    minWidth: 16,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '800',
+    color: C.black,
+  },
 
+  /* totals and misc */
   caption: {
     color: C.black,
     marginTop: 6,
     marginBottom: 6,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
   },
   note: {
@@ -969,85 +910,52 @@ const s = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: C.border,
-    padding: 12,
+    padding: 10,
     color: C.black,
-    marginBottom: 12,
+    marginBottom: 10,
   },
-
   summary: {
     backgroundColor: C.gray,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    padding: 10,
+    marginBottom: 10,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 6,
   },
-  k: { color: C.black, fontWeight: '600', fontSize: 16 },
-  v: { color: C.black, fontWeight: '800', fontSize: 16 },
-
-  upsellText: {
-    textAlign: 'center',
-    color: C.sub,
-    marginTop: 6,
-    marginBottom: 10,
-  },
-  subBtn: {
-    height: 60,
-    borderRadius: 12,
-    borderColor: C.green,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  subBtnTxt: { color: C.green, fontWeight: '800', fontSize: 22 },
+  k: { color: C.black, fontWeight: '600', fontSize: 15 },
+  v: { color: C.black, fontWeight: '800', fontSize: 15 },
 
   clearCartBtn: {
-    height: 60,
+    height: 48,
     borderRadius: 12,
     borderColor: C.red,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  clearCart: { color: C.red, fontWeight: '700', fontSize: 18 },
-
-  segment: {
-    flexDirection: 'row',
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: C.chip,
-    overflow: 'hidden',
-    marginBottom: 8,
-    fontSize: 16,
-  },
-  segBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  segOn: { backgroundColor: C.green },
-  segTxt: { color: C.black, fontWeight: '700' },
-  segTxtOn: { color: C.white },
-
-  saveNote: { textAlign: 'center', color: C.sub, marginBottom: 10 },
+  clearCart: { color: C.red, fontWeight: '700', fontSize: 16 },
 
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 12,
+    marginVertical: 10,
   },
   totalK: { color: C.sub, fontWeight: '700' },
-  totalV: { color: C.black, fontWeight: '900', fontSize: 24 },
+  totalV: { color: C.black, fontWeight: '900' },
 
   payBtn: {
-    height: 52,
+    height: 50,
     borderRadius: 12,
     backgroundColor: C.oranger,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  payTxt: { fontWeight: '800', color: C.white, fontSize: 20 },
+  payTxt: { fontWeight: '800', color: C.white, fontSize: 18 },
+  payBtnDisabled: { opacity: 0.5 },
 
   emptyBox: { backgroundColor: '#FAFAFA', padding: 16, borderRadius: 16 },
   emptyInner: { alignItems: 'center', paddingVertical: 28 },
@@ -1071,36 +979,6 @@ const s = StyleSheet.create({
   },
   emptyCtaTxt: { color: '#FFFFFF', fontWeight: '800' },
 
-  emptyCartText: {
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
-    color: C.sub,
-    marginTop: 20,
-  },
-
-  /* missing/validation notice */
-  missWrap: {
-    backgroundColor: '#FFF6E5',
-    borderColor: '#FFD699',
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 8,
-  },
-  missTitle: { fontWeight: '800', color: '#8A5A00', fontSize: 14 },
-  missCats: { marginTop: 2, color: '#8A5A00', fontSize: 13 },
-  missBtn: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: '#0B5733',
-  },
-  missBtnTxt: { color: '#FFF', fontWeight: '800' },
-
-  payBtnDisabled: { opacity: 0.5 },
   missRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1136,7 +1014,6 @@ const s = StyleSheet.create({
     borderColor: '#FFE0A6',
   },
   missChipTxt: { color: '#8A5A00', fontWeight: '700', fontSize: 12 },
-
   missCta: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -1146,32 +1023,24 @@ const s = StyleSheet.create({
   },
   missCtaTxt: { color: '#FFF', fontWeight: '800' },
 
-  /* total cards */
   tiffinTotalBox: {
     backgroundColor: '#FFF6E5',
     borderColor: '#FFD699',
     borderWidth: 1,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    padding: 10,
+    marginTop: 6,
   },
-  tiffinTotalTxt: {
-    fontWeight: '800',
-    fontSize: 16,
-    color: '#8A5A00',
-  },
+  tiffinTotalTxt: { fontWeight: '800', fontSize: 14, color: '#8A5A00' },
 
   addonTotalBox: {
     backgroundColor: '#EAF1FF',
     borderColor: '#CFE0FF',
     borderWidth: 1,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    padding: 10,
+    marginTop: 6,
+    marginBottom: 8,
   },
-  addonTotalTxt: {
-    fontWeight: '800',
-    fontSize: 16,
-    color: '#1B4FBF',
-  },
+  addonTotalTxt: { fontWeight: '800', fontSize: 14, color: '#1B4FBF' },
 });

@@ -44,6 +44,7 @@ export default function DishCard({
   day,
   category,
   type,
+  tiffinPlan,
   item,
   onChange,
   setSelectedItemsToAddOnCart,
@@ -55,6 +56,7 @@ export default function DishCard({
   type: 'main' | 'addon';
   item: Dish;
   onChange?: (d: Dish) => void;
+  tiffinPlan?: number;
   setSelectedItemsToAddOnCart?: any;
   selectedItemsToAddOnCart: any;
   isLoading?: boolean;
@@ -82,7 +84,14 @@ export default function DishCard({
   // SINGLE or MULTI select by type
   const toggleSelection = () => {
     const date = new Intl.DateTimeFormat('en-US').format(new Date());
-    const itemWithMeta: any = { ...item, type, category, day, date };
+    const itemWithMeta: any = {
+      ...item,
+      type,
+      category,
+      day,
+      date,
+      tiffinPlan,
+    };
     const nextChecked = !checked;
 
     setSelectedItemsToAddOnCart?.((prev: any[]) => {
@@ -185,7 +194,11 @@ export default function DishCard({
             isFav ? 'Remove from favorites' : 'Add to favorites'
           }
         >
-          <HeartIcon width={24} height={24} fill={isFav ? '#FF0000' : '#CCCCCC'} />
+          <HeartIcon
+            width={24}
+            height={24}
+            fill={isFav ? '#FF0000' : '#CCCCCC'}
+          />
         </TouchableOpacity>
       </TouchableOpacity>
 

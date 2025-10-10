@@ -3,8 +3,8 @@ import React, { useImperativeHandle } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { SHADOW } from '../ui/theme';
-import PlusIcon from '../assets/htf-icon/icon-add.svg'
-import MinusIcon from '../assets/htf-icon/icon-remove.svg'
+import PlusIcon from '../assets/htf-icon/icon-add.svg';
+import MinusIcon from '../assets/htf-icon/icon-remove.svg';
 
 const COLORS = {
   bg: '#FFFFFF',
@@ -62,7 +62,11 @@ export default function Section({
           {!!note && <Text style={s.note}>{note}</Text>}
         </View>
         <TouchableOpacity onPress={toggle} style={s.addBtn} activeOpacity={0.8}>
-          {open ? <MinusIcon width={24} height={24} /> : <PlusIcon width={24} height={24} />}
+          {open ? (
+            <MinusIcon width={24} height={24} />
+          ) : (
+            <PlusIcon width={24} height={24} />
+          )}
         </TouchableOpacity>
       </TouchableOpacity>
 
