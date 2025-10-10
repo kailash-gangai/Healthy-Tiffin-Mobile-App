@@ -214,8 +214,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         last_name: user?.familyName,
       };
 
-      const baseURL =
-        'http://healthyfood-dev.cartmade.com/api/shopify/multipass-token';
+      const baseURL = 'https://healthytiffin.app/api/shopify/multipass-token';
 
       const { data } = await axios.post(baseURL, payload, {
         headers: {
