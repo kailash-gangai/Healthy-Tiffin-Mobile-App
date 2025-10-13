@@ -47,48 +47,44 @@ import {
   getAuth,
   signInWithCredential,
 } from '@react-native-firebase/auth';
+
 GoogleSignin.configure({
-  // offlineAccess: true,
   webClientId:
     '678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd.apps.googleusercontent.com',
-  // ios
   iosClientId:
     '541872006500-5mlca2bgg8v4qb26muaabmcjepbekvf2.apps.googleusercontent.com',
-  // android
-  // androidClientId: "678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd.apps.googleusercontent.com",
 });
+
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
-type Props = {
-  navigation: AboutScreenNavigationProp;
-};
+type Props = { navigation: AboutScreenNavigationProp };
+
 const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
+
+  // keep CTA visible with keyboard
   const kbOffset = Platform.select({
-    ios: insets.top + 12, // so content lifts above the iOS keyboard
+    ios: insets.top + 56,
     android: 0,
   }) as number;
+
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [pass, setPass] = useState<string>('');
   const [errors, setErrors] = useState<any>({});
   const [isloading, setIsloading] = useState(false);
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+
+  const validateEmail = (email: string) =>
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+  const validatePassword = (password: string) => password.length >= 6;
+  const validateName = (full: string) => {
+    const [firstName, lastName] = full.trim().split(' ');
+    return !!(firstName && lastName);
   };
 
-  const validatePassword = (password: string) => {
-    return password.length >= 6; // Simple check for password length
-  };
-
-  const validateName = (name: string) => {
-    const [firstName, lastName] = name.trim().split(' ');
-    return firstName && lastName; // Ensure both first and last name are present
-  };
   const onSubmit = useCallback(
     async (_: GestureResponderEvent) => {
       setIsloading(true);
@@ -120,46 +116,37 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
 
       const [firstName, lastName] = name.trim().split(' ');
 
-      const userData = {
-        email,
-        password: pass,
-        firstName,
-        lastName,
-      };
+      const userData = { email, password: pass, firstName, lastName };
       try {
         const response = await customerUpsert(userData);
-        if (response?.customerCreate?.customerUserErrors) {
+        if (response?.customerCreate?.customerUserErrors?.length) {
           setIsloading(false);
           Alert.alert(
             'Error',
             response.customerCreate.customerUserErrors[0]?.message,
           );
+          return;
         }
         if (response?.customerCreate?.customer?.id) {
           const login = await loginCustomer(userData);
-          if (
-            login?.customerAccessTokenCreate?.customerAccessToken?.accessToken
-          ) {
-            const customerToken =
-              login.customerAccessTokenCreate.customerAccessToken.accessToken;
-            const tokenExpire =
-              login.customerAccessTokenCreate.customerAccessToken.expiresAt;
-            saveCustomerTokens({ customerToken, tokenExpire });
-            let customerdetails = checkCustomerTokens();
-            customerdetails.then(async result => {
-              console.log('result', result);
-              if (result) {
-                dispatch(setUser(result));
-              }
+          const token =
+            login?.customerAccessTokenCreate?.customerAccessToken?.accessToken;
+          const expiresAt =
+            login?.customerAccessTokenCreate?.customerAccessToken?.expiresAt;
+          if (token) {
+            saveCustomerTokens({
+              customerToken: token,
+              tokenExpire: expiresAt,
             });
+            const details = await checkCustomerTokens();
+            if (details) dispatch(setUser(details));
             setIsloading(false);
             showToastSuccess('Customer registration successful.');
-            // setTimeout(() => {
             navigation.navigate('SelectPreferences');
-            // }, 3000);
+            return;
           }
-          setIsloading(false);
         }
+        setIsloading(false);
       } catch (error) {
         setIsloading(false);
         showToastError(
@@ -167,83 +154,71 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         );
       }
     },
-    [name, email, pass],
+    [name, email, pass, dispatch, navigation],
   );
 
   useEffect(() => {}, []);
 
   async function onGoogleButtonPress() {
     try {
-      // await GoogleSignin.hasPlayServices();
-      // await GoogleSignin.signOut();
-
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      // Obtain the user's ID token
       const data: any = await GoogleSignin.signIn();
-      console.log('data: ', data);
-      // create a new firebase credential with the token
       const googleCredential = auth.GoogleAuthProvider.credential(
         data?.data.idToken,
       );
-
-      console.log('credential: ', googleCredential);
-      // login with credential
       await auth().signInWithCredential(googleCredential);
-
-      //  Handle the linked account as needed in your app
       return;
     } catch (e) {
       console.log('e: ', e);
     }
   }
+
   const GoogleSingUp = async () => {
     try {
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
       await GoogleSignin.signOut();
-      // Get the users ID token
       const signInResult = await GoogleSignin.signIn();
-      console.log('signInResult', signInResult);
       const user = signInResult?.data?.user;
       const payload = {
         email: user?.email,
         first_name: user?.givenName,
         last_name: user?.familyName,
       };
-
       const baseURL = 'https://healthytiffin.app/api/shopify/multipass-token';
-
       const { data } = await axios.post(baseURL, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
       const customerToken = data?.customerAccessToken;
       const tokenExpire = data?.expiresAt;
       saveCustomerTokens({ customerToken, tokenExpire });
-      let customerdetails = checkCustomerTokens();
-      customerdetails.then(async result => {
-        if (result) {
-          dispatch(setUser(result));
-          navigation.navigate('Home');
-        }
-      });
+      const details = await checkCustomerTokens();
+      if (details) {
+        dispatch(setUser(details));
+        navigation.navigate('Home');
+      }
     } catch (error) {
       console.log('error: ', error);
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.select({ ios: 'padding', android: 'height' })}
       keyboardVerticalOffset={kbOffset}
     >
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: 24 + insets.bottom,
+        }}
         bounces={false}
       >
         <View style={styles.heroWrap}>
@@ -269,9 +244,16 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
           </ImageBackground>
         </View>
 
-        {/* CARD */}
-
-        <View style={styles.card}>
+        <View
+          style={[
+            styles.card,
+            {
+              // extra room so CTA stays visible above keyboard
+              paddingBottom:
+                28 + (Platform.OS === 'ios' ? 10 : 16) + 24 + insets.bottom,
+            },
+          ]}
+        >
           <FormInput
             label="Full Name"
             icon="person"
@@ -318,7 +300,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             </Text>
           )}
 
-          {/* CTA */}
           <TouchableOpacity
             disabled={isloading}
             activeOpacity={0.9}
@@ -350,14 +331,12 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Divider */}
           <View style={styles.dividerWrap}>
             <View style={styles.line} />
             <Text style={styles.orText}>Or</Text>
             <View style={styles.line} />
           </View>
 
-          {/* Social buttons row */}
           <View style={styles.socialRow}>
             <CircleBtn
               bg="#1877F2"
@@ -368,9 +347,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             <CircleBtn
               bg="#EA4335"
               icon={<Fontisto name="google" size={18} color={COLORS.white} />}
-              onPress={() => {
-                GoogleSingUp();
-              }}
+              onPress={GoogleSingUp}
             />
             <CircleBtn
               bg="#000000"
@@ -379,14 +356,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
 
-          {/* Footer */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('SignIn');
-              }}
-            >
+            <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
               <Text style={styles.footerLink}> Sign In</Text>
             </TouchableOpacity>
           </View>
@@ -444,11 +416,7 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
     alignItems: 'center',
   },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 8,
-  },
+  logo: { width: 150, height: 150, marginBottom: 8 },
   title: { fontSize: 28, color: COLORS.white, fontWeight: '800' },
   welcome: {
     color: COLORS.white,
@@ -474,7 +442,6 @@ const styles = StyleSheet.create({
     marginTop: -20,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 28 + (Platform.OS === 'ios' ? 10 : 16),
   },
 
   /** CTA */
@@ -528,3 +495,10 @@ const styles = StyleSheet.create({
 });
 
 export default SignUpScreen;
+
+/*
+Android manifest reminder (outside this file):
+<activity
+  android:name=".MainActivity"
+  android:windowSoftInputMode="adjustResize" />
+*/

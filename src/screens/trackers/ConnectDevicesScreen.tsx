@@ -59,7 +59,6 @@ export default function ConnectDevicesScreen({ navigation }: any) {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       }
     } catch (e) {
-
       console.warn('Fitbit connect error', e);
       setLoading(false);
     }
@@ -103,18 +102,14 @@ export default function ConnectDevicesScreen({ navigation }: any) {
         <SectionTitle t="Connect To a Device" />
 
         <DeviceCard
-          icon={
-            <FitbitLogo width={44} height={44} />
-          }
+          icon={<FitbitLogo width={44} height={44} />}
           title="Fitbit"
           status={tokens ? 'Connected' : 'SETUP'}
           onPress={onConnectFitbit}
         />
 
         <DeviceCard
-          icon={
-            <AppleHealthLogo width={44} height={44} />
-          }
+          icon={<AppleHealthLogo width={44} height={44} />}
           title="Apple Health"
           status={tokens ? 'Connected' : 'SETUP'}
           onPress={onPressConnect}

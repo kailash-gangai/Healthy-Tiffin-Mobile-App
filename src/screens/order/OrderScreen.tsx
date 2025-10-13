@@ -87,7 +87,7 @@ const OrderScreen: React.FC<Props> = ({ navigation }) => {
               </Text>
               <TouchableOpacity
                 style={s.shopButton}
-                onPress={() => navigation.navigate('home')}
+                onPress={() => navigation.navigate('Home')}
               >
                 <Text style={s.shopButtonText}>Start Shopping</Text>
               </TouchableOpacity>
