@@ -17,7 +17,6 @@ type Item = { id: string; title: string; image: any };
 
 export default function FitnessCarousel({ items }: { items: any[] }) {
   const [open, setOpen] = useState<any>(null);
-
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (

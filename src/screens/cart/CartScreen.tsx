@@ -342,7 +342,7 @@ export default function CartScreen({ navigation }: any) {
                                         </Text>
 
                                         <View style={s.qtyPill}>
-                                          <TouchableOpacity
+                                          {/* <TouchableOpacity
                                             onPress={() => {
                                               if (it.qty === 1) return;
                                               dispatch(
@@ -357,9 +357,12 @@ export default function CartScreen({ navigation }: any) {
                                             style={s.pillBtn}
                                           >
                                             <Text style={s.pillBtnTxt}>−</Text>
-                                          </TouchableOpacity>
-                                          <Text style={s.qtyNum}>{it.qty}</Text>
-                                          <TouchableOpacity
+                                          </TouchableOpacity> */}
+
+                                          <Text style={s.qtyNum}>
+                                            {it.qty} Qty
+                                          </Text>
+                                          {/* <TouchableOpacity
                                             onPress={() =>
                                               dispatch(
                                                 increaseItem({
@@ -373,7 +376,7 @@ export default function CartScreen({ navigation }: any) {
                                             style={s.pillBtn}
                                           >
                                             <Text style={s.pillBtnTxt}>+</Text>
-                                          </TouchableOpacity>
+                                          </TouchableOpacity> */}
                                         </View>
                                       </View>
                                     </View>

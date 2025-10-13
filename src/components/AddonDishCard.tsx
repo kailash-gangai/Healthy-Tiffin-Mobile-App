@@ -63,7 +63,6 @@ export default React.memo(function AddonDishCard({
 }) {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
-
   const keyMatch = useCallback(
     (i: any) =>
       i.id === item.id &&
@@ -244,7 +243,7 @@ export default React.memo(function AddonDishCard({
         visible={open}
         onClose={() => setOpen(false)}
         onShare={() => {}}
-        onToggleLike={() => {}}
+        onToggleLike={onHeartPress}
         liked={isFav}
         dish={item as any}
       />

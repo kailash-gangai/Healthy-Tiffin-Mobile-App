@@ -31,6 +31,7 @@ import { getProductsByIds } from '../../shopify/queries/getProducts';
 import { getAllArticles } from '../../shopify/queries/blogs';
 import AddonDishCard from '../../components/AddonDishCard';
 import SkeletonLoading from '../../components/SkeletonLoading';
+import EmptyState from '../../components/EmptyState';
 
 type SectionKey = string;
 
@@ -44,6 +45,8 @@ interface CategoriesProps {
     image: string;
     price: string | number;
   }[];
+  // may or may not exist on your data
+  _sectionType?: 'main' | 'addon';
 }
 
 export type Item = {
@@ -87,14 +90,12 @@ function keepDecimals(from: string | number, num: number) {
   const decs = (s.split('.')[1] ?? '').length;
   return decs > 0 ? Number(num.toFixed(decs)) : Math.trunc(num);
 }
-
 function rankOf(key: string, ordered: string[]) {
   const i = ordered.indexOf(key.toLowerCase());
   return i === -1 ? 1e9 : i;
 }
-
 function getAbsoluteTodayIndex() {
-  const js = new Date().getDay(); // 0..6 Sun..Sat
+  const js = new Date().getDay();
   const week = [
     'Sunday',
     'Monday',
@@ -106,11 +107,9 @@ function getAbsoluteTodayIndex() {
   ];
   return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
 }
-
 function toMoney(n: number) {
   return `$${Number.isFinite(n) ? n : 0}`;
 }
-
 async function expandCategoryFields(metaObjectId: string) {
   const single: any[] = await getMetaObjectByHandle(metaObjectId);
   const expanded = await Promise.all(
@@ -123,7 +122,6 @@ async function expandCategoryFields(metaObjectId: string) {
   );
   return expanded.filter(Boolean) as CategoriesProps[];
 }
-
 function applyPriceThresholds(
   categories: CategoriesProps[],
   thresholds: any[],
@@ -165,12 +163,16 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     Item[]
   >([]);
   const [filteredIndex, setFilteredIndex] = useState(0);
-  const [openByKey, setOpenByKey] = useState<Record<SectionKey, boolean>>({});
-  const [tiffinPlan, setTiffinPlan] = useState<number>(1);
 
+  // per-section open state
+  const [openByKey, setOpenByKey] = useState<Record<SectionKey, boolean>>({});
   const isOpen = (k: SectionKey) => openByKey[k] ?? true;
   const setOpen = (k: SectionKey, v: boolean) =>
     setOpenByKey(s => ({ ...s, [k]: v }));
+
+  // only MAIN: expand all visible main sections
+
+  const [tiffinPlan, setTiffinPlan] = useState<number>(1);
 
   const absoluteTodayIndex = useMemo(() => getAbsoluteTodayIndex(), []);
   const FILTERED_DAYS = useMemo(() => {
@@ -220,11 +222,22 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [sortedCategories, priceThreshold],
   );
 
-  // merged list: updated main first, then addons
+  // keep addon logic intact
   const mergedCatalog = useMemo(
     () => [...updatedCategory, ...sortedAddons],
     [updatedCategory, sortedAddons],
   );
+
+  const openAllMain = useCallback(() => {
+    const next: Record<SectionKey, boolean> = {};
+    updatedCategory.forEach(cat => {
+      // fallback to 'main' if _sectionType is absent in your data
+      const t = (cat as any)._sectionType ?? 'main';
+      const k = `${t}:${cat.key}`;
+      next[k] = true;
+    });
+    setOpenByKey(s => ({ ...s, ...next }));
+  }, [updatedCategory]);
 
   const idToCat = useMemo(() => {
     const m = new Map<string, string>();
@@ -256,7 +269,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [selectedItemsToAddOnCart],
   );
 
-  console.log(mealCost, 'mcost');
   const addonCost = useMemo(
     () =>
       selectedItemsToAddOnCart
@@ -305,11 +317,13 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     idToCat,
   ]);
 
+  // MAIN ONLY: open all categories after adding a tiffin
   const handleAddNewTiffin = useCallback(() => {
     setTiffinPlan(p => p + 1);
     dispatch(addItems(selectedItemsToAddOnCart as any));
     setSelectedItemsToAddOnCart([]);
-  }, [dispatch, selectedItemsToAddOnCart]);
+    openAllMain();
+  }, [dispatch, selectedItemsToAddOnCart, openAllMain]);
 
   const fetchMetaAndData = useCallback(async () => {
     setLoading(true);
@@ -323,8 +337,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
       setDaysMeta(mainList ?? []);
       setAddonsMeta(addonList ?? []);
-
-      // thresholds
       if (thresholdList?.[0]?.id) {
         const priceMetaobject: any = await getMetaObjectByHandle(
           thresholdList[0].id,
@@ -334,12 +346,12 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         setPriceThreshold([]);
       }
 
-      // blogs
       const articles: any = blogResp?.articles;
       const blog: BlogProp[] =
         articles?.map((b: any) => ({
           id: b?.id,
           title: b?.title,
+          handle: b?.handle,
           image: b?.image?.url,
           content: b?.content,
           video: b?.video || null,
@@ -349,7 +361,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         })) ?? [];
       setBlogs(blog);
 
-      // per-day expansions
       const [mainCat, addOnCat] = await Promise.all([
         currentDayMetaObjectId
           ? expandCategoryFields(currentDayMetaObjectId)
@@ -358,7 +369,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           ? expandCategoryFields(addonsMetaObjectId)
           : Promise.resolve([]),
       ]);
-
       setCategories(mainCat);
       setAddonCategories(addOnCat);
 
@@ -379,9 +389,12 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     if (isCartCleared) setSelectedItemsToAddOnCart([]);
     dispatch(cartFLag());
     setTiffinPlan(1);
-    currentDay !== 'Saturday' && currentDay !== 'Sunday'
-      ? fetchMetaAndData()
-      : setCategories([]);
+    if (currentDay !== 'Saturday' && currentDay !== 'Sunday') {
+      fetchMetaAndData();
+    } else {
+      setCategories([]);
+      setAddonCategories([]);
+    }
   }, [isCartCleared, dispatch, fetchMetaAndData]);
 
   return (
@@ -408,94 +421,22 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         {!categories.length &&
           currentDay !== 'Saturday' &&
           currentDay !== 'Sunday' && <SkeletonLoading count={5} />}
-        {/* Tab 0: show merged list as requested (updated main first, then addons) */}
+
+        {/* Tab 0: MAIN categories only */}
         {tab === 0 && (
           <View style={{ backgroundColor: COLORS.white }}>
             {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
-              <View
-                style={{
-                  marginHorizontal: 16,
-                  marginTop: 12,
-                  padding: 16,
-                  borderRadius: 16,
-                  backgroundColor: '#F4FBF6',
-                  borderWidth: 1,
-                  borderColor: '#D8F0DF',
-                  shadowColor: '#000',
-                  shadowOpacity: 0.08,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowRadius: 12,
-                  elevation: 3,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginBottom: 8,
-                  }}
-                >
-                  <FontAwesome5
-                    name="calendar-times"
-                    size={20}
-                    color="#2E7D32"
-                  />
-                  <Text
-                    style={{
-                      marginLeft: 8,
-                      fontSize: 16,
-                      fontWeight: '700',
-                      color: '#1B5E20',
-                    }}
-                  >
-                    No menu for {currentDay}
-                  </Text>
-                </View>
-                <Text
-                  style={{ fontSize: 13, color: '#2E7D32', lineHeight: 18 }}
-                >
-                  Please check our weekday menu. Available Monday to Friday.
-                </Text>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    marginTop: 10,
-                  }}
-                >
-                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(
-                    d => (
-                      <View
-                        key={d}
-                        style={{
-                          paddingVertical: 6,
-                          paddingHorizontal: 10,
-                          borderRadius: 999,
-                          borderWidth: 1,
-                          borderColor: '#B7E1C0',
-                          backgroundColor: '#FFFFFF',
-                          marginRight: 8,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            fontWeight: '700',
-                            color: '#2E7D32',
-                          }}
-                        >
-                          {d}
-                        </Text>
-                      </View>
-                    ),
-                  )}
-                </View>
-              </View>
+              <EmptyState
+                key={'addon-menu'}
+                currentDay={currentDay}
+                message="  Please check our weekday menu. Available Monday to Friday."
+              />
             )}
 
             {updatedCategory.map(cat => {
-              const sectionType = (cat as any)._sectionType as 'main' | 'addon';
+              // fallback to 'main' if data lacks _sectionType
+              const sectionType =
+                ((cat as any)._sectionType as 'main' | 'addon') ?? 'main';
               const key = `${sectionType}:${cat.key}`;
               return (
                 <Section
@@ -530,11 +471,18 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           </View>
         )}
 
-        {/* Tab 1: addons only */}
+        {/* Tab 1: addons only — unchanged */}
         {tab === 1 && (
           <>
-            {mergedCatalog.map(cat => {
-              const key = `addon:${cat.key}`;
+            {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
+              <EmptyState
+                key="a-la-carte"
+                currentDay={currentDay}
+                message="  Please check our A La Carte. Available Monday to Friday."
+              />
+            )}
+            {mergedCatalog.map((cat, i) => {
+              const key = `addon:${cat.key}-${i}`;
               return (
                 <Section
                   key={key}

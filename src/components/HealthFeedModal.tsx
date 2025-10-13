@@ -16,6 +16,7 @@ import { COLORS as C, SHADOW } from '../ui/theme';
 export type Feed = {
   id: string;
   title: string;
+  handle?: string;
   author: string;
   date: string;
   image: string;
@@ -26,6 +27,7 @@ export type Feed = {
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import ShearIcon from '../assets/htf-icon/icon-shre.svg';
 import CloseIcon from '../assets/htf-icon/icon-close.svg';
+import { handleShare } from '../utils/share';
 export const formatDate = (d: string | number | Date, locale = 'en-US') => {
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return '';
@@ -115,7 +117,14 @@ export default function HealthFeedModal({
                     color={liked ? C.green : C.black}
                   />
                 </TouchableOpacity> */}
-                <TouchableOpacity style={s.iconBtn}>
+                <TouchableOpacity
+                  onPress={() =>
+                    handleShare({
+                      url: `https://healthytiffin-dev.myshopify.com/blogs/news/${open?.handle}`,
+                    })
+                  }
+                  style={s.iconBtn}
+                >
                   <ShearIcon width={24} height={24} />
                 </TouchableOpacity>
               </View>
@@ -152,7 +161,8 @@ export default function HealthFeedModal({
               </TouchableOpacity>
             </View>
 
-            <View style={s.actionsRow}>
+            {/* CUrrently Not needed */}
+            {/* <View style={s.actionsRow}>
               <TouchableOpacity
                 style={s.actionChip}
                 onPress={() => open && onSave?.(open)}
@@ -174,7 +184,7 @@ export default function HealthFeedModal({
                 <FontAwesome5 name="comment" size={14} color={C.black} />
                 <Text style={s.actionTxt}>Discuss</Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
           </ScrollView>
 
           {/* close */}
@@ -293,7 +303,6 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-
 
     alignItems: 'center',
     justifyContent: 'center',

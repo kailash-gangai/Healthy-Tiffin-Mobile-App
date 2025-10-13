@@ -205,8 +205,7 @@ export default function DishCard({
       <DishDetailModal
         visible={open}
         onClose={() => setOpen(false)}
-        onShare={() => {}}
-        onToggleLike={() => {}}
+        onToggleLike={onHeartPress}
         liked={isFav}
         dish={item as any}
       />

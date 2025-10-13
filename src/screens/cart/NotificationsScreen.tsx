@@ -11,7 +11,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import { COLORS as C, SPACING } from '../../ui/theme';
-import { showHealthyTiffinNow } from '../../utils/notification';
 
 type Notice = {
   id: string;
@@ -81,9 +80,7 @@ export default function NotificationsScreen({ navigation }: any) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
       <AppHeader title="Notifications" onBack={() => navigation.goBack()} />
-      <TouchableOpacity onPress={() => showHealthyTiffinNow()}>
-        <Text>Send test notification</Text>
-      </TouchableOpacity>
+
       <FlatList
         data={DATA}
         keyExtractor={i => i.id}

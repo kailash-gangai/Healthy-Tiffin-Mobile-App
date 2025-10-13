@@ -6,6 +6,7 @@ export const getProductsByIds = async (productIds: string) => {
         nodes(ids: ${productIds}) {
           ... on Product {
             id
+            handle
             title
             tags
             description
@@ -43,6 +44,7 @@ export const getProductsByIds = async (productIds: string) => {
       );
       return filteredData.map((product: any) => ({
         id: product.id,
+        handle: product.handle,
         variantId: product.variants.edges?.[0]?.node.id || null,
         title: product.title,
         description: product.description,

@@ -8,21 +8,21 @@ import {
   TouchableOpacity,
   ScrollView,
   Pressable,
+  Alert,
 } from 'react-native';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { useAppDispatch } from '../store/hooks';
-import { addItem } from '../store/slice/cartSlice';
-import Toast from 'react-native-toast-message';
+import Share from 'react-native-share';
+import Clipboard from '@react-native-clipboard/clipboard';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import ShearIcon from '../assets/htf-icon/icon-shre.svg';
 import CloseIcon from '../assets/htf-icon/icon-close.svg';
 
 type Dish = {
   title: string;
-  image: any;
-  price: string; // require(...)
+  handle?: string;
+  image: string;
+  price: string;
   calories: number;
-  tags?: string[]; // e.g. ['High Protein','Low carb','150 g']
+  tags?: string[];
   description?: string;
   liked?: boolean;
 };
@@ -41,19 +41,36 @@ const COLORS = {
 export default function DishDetailModal({
   visible,
   onClose,
-  onShare,
   onToggleLike,
   liked,
   dish,
 }: {
   visible: boolean;
   onClose: () => void;
-  onShare?: () => void;
   onToggleLike?: () => void;
   liked?: boolean;
   dish: Dish;
 }) {
-  const dispatch = useAppDispatch();
+  // share handler
+  const handleShare = async () => {
+    try {
+      const url = `https://healthytiffin-dev.myshopify.com/products/${dish.handle}`;
+      await Share.open({
+        url,
+        title: 'Share Dish',
+      });
+    } catch (err: any) {
+      if (err?.message?.includes('User did not share')) return;
+      Alert.alert('Error', 'Share failed.');
+    }
+  };
+
+  // copy link handler
+  const handleCopyLink = () => {
+    Clipboard.setString(dish.image || '');
+    Alert.alert('Copied', 'Link copied to clipboard.');
+  };
+
   return (
     <Modal
       visible={visible}
@@ -64,7 +81,6 @@ export default function DishDetailModal({
       <Pressable style={s.backdrop} onPress={onClose} />
       <View style={s.wrap}>
         <View style={s.card}>
-          {/* close button */}
           <TouchableOpacity
             style={s.close}
             onPress={onClose}
@@ -72,38 +88,39 @@ export default function DishDetailModal({
           >
             <CloseIcon width={33} height={33} />
           </TouchableOpacity>
-          {/* image with white frame + shadow */}
+
           <View style={s.imgFrame}>
-            <Image
-              source={{
-                uri: dish.image,
-              }}
-              style={s.img}
-            />
+            <Image source={{ uri: dish.image }} style={s.img} />
           </View>
 
-          {/* title row with share + like */}
           <View style={s.titleRow}>
             <Text style={s.title} numberOfLines={2}>
               {dish.title}
             </Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity onPress={onShare} hitSlop={8}>
-               <ShearIcon width={24} height={24} />
+              <TouchableOpacity onPress={handleShare} hitSlop={8}>
+                <ShearIcon width={24} height={24} />
               </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleCopyLink} hitSlop={8}>
+                <Text style={{ fontSize: 18, color: '#666' }}>⧉</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity onPress={onToggleLike} hitSlop={8}>
-               <HeartIcon width={30} height={30} fill={liked ? '#FF0000' : '#CCCCCC'} />
+                <HeartIcon
+                  width={30}
+                  height={30}
+                  fill={liked ? '#FF0000' : '#CCCCCC'}
+                />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* calories */}
           <Text style={s.kcal}>
             <Text style={s.kcalNum}>{dish.calories}</Text>
             <Text style={s.kcalUnit}> CALORIES</Text>
           </Text>
 
-          {/* tags */}
           <View
             style={{
               display: 'flex',
@@ -122,15 +139,13 @@ export default function DishDetailModal({
             <Text style={{ color: 'gray' }}>${dish.price}</Text>
           </View>
 
-          {/* description */}
           <ScrollView
             contentContainerStyle={{ paddingBottom: 8 }}
             showsVerticalScrollIndicator={false}
           >
             <Text style={s.desc}>
               {dish.description ||
-                `Savor the burst of summer flavors with each bite. This dish is perfect for picnics,
-barbecues, or as a light and satisfying lunch. A perfect balance of sweet, savory, and zesty goodness.`}
+                `Savor the burst of summer flavors with each bite. This dish is perfect for picnics, barbecues, or as a light and satisfying lunch.`}
             </Text>
           </ScrollView>
         </View>
@@ -159,17 +174,12 @@ const s = StyleSheet.create({
   },
   close: {
     position: 'absolute',
-    // bottom: 'auto',
     top: -14,
     right: 12,
-    
-    
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-   
   },
-
   imgFrame: {
     borderRadius: 14,
     padding: 6,
@@ -182,7 +192,6 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   img: { width: '100%', height: 200, borderRadius: 10, resizeMode: 'cover' },
-
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -195,10 +204,7 @@ const s = StyleSheet.create({
     flex: 1,
     paddingRight: 10,
   },
-
-  kcal: {
-    marginTop: 8,
-  },
+  kcal: { marginTop: 8 },
   kcalNum: { color: COLORS.green, fontWeight: '800', fontSize: 20 },
   kcalUnit: {
     color: COLORS.sub,
@@ -207,7 +213,6 @@ const s = StyleSheet.create({
     marginLeft: 2,
     fontSize: 11,
   },
-
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -221,6 +226,5 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
   },
   tagTxt: { color: '#fff', fontWeight: '700', fontSize: 12 },
-
   desc: { color: COLORS.sub, marginTop: 12, lineHeight: 20 },
 });
