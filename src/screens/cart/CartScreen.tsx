@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 
+
 import AppHeader from '../../components/AppHeader';
 import { COLORS as C } from '../../ui/theme';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
@@ -29,6 +30,9 @@ import {
 import MissingCategoryModal from '../../components/MissingCategoryModal';
 import CartIcon from '../../assets/htf-icon/icon-cart.svg';
 import InfoIcon from '../../assets/htf-icon/icon-info.svg';
+import TrashIcon from '../../assets/htf-icon/icon-trans.svg';
+import DownArrow from '../../assets/htf-icon/icon-down-arrow.svg'
+import CrossIcon from '../../assets/htf-icon/icon-cross.svg'
 
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -233,12 +237,13 @@ export default function CartScreen({ navigation }: any) {
                     activeOpacity={0.9}
                   >
                     <Text style={s.dayTitle}>{day} Summary</Text>
-                    <FontAwesome5
-                      iconStyle="solid"
-                      name={isOpen(day) ? 'chevron-up' : 'chevron-down'}
-                      size={16}
-                      color={C.black}
-                    />
+                   {/* isOpen(day) ? 'chevron-up' : 'chevron-down'} */}
+                    <DownArrow height={30} width={20} 
+                     style={{
+                      transform: [
+                        { rotate: isOpen(day) ? '180deg' : '0deg' },
+                      ],
+                    }} />
                   </TouchableOpacity>
 
                   {isOpen(day) && (
@@ -252,12 +257,7 @@ export default function CartScreen({ navigation }: any) {
                               onPress={() => onRemoveDayMains(day)}
                               style={s.hdrTrashBtn}
                             >
-                              <FontAwesome5
-                                iconStyle="solid"
-                                name="trash"
-                                size={16}
-                                color={C.red}
-                              />
+                            <TrashIcon height={20} width={20} />
                             </TouchableOpacity>
                           </View>
 
@@ -273,16 +273,22 @@ export default function CartScreen({ navigation }: any) {
                                 <Text style={s.planTitle}>
                                   Tiffin {plan.plan}
                                 </Text>
-                                <FontAwesome5
-                                  iconStyle="solid"
-                                  name={
-                                    isPlanOpen(day, plan.plan)
+                               <DownArrow
+  width={25}
+  height={25}
+  style={{
+    transform: [
+      { rotate: isPlanOpen(day, plan.plan) ? '180deg' : '0deg' },
+    ],
+  }}
+/>
+
+                             
+                                    {/* isPlanOpen(day, plan.plan)
                                       ? 'chevron-up'
                                       : 'chevron-down'
-                                  }
-                                  size={14}
-                                  color={C.black}
-                                />
+                                  */}
+                              
                               </TouchableOpacity>
 
                               {isPlanOpen(day, plan.plan) && (
@@ -307,12 +313,9 @@ export default function CartScreen({ navigation }: any) {
                                         accessibilityRole="button"
                                         accessibilityLabel="Remove item"
                                       >
-                                        <FontAwesome5
-                                          iconStyle="solid"
-                                          name="times"
-                                          size={16}
-                                          color={C.red}
-                                        />
+                            <TrashIcon height={15} width={15} />
+          {/* <CrossIcon width={25} height={25} stroke="red" /> */}
+                                      
                                       </TouchableOpacity>
 
                                       <View style={s.thumbWrap}>
@@ -406,12 +409,7 @@ export default function CartScreen({ navigation }: any) {
                               onPress={() => onRemoveDayAddons(day)}
                               style={s.hdrTrashBtn}
                             >
-                              <FontAwesome5
-                                iconStyle="solid"
-                                name="trash"
-                                size={16}
-                                color={C.red}
-                              />
+                           <TrashIcon height={20} width={20} />
                             </TouchableOpacity>
                           </View>
 
@@ -434,12 +432,8 @@ export default function CartScreen({ navigation }: any) {
                                 accessibilityRole="button"
                                 accessibilityLabel="Remove add-on"
                               >
-                                <FontAwesome5
-                                  iconStyle="solid"
-                                  name="times"
-                                  size={16}
-                                  color={C.red}
-                                />
+                              <TrashIcon height={15} width={15} />
+
                               </TouchableOpacity>
 
                               <View style={s.thumbWrap}>
@@ -466,7 +460,6 @@ export default function CartScreen({ navigation }: any) {
                                 <View style={s.qtyPillAlt}>
                                   <TouchableOpacity
                                     onPress={() => {
-                                      if (it.qty === 1) return;
                                       dispatch(
                                         decreaseItem({
                                           id: it.id,

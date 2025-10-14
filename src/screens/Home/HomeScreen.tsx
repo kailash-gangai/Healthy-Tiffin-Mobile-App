@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import PlusIcon from '../../assets/htf-icon/icon-add.svg';
 import {
   ScrollView,
   View,
@@ -520,11 +521,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             onPress={handleAddNewTiffin}
             style={styles.addNewTiffin}
           >
-            <FontAwesome5
-              name="plus"
-              iconStyle="solid"
-              style={styles.circleIcon}
-            />
+           <PlusIcon width={24} height={24} />
             <Text style={styles.newTiffinText}>Add new tiffin</Text>
           </TouchableOpacity>
         )}

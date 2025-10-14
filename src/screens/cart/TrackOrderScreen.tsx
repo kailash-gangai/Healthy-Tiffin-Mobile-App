@@ -16,7 +16,9 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { createCart } from '../../shopify/mutation/cart';
 import { clearCart } from '../../store/slice/cartSlice';
 import { useShopifyCheckoutSheet } from '@shopify/checkout-sheet-kit';
-
+import RightArrow from '../../assets/htf-icon/icon-right-arriw.svg'
+import MyOrder from '../../assets/htf-icon/icon-myorder.svg'
+import IconConnect from '../../assets/htf-icon/icon-connect.svg'
 const STEPS = [
   {
     id: 1,
@@ -98,15 +100,10 @@ export default function TrackOrderScreen({ navigation }: any) {
             <Text style={s.riderName}>John Smith</Text>
             <View style={{ flexDirection: 'row', gap: 12, marginLeft: 'auto' }}>
               <TouchableOpacity style={s.callBtn}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="phone"
-                  size={16}
-                  color={C.white}
-                />
+               <MyOrder  />
               </TouchableOpacity>
               <TouchableOpacity style={s.msgBtn}>
-                <FontAwesome5 name="comment-dots" size={16} color={C.white} />
+                <IconConnect/>
               </TouchableOpacity>
             </View>
           </View>
@@ -170,12 +167,7 @@ export default function TrackOrderScreen({ navigation }: any) {
               Invite friend, get $10 off
             </Text>
             <View style={s.icon}>
-              <FontAwesome5
-                iconStyle="solid"
-                name="arrow-right"
-                size={22}
-                color={C.white}
-              />
+            <RightArrow height={20} width={20} />
             </View>
           </TouchableOpacity>
         </View>
@@ -226,7 +218,7 @@ const s = StyleSheet.create({
   riderImg: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
   riderName: { fontWeight: '800', color: C.black, fontSize: 18 },
   callBtn: { backgroundColor: C.green, borderRadius: 20, padding: 8 },
-  msgBtn: { backgroundColor: '#F6A300', borderRadius: 20, padding: 8 },
+  msgBtn: { backgroundColor: '#15bc52ff', borderRadius: 20, padding: 8 },
 
   invite: {
     flexDirection: 'row',

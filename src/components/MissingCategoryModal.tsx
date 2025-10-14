@@ -11,6 +11,12 @@ import {
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { COLORS as C } from '../ui/theme';
+import Calender from '../assets/htf-icon/icon-callendar.svg';
+import TrashIcon from '../assets/htf-icon/icon-trans.svg';
+import AddIcon from '../assets/htf-icon/icon-add.svg';
+import InfoIcon from '../assets/htf-icon/icon-info.svg';
+import Tiffin from '../assets/htf-icon/icon-myorder.svg';
+import CrossIcon from '../assets/htf-icon/icon-cross.svg'
 
 type DayName =
   | 'Monday'
@@ -30,10 +36,12 @@ type CatalogItem = {
   image: string | null;
   price: string | number;
 };
+
 type CatalogGroup = {
   key: 'probiotics' | 'protein' | 'sides' | 'veggies';
   value: CatalogItem[];
 };
+
 type MissingRow = { day: DayName; tiffinPlan: number; missing: string[] };
 
 export default function MissingCategoryModal({
@@ -68,6 +76,7 @@ export default function MissingCategoryModal({
   );
 
   const [day, setDay] = useState<DayName>(days[0] || 'Wednesday');
+
   const plansForDay = useMemo(
     () =>
       missingList
@@ -76,6 +85,7 @@ export default function MissingCategoryModal({
         .sort((a, b) => a - b),
     [missingList, day],
   );
+
   const [plan, setPlan] = useState<number>(plansForDay[0] || 1);
 
   const missingCats = useMemo(() => {
@@ -93,11 +103,13 @@ export default function MissingCategoryModal({
     label,
     active,
     icon,
+    iconComponent,
     onPress,
   }: {
     label: string;
     active: boolean;
     icon?: string;
+    iconComponent?: React.ReactNode;
     onPress: () => void;
   }) => (
     <TouchableOpacity
@@ -105,7 +117,9 @@ export default function MissingCategoryModal({
       style={[s.chip, active && s.chipOn]}
       activeOpacity={0.9}
     >
-      {icon ? (
+      {iconComponent ? (
+        iconComponent
+      ) : icon ? (
         <FontAwesome5
           iconStyle="solid"
           name={icon as any}
@@ -144,12 +158,9 @@ export default function MissingCategoryModal({
               style={s.iconBtn}
               hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
             >
-              <FontAwesome5
-                iconStyle="solid"
-                name="times"
-                size={18}
-                color="#1C1C1C"
-              />
+          <CrossIcon width={25} height={25} stroke="red" />
+
+
             </TouchableOpacity>
           </View>
 
@@ -163,8 +174,8 @@ export default function MissingCategoryModal({
               <Chip
                 key={d}
                 label={d}
-                icon="calendar-day"
                 active={d === day}
+                iconComponent={<Calender width={12} height={12} />}
                 onPress={() => {
                   setDay(d);
                   const first =
@@ -185,8 +196,8 @@ export default function MissingCategoryModal({
               <Chip
                 key={p}
                 label={`Tiffin ${p}`}
-                icon="box"
                 active={p === plan}
+                iconComponent={<Tiffin width={12} height={12} />}
                 onPress={() => setPlan(p)}
               />
             ))}
@@ -194,12 +205,7 @@ export default function MissingCategoryModal({
 
           {/* notice */}
           <View style={s.notice}>
-            <FontAwesome5
-              iconStyle="solid"
-              name="info-circle"
-              size={14}
-              color="#8A5A00"
-            />
+            <InfoIcon width={14} height={14} />
             {missingCats.length ? (
               <ScrollView
                 horizontal
@@ -272,12 +278,7 @@ export default function MissingCategoryModal({
                         })
                       }
                     >
-                      <FontAwesome5
-                        iconStyle="solid"
-                        name="plus"
-                        size={14}
-                        color="#FFF"
-                      />
+                      <AddIcon width={17} height={17} />
                       <Text style={s.addTxt}>Add</Text>
                     </TouchableOpacity>
                   </View>
@@ -287,12 +288,7 @@ export default function MissingCategoryModal({
 
             {!groups.length && (
               <View style={s.empty}>
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="inbox"
-                  size={16}
-                  color="#8A5A00"
-                />
+                <TrashIcon width={16} height={16} />
                 <Text style={s.emptyTxt}>
                   No suggestions for selected tiffin.
                 </Text>
@@ -306,7 +302,6 @@ export default function MissingCategoryModal({
 }
 
 const s = StyleSheet.create({
-  // backdrop + sheet
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
@@ -330,8 +325,6 @@ const s = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#E8EAE9',
   },
-
-  // header
   headerRow: {
     paddingHorizontal: 16,
     paddingTop: 10,
@@ -349,8 +342,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#F3F5F4',
   },
-
-  // chips
   rowChips: { paddingHorizontal: 12, paddingTop: 8, gap: 8 },
   chip: {
     flexDirection: 'row',
@@ -372,8 +363,6 @@ const s = StyleSheet.create({
     textAlignVertical: 'center',
   },
   chipTxtOn: { color: '#FFF' },
-
-  // notice
   notice: {
     marginTop: 8,
     marginHorizontal: 12,
@@ -405,8 +394,6 @@ const s = StyleSheet.create({
     includeFontPadding: false,
   },
   allSet: { color: '#8A5A00', fontWeight: '800' },
-
-  // groups
   group: { marginTop: 12 },
   groupHdr: { paddingHorizontal: 12, marginBottom: 8 },
   groupTitle: {
@@ -422,8 +409,6 @@ const s = StyleSheet.create({
     borderRadius: 2,
     marginTop: 6,
   },
-
-  // compact card
   cardSm: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -453,7 +438,6 @@ const s = StyleSheet.create({
     backgroundColor: '#0B5733',
   },
   priceText: { color: '#FFF', fontSize: 10, fontWeight: '800' },
-
   itemTitle: {
     color: C.black,
     fontWeight: '800',
@@ -461,7 +445,6 @@ const s = StyleSheet.create({
     lineHeight: 16,
     includeFontPadding: false,
   },
-
   addBtnSm: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -472,8 +455,6 @@ const s = StyleSheet.create({
     backgroundColor: '#0B5733',
   },
   addTxt: { color: '#FFF', fontWeight: '900', fontSize: 12 },
-
-  // empty
   empty: {
     marginTop: 8,
     marginHorizontal: 12,

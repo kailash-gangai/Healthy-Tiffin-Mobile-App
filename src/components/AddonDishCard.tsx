@@ -10,7 +10,7 @@ import {
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import EyeShow from '../assets/htf-icon/icon-eye.svg';
 import SkeletonLoading from './SkeletonLoading';
-
+import DeleteIcon from '../assets/htf-icon/icon-trans.svg'
 type Dish = {
   id: string;
   title: string;
@@ -187,7 +187,7 @@ export default React.memo(function AddonDishCard({
               disabled={!checked}
             >
               {qty <= 1 ? (
-                <FontAwesome5 iconStyle="solid" name="trash" size={12} />
+               <DeleteIcon height={20} width={20} />
               ) : (
                 <Text style={s.pillBtnText}>−</Text>
               )}
