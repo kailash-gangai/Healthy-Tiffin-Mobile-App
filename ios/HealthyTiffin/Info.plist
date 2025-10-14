@@ -34,6 +34,14 @@
 		<true/>
 	</dict>
 
+	<!-- Local network / Bonjour -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Allow local network access to discover and connect to devices on your network.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+	</array>
+
 	<!-- HealthKit -->
 	<key>NSHealthClinicalHealthRecordsShareUsageDescription</key>
 	<string>Read and understand clinical health data.</string>
@@ -45,18 +53,20 @@
 	<!-- Location -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app uses your location during workouts to map routes.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Allow location access in the background for continuous features you enable.</string>
 
 	<!-- Photos / Camera / Microphone -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access so you can select and upload images.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app may save images to your photo library when you choose to export or download.</string>
+	<string>This app may save images to your photo library when you export or download.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app uses the camera to capture photos for your profile or logs.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app may use the microphone when recording audio or video.</string>
 
-	<!-- Optional capabilities often pulled by SDKs. Keep only if relevant. -->
+	<!-- Optional capabilities often required by SDKs -->
 	<key>NSContactsUsageDescription</key>
 	<string>This app may access contacts when you choose to invite or share.</string>
 	<key>NSCalendarsUsageDescription</key>
@@ -71,8 +81,14 @@
 	<string>This app uses Face ID for secure authentication if you enable it.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>This app may use speech recognition when you choose voice input.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app may access your media library to play or manage audio you select.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>This app may access motion data to analyze your activity.</string>
+
+	<!-- Tracking (ATT) -->
 	<key>NSUserTrackingUsageDescription</key>
-	<string>This app uses identifiers to personalize content and measure performance.</string>
+	<string>Allow permission to use identifiers to personalize content and measure performance.</string>
 
 	<!-- UI -->
 	<key>RCTNewArchEnabled</key>
