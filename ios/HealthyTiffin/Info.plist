@@ -24,6 +24,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- Networking -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -31,14 +33,48 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+
+	<!-- HealthKit -->
 	<key>NSHealthClinicalHealthRecordsShareUsageDescription</key>
 	<string>Read and understand clinical health data.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>This app reads your health data (e.g. steps) to show activity insights.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>This app writes health data you choose (e.g. workouts) to your Health app.</string>
+
+	<!-- Location -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app uses your location during workouts to map routes.</string>
+
+	<!-- Photos / Camera / Microphone -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access so you can select and upload images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app may save images to your photo library when you choose to export or download.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to capture photos for your profile or logs.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app may use the microphone when recording audio or video.</string>
+
+	<!-- Optional capabilities often pulled by SDKs. Keep only if relevant. -->
+	<key>NSContactsUsageDescription</key>
+	<string>This app may access contacts when you choose to invite or share.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>This app may access your calendar to create or manage events you request.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>This app may access reminders to help manage tasks you request.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>This app may use Bluetooth to connect to compatible nearby devices.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>This app may use Bluetooth to discover and communicate with compatible devices.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID for secure authentication if you enable it.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app may use speech recognition when you choose voice input.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This app uses identifiers to personalize content and measure performance.</string>
+
+	<!-- UI -->
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
