@@ -130,10 +130,12 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleGoogleLogin = async () => {
     try {
-      await GoogleSignin.hasPlayServices({
+     const a = await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      await GoogleSignin.signOut();
+      console.log(a,"aa")
+      const so = await GoogleSignin.signOut();
+      console.log(so,"singout")
       const signInResult = await GoogleSignin.signIn();
       console.log('signInResult', signInResult);
       const user = signInResult?.data?.user;

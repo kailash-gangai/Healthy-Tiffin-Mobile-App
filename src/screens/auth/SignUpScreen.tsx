@@ -47,6 +47,10 @@ import {
   getAuth,
   signInWithCredential,
 } from '@react-native-firebase/auth';
+import Facebook from '../../assets/htf-icon/fb.svg';
+import Insta from '../../assets/htf-icon/insta.svg';
+import Google from '../../assets/htf-icon/google.svg';
+import Apple from '../../assets/htf-icon/apple.svg';
 
 GoogleSignin.configure({
   webClientId:
@@ -339,21 +343,21 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
 
           <View style={styles.socialRow}>
             <CircleBtn
-              bg="#1877F2"
-              icon={<Fontisto name="facebook" size={18} color={COLORS.white} />}
-              onPress={() => {}}
-            />
-            <InstaBtn onPress={() => {}} />
-            <CircleBtn
-              bg="#EA4335"
-              icon={<Fontisto name="google" size={18} color={COLORS.white} />}
-              onPress={GoogleSingUp}
-            />
-            <CircleBtn
-              bg="#000000"
-              icon={<Fontisto name="apple" size={20} color={COLORS.white} />}
-              onPress={() => {}}
-            />
+            bg="#1877F2"
+            icon={<Facebook width={30} height={30} />}
+            onPress={() => {}}
+          />
+          <InstaBtn onPress={() => {}} />
+          <CircleBtn
+            bg="#EA4335"
+            icon={<Google width={30} height={40} />}
+            onPress={GoogleSingUp}
+          />
+          <CircleBtn
+            bg="#000000"
+            icon={<Apple height={30} width={30} />}
+            onPress={() => {}}
+          />
           </View>
 
           <View style={styles.footerRow}>

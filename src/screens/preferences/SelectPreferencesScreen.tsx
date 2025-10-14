@@ -25,6 +25,7 @@ import { getCustomerMetaField, getCustomerMetafields } from '../../shopify/query
 import { getMetaObjectByHandle } from '../../shopify/queries/getMetaObject';
 import { showToastError, showToastSuccess } from '../../config/ShowToastMessages';
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
+import ArrowDown from '../../assets/htf-icon/icon-down-arrow.svg'
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
 
@@ -237,7 +238,7 @@ const SelectField = ({
                         <Text style={[styles.selectText, !value && { color: COLORS.subText }]}>
                               {value || placeholder || 'Select'}
                         </Text>
-                        <FontAwesome5 iconStyle='solid' name="chevron-down" size={16} color={COLORS.subText} />
+                     <ArrowDown/>
                   </TouchableOpacity>
 
                   <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>

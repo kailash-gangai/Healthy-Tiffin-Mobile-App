@@ -90,6 +90,28 @@
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Allow permission to use identifiers to personalize content and measure performance.</string>
 
+	<!-- Google Sign-In: URL Schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Your iOS reversed client ID (from GoogleService-Info.plist) -->
+				<string>com.googleusercontent.apps.541872006500-5mlca2bgg8v4qb26muaabmcjepbekvf2</string>
+				<!-- Optional: If you're also using web client for multipass -->
+				<string>com.googleusercontent.apps.678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Google Sign-In: Queries -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>google</string>
+	</array>
+
 	<!-- UI -->
 	<key>RCTNewArchEnabled</key>
 	<true/>
