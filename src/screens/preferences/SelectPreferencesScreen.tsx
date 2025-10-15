@@ -8,7 +8,6 @@ import {
   Modal,
   FlatList,
   Platform,
-  KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -35,7 +34,7 @@ import ArrowDown from '../../assets/htf-icon/icon-down-arrow.svg';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
 
-const ages = Array.from({ length: 83 }, (_, i) => `${i + 18}`); // 18..100
+const ages = Array.from({ length: 83 }, (_, i) => `${i + 18}`);
 const genders = ['Male', 'Female', 'Other'];
 const levels = ['Beginner', 'Intermediate', 'Advanced'];
 
@@ -43,14 +42,13 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const user = useSelector((state: RootState) => state.user);
 
-  const [gender, setGender] = useState<string>('');
-  const [age, setAge] = useState<string>('');
-  const [level, setLevel] = useState<string>('');
-
-  const [curWeight, setCurWeight] = useState<string>(''); // lbs
-  const [goalWeight, setGoalWeight] = useState<string>(''); // lbs
-  const [feet, setFeet] = useState<string>(''); // ft
-  const [inches, setInches] = useState<string>(''); // in
+  const [gender, setGender] = useState('');
+  const [age, setAge] = useState('');
+  const [level, setLevel] = useState('');
+  const [curWeight, setCurWeight] = useState(''); // lbs
+  const [goalWeight, setGoalWeight] = useState(''); // lbs
+  const [feet, setFeet] = useState(''); // ft
+  const [inches, setInches] = useState(''); // in
 
   useEffect(() => {
     const fetchdata = async () => {
@@ -67,7 +65,6 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
         setGoalWeight(
           await getCustomerMetaField(user.customerToken, 'goal_weight'),
         );
-
         const rawHeight = await getCustomerMetaField(
           user.customerToken,
           'height',
@@ -78,9 +75,7 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
           setFeet(ft);
           setInches(inch);
         }
-      } catch (e) {
-        // no-op
-      }
+      } catch {}
     };
     fetchdata();
   }, [user]);
@@ -149,144 +144,130 @@ const SelectPreferencesScreen: React.FC<Props> = ({ navigation }) => {
         onBack={() => navigation.goBack()}
       />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: 24 + insets.bottom },
+        ]}
       >
-        <View style={{ flex: 1 }}>
-          <ScrollView
-            contentContainerStyle={[styles.content, { paddingBottom: 140 }]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.label}>Select Gender</Text>
-            <SelectField
-              value={gender}
-              placeholder="Select"
-              options={genders}
-              onSelect={setGender}
-            />
+        <Text style={styles.label}>Select Gender</Text>
+        <SelectField
+          value={gender}
+          placeholder="Select"
+          options={genders}
+          onSelect={setGender}
+        />
 
-            <Text style={[styles.label, { marginTop: 16 }]}>
-              Select Your Age
-            </Text>
-            <SelectField
-              value={age}
-              placeholder="Select"
-              options={ages}
-              onSelect={setAge}
-            />
+        <Text style={[styles.label, { marginTop: 16 }]}>Select Your Age</Text>
+        <SelectField
+          value={age}
+          placeholder="Select"
+          options={ages}
+          onSelect={setAge}
+        />
 
-            <Text style={[styles.label, { marginTop: 16 }]}>
-              Select Fitness Level
-            </Text>
-            <SelectField
-              value={level}
-              placeholder="Select"
-              options={levels}
-              onSelect={setLevel}
-            />
+        <Text style={[styles.label, { marginTop: 16 }]}>
+          Select Fitness Level
+        </Text>
+        <SelectField
+          value={level}
+          placeholder="Select"
+          options={levels}
+          onSelect={setLevel}
+        />
 
-            <Text style={[styles.label, { marginTop: 16 }]}>
-              Current Weight
-            </Text>
-            <UnitInput
-              value={curWeight}
-              onChangeText={t => setCurWeight(t.replace(/[^\d.]/g, ''))}
-              keyboardType={Platform.select({
-                ios: 'number-pad',
-                android: 'numeric',
-              })}
-              unit="Lbs"
-            />
+        <Text style={[styles.label, { marginTop: 16 }]}>Current Weight</Text>
+        <UnitInput
+          value={curWeight}
+          onChangeText={t => setCurWeight(t.replace(/[^\d.]/g, ''))}
+          keyboardType={Platform.select({
+            ios: 'number-pad',
+            android: 'numeric',
+          })}
+          unit="Lbs"
+        />
 
-            <Text style={[styles.label, { marginTop: 16 }]}>Weight Goal</Text>
-            <UnitInput
-              value={goalWeight}
-              onChangeText={t => setGoalWeight(t.replace(/[^\d.]/g, ''))}
-              keyboardType={Platform.select({
-                ios: 'number-pad',
-                android: 'numeric',
-              })}
-              unit="Lbs"
-            />
+        <Text style={[styles.label, { marginTop: 16 }]}>Weight Goal</Text>
+        <UnitInput
+          value={goalWeight}
+          onChangeText={t => setGoalWeight(t.replace(/[^\d.]/g, ''))}
+          keyboardType={Platform.select({
+            ios: 'number-pad',
+            android: 'numeric',
+          })}
+          unit="Lbs"
+        />
 
-            <Text style={[styles.label, { marginTop: 16 }]}>
-              Select Your Height
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <UnitInput
-                style={{ flex: 1 }}
-                value={feet}
-                onChangeText={t => setFeet(t.replace(/[^\d]/g, ''))}
-                keyboardType={Platform.select({
-                  ios: 'number-pad',
-                  android: 'numeric',
-                })}
-                unit="ft"
-                maxLength={1}
-              />
-              <UnitInput
-                style={{ flex: 1 }}
-                value={inches}
-                onChangeText={t => setInches(t.replace(/[^\d]/g, ''))}
-                keyboardType={Platform.select({
-                  ios: 'number-pad',
-                  android: 'numeric',
-                })}
-                unit="in"
-                maxLength={2}
-              />
-            </View>
-
-            <View style={styles.divider} />
-
-            <Text style={styles.bmiTitle}>Your current BMI</Text>
-            <View style={styles.bmiCard}>
-              <Text style={styles.bmiLeft}>Ideal</Text>
-              <Text style={styles.bmiRight}>
-                {Number.isNaN(bmi) ? '--' : bmi.toFixed(1)}
-              </Text>
-            </View>
-          </ScrollView>
-
-          <View
-            style={[
-              styles.ctaWrap,
-              { paddingBottom: Math.max(insets.bottom, 12) },
-            ]}
-          >
-            <TouchableOpacity
-              activeOpacity={0.9}
-              disabled={!canContinue}
-              style={[styles.ctaBtn, !canContinue && { opacity: 0.5 }]}
-              onPress={onsubmit}
-            >
-              <LinearGradient
-                colors={[COLORS.green, COLORS.greenLight]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.ctaGradient}
-              >
-                <Text style={styles.ctaText}>Continue</Text>
-                <ContinueIcon
-                  height={24}
-                  width={24}
-                  style={{ marginLeft: 8 }}
-                />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+        <Text style={[styles.label, { marginTop: 16 }]}>
+          Select Your Height
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <UnitInput
+            style={{ flex: 1 }}
+            value={feet}
+            onChangeText={t => setFeet(t.replace(/[^\d]/g, ''))}
+            keyboardType={Platform.select({
+              ios: 'number-pad',
+              android: 'numeric',
+            })}
+            unit="ft"
+            maxLength={1}
+          />
+          <UnitInput
+            style={{ flex: 1 }}
+            value={inches}
+            onChangeText={t => setInches(t.replace(/[^\d]/g, ''))}
+            keyboardType={Platform.select({
+              ios: 'number-pad',
+              android: 'numeric',
+            })}
+            unit="in"
+            maxLength={2}
+          />
         </View>
-      </KeyboardAvoidingView>
+
+        <View style={styles.divider} />
+
+        <Text style={styles.bmiTitle}>Your current BMI</Text>
+        <View style={styles.bmiCard}>
+          <Text style={styles.bmiLeft}>Ideal</Text>
+          <Text style={styles.bmiRight}>
+            {Number.isNaN(bmi) ? '--' : bmi.toFixed(1)}
+          </Text>
+        </View>
+
+        {/* CTA now part of the scrollable content */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          disabled={!canContinue}
+          style={[
+            styles.ctaBtn,
+            !canContinue && { opacity: 0.5 },
+            { marginTop: 22, marginBottom: insets.bottom },
+          ]}
+          onPress={onsubmit}
+        >
+          <LinearGradient
+            colors={[COLORS.green, COLORS.greenLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.ctaGradient}
+          >
+            <Text style={styles.ctaText}>Continue</Text>
+            <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} />
+          </LinearGradient>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 export default SelectPreferencesScreen;
 
-/* ---------- SelectField (modal dropdown) ---------- */
+/* ---------- SelectField ---------- */
 const SelectField = ({
   value,
   placeholder,
@@ -345,7 +326,7 @@ const SelectField = ({
   );
 };
 
-/* ---------- UnitInput (text + unit badge) ---------- */
+/* ---------- UnitInput ---------- */
 const UnitInput = ({
   unit,
   style,
@@ -436,13 +417,7 @@ const styles = StyleSheet.create({
   bmiLeft: { color: COLORS.subText, fontWeight: '600' },
   bmiRight: { color: COLORS.black, fontWeight: '800', fontSize: 18 },
 
-  ctaWrap: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 0,
-    backgroundColor: 'transparent',
-  },
+  // CTA styles
   ctaBtn: {},
   ctaGradient: {
     height: 54,
@@ -453,6 +428,7 @@ const styles = StyleSheet.create({
   },
   ctaText: { color: COLORS.white, fontWeight: '800', fontSize: 16 },
 
+  // Modal
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.25)',

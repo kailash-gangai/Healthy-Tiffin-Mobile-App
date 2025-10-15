@@ -9,7 +9,6 @@ import {
   ActionSheetIOS,
   Platform,
   ActivityIndicator,
-  KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
 import {
@@ -52,8 +51,6 @@ export default function EditProfile({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user);
-
-  const scrollRef = useRef<ScrollView>(null);
 
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -162,116 +159,92 @@ export default function EditProfile({ navigation }: Props) {
     }
   };
 
-  // Ensures field is visible when focused
-  const scrollToEndOnFocus = () => {
-    requestAnimationFrame(() =>
-      scrollRef.current?.scrollToEnd({ animated: true }),
-    );
-  };
-
-  const kbOffset = Platform.select({
-    ios: insets.top + 56,
-    android: 0,
-  }) as number;
-
   return (
     <SafeAreaView style={styles.safe}>
       <AppHeader title="Edit Profile" onBack={() => navigation.goBack()} />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.select({ ios: 'padding', android: 'height' })}
-        keyboardVerticalOffset={kbOffset}
+      {/* Remove KeyboardAvoidingView to prevent over-lifting. */}
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        contentInset={{ bottom: insets.bottom }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: insets.bottom + 24,
+        }}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={{
-            padding: 16,
-            paddingBottom: insets.bottom + 180,
-          }}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          automaticallyAdjustKeyboardInsets
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarWrap}>
-              <Image
-                source={
-                  avatar ? { uri: avatar } : require('../../assets/LOGO.png')
-                }
-                style={styles.avatar}
-              />
-              <TouchableOpacity style={styles.cameraBtn} onPress={pickImage}>
-                <CameraIcon width={24} height={24} />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatarWrap}>
+            <Image
+              source={
+                avatar ? { uri: avatar } : require('../../assets/LOGO.png')
+              }
+              style={styles.avatar}
+            />
+            <TouchableOpacity style={styles.cameraBtn} onPress={pickImage}>
+              <CameraIcon width={24} height={24} />
+            </TouchableOpacity>
           </View>
+        </View>
 
-          <FormInput
-            label="Name"
-            icon="person"
-            placeholder="Enter name"
-            value={name}
-            onChangeText={setName}
-            returnKeyType="next"
-            onFocus={scrollToEndOnFocus}
-          />
+        <FormInput
+          label="Name"
+          icon="person"
+          placeholder="Enter name"
+          value={name}
+          onChangeText={setName}
+          returnKeyType="next"
+        />
 
-          <FormInput
-            label="Email Address"
-            icon="email"
-            placeholder="Enter email address"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            returnKeyType="next"
-            onFocus={scrollToEndOnFocus}
-          />
+        <FormInput
+          label="Email Address"
+          icon="email"
+          placeholder="Enter email address"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+          returnKeyType="next"
+        />
 
-          <FormInput
-            label="Phone Number"
-            icon="phone"
-            placeholder="Enter phone number"
-            keyboardType="phone-pad"
-            autoCapitalize="none"
-            value={phone}
-            onChangeText={setPhone}
-            returnKeyType="done"
-            onFocus={scrollToEndOnFocus}
-          />
+        <FormInput
+          label="Phone Number"
+          icon="phone"
+          placeholder="Enter phone number"
+          keyboardType="phone-pad"
+          autoCapitalize="none"
+          value={phone}
+          onChangeText={setPhone}
+          returnKeyType="done"
+        />
 
-          <TouchableOpacity
-            activeOpacity={0.9}
-            disabled={loading}
-            style={styles.ctaBtn}
-            onPress={onSubmit}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          disabled={loading}
+          style={styles.ctaBtn}
+          onPress={onSubmit}
+        >
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            colors={[COLORS.green, COLORS.greenLight]}
+            style={styles.ctaGradient}
           >
-            <LinearGradient
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              colors={[COLORS.green, COLORS.greenLight]}
-              style={styles.ctaGradient}
-            >
-              <Text style={styles.ctaText}>Save Details</Text>
-              {loading ? (
-                <ActivityIndicator
-                  style={{ marginLeft: 8 }}
-                  size="small"
-                  color={COLORS.white}
-                />
-              ) : (
-                <ContinueIcon
-                  height={24}
-                  width={24}
-                  style={{ marginLeft: 8 }}
-                />
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <Text style={styles.ctaText}>Save Details</Text>
+            {loading ? (
+              <ActivityIndicator
+                style={{ marginLeft: 8 }}
+                size="small"
+                color={COLORS.white}
+              />
+            ) : (
+              <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} />
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -314,12 +287,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatar: {
-    width: 124,
-    height: 124,
-    borderRadius: 62,
-    resizeMode: 'cover',
-  },
+  avatar: { width: 124, height: 124, borderRadius: 62, resizeMode: 'cover' },
   cameraBtn: {
     position: 'absolute',
     bottom: 4,
@@ -332,3 +300,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+/*
+Android manifest:
+<activity
+  android:name=".MainActivity"
+  android:windowSoftInputMode="adjustResize" />
+*/

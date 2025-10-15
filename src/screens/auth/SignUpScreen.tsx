@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,9 @@ import {
   ScrollView,
   Platform,
   GestureResponderEvent,
-  KeyboardAvoidingView,
   Alert,
   ActivityIndicator,
+  LayoutChangeEvent,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Fontisto } from '@react-native-vector-icons/fontisto';
@@ -51,7 +51,7 @@ GoogleSignin.configure({
     '541872006500-5mlca2bgg8v4qb26muaabmcjepbekvf2.apps.googleusercontent.com',
 });
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -62,21 +62,29 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
 
-  // keep CTA visible with keyboard
-  const kbOffset = Platform.select({
-    ios: insets.top + 56,
-    android: 0,
-  }) as number;
-
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [pass, setPass] = useState<string>('');
   const [errors, setErrors] = useState<any>({});
   const [isloading, setIsloading] = useState(false);
 
-  const validateEmail = (email: string) =>
-    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-  const validatePassword = (password: string) => password.length >= 6;
+  // track Y positions of inputs to scroll precisely on focus
+  const positions = useRef<{ [k: string]: number }>({}).current;
+  const onLayoutAt =
+    (key: string) =>
+    (e: LayoutChangeEvent): void => {
+      positions[key] = e.nativeEvent.layout.y;
+    };
+  const ensureVisible = (key: string) => {
+    const y = positions[key] ?? 0;
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+    });
+  };
+
+  const validateEmail = (v: string) =>
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v);
+  const validatePassword = (v: string) => v.length >= 6;
   const validateName = (full: string) => {
     const [firstName, lastName] = full.trim().split(' ');
     return !!(firstName && lastName);
@@ -154,21 +162,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     [name, email, pass, dispatch, navigation],
   );
 
-  async function onGoogleButtonPress() {
-    try {
-      await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
-      const data: any = await GoogleSignin.signIn();
-      const googleCredential = auth.GoogleAuthProvider.credential(
-        data?.data.idToken,
-      );
-      await auth().signInWithCredential(googleCredential);
-    } catch (e) {
-      console.log('e: ', e);
-    }
-  }
-
   const GoogleSingUp = async () => {
     try {
       await GoogleSignin.hasPlayServices({
@@ -195,60 +188,50 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         navigation.navigate('Home');
       }
     } catch (error) {
-      console.log('error: ', error);
+      // no-op
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.select({ ios: 'padding', android: 'height' })}
-      keyboardVerticalOffset={kbOffset}
+    // Removed KeyboardAvoidingView to avoid large jumps.
+    <ScrollView
+      ref={scrollRef}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      automaticallyAdjustKeyboardInsets
+      contentInset={{ bottom: insets.bottom + 20 }}
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingBottom: 24 + insets.bottom,
+      }}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
     >
-      <ScrollView
-        ref={scrollRef}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingBottom: 24 + insets.bottom,
-        }}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        <View style={styles.heroWrap}>
-          <ImageBackground
-            source={require('../../assets/banners/chana.jpg')}
-            resizeMode="cover"
-            style={styles.heroBg}
-            imageStyle={{ opacity: 0.85 }}
-          >
-            <View style={styles.overlay} />
-            <View style={styles.heroContent}>
-              <Image
-                source={require('../../assets/LOGO.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={styles.title}>Sign Up</Text>
-              <Text style={styles.welcome}>Welcome!</Text>
-              <Text style={styles.subtitle}>
-                Please enter the details to proceed.
-              </Text>
-            </View>
-          </ImageBackground>
-        </View>
-
-        <View
-          style={[
-            styles.card,
-            {
-              paddingBottom:
-                28 + (Platform.OS === 'ios' ? 10 : 16) + 24 + insets.bottom,
-            },
-          ]}
+      <View style={styles.heroWrap}>
+        <ImageBackground
+          source={require('../../assets/banners/chana.jpg')}
+          resizeMode="cover"
+          style={styles.heroBg}
+          imageStyle={{ opacity: 0.85 }}
         >
+          <View style={styles.overlay} />
+          <View style={styles.heroContent}>
+            <Image
+              source={require('../../assets/LOGO.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.title}>Sign Up</Text>
+            <Text style={styles.welcome}>Welcome!</Text>
+            <Text style={styles.subtitle}>
+              Please enter the details to proceed.
+            </Text>
+          </View>
+        </ImageBackground>
+      </View>
+
+      <View style={[styles.card, { paddingBottom: 28 + 24 + insets.bottom }]}>
+        <View onLayout={onLayoutAt('name')}>
           <FormInput
             label="Full Name"
             icon="person"
@@ -257,13 +240,16 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             onChangeText={setName}
             autoCapitalize="words"
             returnKeyType="next"
+            onFocus={() => ensureVisible('name')}
           />
-          {errors.name ? (
-            <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
-              {errors.name}
-            </Text>
-          ) : null}
+        </View>
+        {errors.name ? (
+          <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
+            {errors.name}
+          </Text>
+        ) : null}
 
+        <View onLayout={onLayoutAt('pass')}>
           <FormInput
             label="Password"
             icon="unlocked"
@@ -272,13 +258,16 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             value={pass}
             onChangeText={setPass}
             returnKeyType="next"
+            onFocus={() => ensureVisible('pass')}
           />
-          {errors.pass ? (
-            <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
-              {errors.pass}
-            </Text>
-          ) : null}
+        </View>
+        {errors.pass ? (
+          <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
+            {errors.pass}
+          </Text>
+        ) : null}
 
+        <View onLayout={onLayoutAt('email')}>
           <FormInput
             label="Email Address"
             icon="email"
@@ -288,84 +277,79 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             value={email}
             onChangeText={setEmail}
             returnKeyType="done"
-            onFocus={() => {
-              // ensure email field is visible
-              requestAnimationFrame(() => {
-                scrollRef.current?.scrollToEnd({ animated: true });
-              });
-            }}
+            onFocus={() => ensureVisible('email')}
           />
-          {errors.email ? (
-            <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
-              {errors.email}
-            </Text>
-          ) : null}
-
-          <TouchableOpacity
-            disabled={isloading}
-            activeOpacity={0.9}
-            style={styles.ctaBtn}
-            onPress={onSubmit}
-          >
-            <LinearGradient
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              colors={[COLORS.green, COLORS.greenLight]}
-              style={styles.ctaGradient}
-            >
-              <Text style={styles.ctaText}>Sign Up</Text>
-              {isloading ? (
-                <ActivityIndicator
-                  size="small"
-                  style={{ marginLeft: 8 }}
-                  color={COLORS.white}
-                />
-              ) : (
-                <FontAwesome5
-                  iconStyle="solid"
-                  name="sign-in-alt"
-                  size={18}
-                  color={COLORS.white}
-                  style={{ marginLeft: 8 }}
-                />
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <View style={styles.dividerWrap}>
-            <View style={styles.line} />
-            <Text style={styles.orText}>Or</Text>
-            <View style={styles.line} />
-          </View>
-
-          <View style={styles.socialRow}>
-            <CircleBtn
-              bg="#1877F2"
-              icon={<Facebook width={30} height={30} />}
-              onPress={() => {}}
-            />
-            <InstaBtn onPress={() => {}} />
-            <CircleBtn
-              bg="#EA4335"
-              icon={<Google width={30} height={40} />}
-              onPress={GoogleSingUp}
-            />
-            <CircleBtn
-              bg="#000000"
-              icon={<Apple height={30} width={30} />}
-              onPress={() => {}}
-            />
-          </View>
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-              <Text style={styles.footerLink}> Sign In</Text>
-            </TouchableOpacity>
-          </View>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        {errors.email ? (
+          <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
+            {errors.email}
+          </Text>
+        ) : null}
+
+        <TouchableOpacity
+          disabled={isloading}
+          activeOpacity={0.9}
+          style={styles.ctaBtn}
+          onPress={onSubmit}
+        >
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            colors={[COLORS.green, COLORS.greenLight]}
+            style={styles.ctaGradient}
+          >
+            <Text style={styles.ctaText}>Sign Up</Text>
+            {isloading ? (
+              <ActivityIndicator
+                size="small"
+                style={{ marginLeft: 8 }}
+                color={COLORS.white}
+              />
+            ) : (
+              <FontAwesome5
+                iconStyle="solid"
+                name="sign-in-alt"
+                size={18}
+                color={COLORS.white}
+                style={{ marginLeft: 8 }}
+              />
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={styles.dividerWrap}>
+          <View style={styles.line} />
+          <Text style={styles.orText}>Or</Text>
+          <View style={styles.line} />
+        </View>
+
+        <View style={styles.socialRow}>
+          <CircleBtn
+            bg="#1877F2"
+            icon={<Facebook width={30} height={30} />}
+            onPress={() => {}}
+          />
+          <InstaBtn onPress={() => {}} />
+          <CircleBtn
+            bg="#EA4335"
+            icon={<Google width={30} height={40} />}
+            onPress={GoogleSingUp}
+          />
+          <CircleBtn
+            bg="#000000"
+            icon={<Apple height={30} width={30} />}
+            onPress={() => {}}
+          />
+        </View>
+
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>Already have an account?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+            <Text style={styles.footerLink}> Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
