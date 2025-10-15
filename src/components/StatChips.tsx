@@ -101,7 +101,7 @@ export default function StatsCard() {
       try {
         const t = await withRetry(() => getValidTokens());
         const token = t?.accessToken as string;
-        console.log('fitbit data chips');
+        console.log('fitbit data chips', token);
         const [s, weight, sleep, water] = await Promise.all([
           withRetry(() => getfitBitData(token, '')),
           withRetry(() => getfitBitWeight(token, '')),
@@ -135,7 +135,7 @@ export default function StatsCard() {
           }),
         );
       } catch (e: any) {
-        console.warn('fitbit data err', e?.message ?? e);
+        console.warn('fitbit data err', JSON.stringify(e));
         // showToastError(e?.message ?? e);
       }
     })();

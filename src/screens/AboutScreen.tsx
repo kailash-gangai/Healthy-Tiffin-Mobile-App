@@ -1,197 +1,227 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from "react-native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "./navigation/types";
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from "react-redux";
-import { RootState } from "../store";
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+} from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
+
+import { RootStackParamList } from './navigation/types';
+import { RootState } from '../store';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 type Props = {
-    navigation: AboutScreenNavigationProp;
+  navigation: AboutScreenNavigationProp;
 };
 
 const AboutScreen: React.FC<Props> = ({ navigation }) => {
-    const user = useSelector((state: RootState) => state.user);
-    console.log('user', user);
-    const handlePress = () => {
+  const insets = useSafeAreaInsets();
+  const user = useSelector((state: RootState) => state.user);
 
-        if (!user || user.customerToken === null || user.customerToken === '') {
-
-            navigation.navigate("SignIn");
-        } else {
-            navigation.navigate("Home");
-        }
+  const handlePress = () => {
+    if (!user || user.customerToken === null || user.customerToken === '') {
+      navigation.navigate('SignIn');
+    } else {
+      navigation.navigate('Home');
     }
-    return (
-        <ScrollView style={styles.container}>
-            {/* 1. Header Image */}
-            <Image
-                source={require("../assets/banners/chana.jpg")} // replace with your top image
-                style={styles.headerImage}
-                resizeMode="cover"
+  };
+
+  return (
+    <SafeAreaView
+      style={styles.safe}
+      edges={['top', 'left', 'right', 'bottom']}
+    >
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 1. Header Image */}
+        <Image
+          source={require('../assets/banners/chana.jpg')}
+          style={styles.headerImage}
+          resizeMode="cover"
+        />
+
+        {/* 2. Green Section with Text */}
+        <View style={styles.greenSection}>
+          <Text style={styles.greenText}>
+            <Text style={{ fontWeight: 'bold' }}>Fresh</Text> healthy meal{'\n'}
+            delivered <Text style={{ fontWeight: 'bold' }}>daily!</Text>
+          </Text>
+        </View>
+
+        {/* 3. Features Grid */}
+        <View style={styles.featuresContainer}>
+          <View style={styles.featureRow}>
+            <FeatureItem
+              icon={require('../assets/icons/fresh.png')}
+              title="Made Fresh Daily"
             />
+            <FeatureItem
+              icon={require('../assets/icons/veg-non.png')}
+              title="Veg, Non-Veg, Vegan, Jain"
+            />
+            <FeatureItem
+              icon={require('../assets/icons/delivery.png')}
+              title="Delivered Daily"
+            />
+          </View>
+          <View style={styles.featureRow}>
+            <FeatureItem
+              icon={require('../assets/icons/zero-plastic.png')}
+              title="Zero Plastic"
+            />
+            <FeatureItem
+              icon={require('../assets/icons/ayurveda.png')}
+              title="Ayurveda"
+            />
+            <FeatureItem
+              icon={require('../assets/icons/cal.png')}
+              title="Track Fitness Goals"
+            />
+          </View>
+        </View>
 
-            {/* 2. Green Section with Text */}
-            <View style={styles.greenSection}>
-                <Text style={styles.greenText}>
-                    <Text style={{ fontWeight: "bold" }}>Fresh</Text> healthy meal{"\n"}
-                    delivered <Text style={{ fontWeight: "bold" }}>daily!</Text>
-                </Text>
-            </View>
+        {/* 4. Banner Section */}
+        <View style={styles.banner}>
+          <Image
+            source={require('../assets/banners/chana.jpg')}
+            style={styles.bannerImage}
+            resizeMode="cover"
+          />
+          <View style={styles.bannerOverlay}>
+            <Text style={styles.bannerText}>
+              ALL <Text style={styles.highlight}>YOUR HEALTH</Text>
+              {'\n'}
+              IN ONE <Text style={styles.highlight}>PLACE</Text>
+            </Text>
+          </View>
+        </View>
 
-            {/* 3. Features Grid */}
-            <View style={styles.featuresContainer}>
-                <View style={styles.featureRow}>
-                    <FeatureItem
-                        icon={require("../assets/icons/fresh.png")}
-                        title="Made Fresh Daily"
-                    />
-                    <FeatureItem
-                        icon={require("../assets/icons/veg-non.png")}
-                        title="Veg, Non-Veg, Vegan, Jain"
-                    />
-                    <FeatureItem
-                        icon={require("../assets/icons/delivery.png")}
-                        title="Delivered Daily"
-                    />
-                </View>
-                <View style={styles.featureRow}>
-                    <FeatureItem
-                        icon={require("../assets/icons/zero-plastic.png")}
-                        title="Zero Plastic"
-                    />
-                    <FeatureItem
-                        icon={require("../assets/icons/ayurveda.png")}
-                        title="Ayurveda"
-                    />
-                    <FeatureItem
-                        icon={require("../assets/icons/cal.png")}
-                        title="Track Fitness Goals"
-                    />
-                </View>
-            </View>
-
-            {/* 4. Banner Section */}
-            <View style={styles.banner}>
-                <Image
-                    source={require("../assets/banners/chana.jpg")} // background banner
-                    style={styles.bannerImage}
-                    resizeMode="cover"
-                />
-                <View style={styles.bannerOverlay}>
-                    <Text style={styles.bannerText}>
-                        ALL <Text style={styles.highlight}>YOUR HEALTH</Text>{"\n"}
-                        IN ONE <Text style={styles.highlight}>PLACE</Text>
-                    </Text>
-                </View>
-            </View>
-
-            {/* 5. CTA Button */}
-            <TouchableOpacity style={styles.button} onPress={() => { handlePress() }}
-            >
-                <Text style={styles.buttonText}>TRY IT TODAY</Text>
-            </TouchableOpacity>
-        </ScrollView>
-    );
+        {/* 5. CTA Button */}
+        <TouchableOpacity
+          style={[styles.button, { marginBottom: 16 + insets.bottom }]}
+          onPress={handlePress}
+          activeOpacity={0.9}
+        >
+          <Text style={styles.buttonText}>TRY IT TODAY</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
 };
 
 export default AboutScreen;
+
 interface FeatureItemProps {
-    icon: any;
-    title: string;
+  icon: any;
+  title: string;
 }
 
 const FeatureItem: React.FC<FeatureItemProps> = ({ icon, title }) => (
-    <View style={styles.featureItem}>
-        <Image source={icon} style={styles.featureIcon} resizeMode="contain" />
-        <Text style={styles.featureText}>{title}</Text>
-    </View>
+  <View style={styles.featureItem}>
+    <Image source={icon} style={styles.featureIcon} resizeMode="contain" />
+    <Text style={styles.featureText}>{title}</Text>
+  </View>
 );
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-    },
-    headerImage: {
-        width: "100%",
-        height: 350,
-    },
-    greenSection: {
-        backgroundColor: "#006400",
-        padding: 20,
-        alignItems: "center",
-    },
-    greenText: {
-        color: "#fff",
-        fontSize: 18,
-        textAlign: "center",
-        lineHeight: 24,
-    },
-    featuresContainer: {
-        padding: 20,
-    },
-    featureRow: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        marginBottom: 20,
-    },
-    featureItem: {
-        flex: 1,
-        alignItems: "center",
-        paddingHorizontal: 5,
-    },
-    featureIcon: {
-        marginBottom: 8,
-        height: 92,
-        width: 92,
-    },
-    featureText: {
-        textAlign: "center",
-        fontSize: 12,
-        color: "#333",
-    },
-    banner: {
-        position: "relative",
-        marginVertical: 20,
-    },
-    bannerImage: {
-        width: "100%",
-        height: 146,
-        borderRadius: 10,
-    },
-    bannerOverlay: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0,0,0,0.3)",
 
-    },
-    bannerText: {
-        color: "#fff",
-        fontSize: 20,
-        fontWeight: "600",
-        textAlign: "center",
-    },
-    highlight: {
-        fontWeight: "bold",
-    },
-    button: {
-        marginHorizontal: 30,
-        marginBottom: 40,
-        paddingVertical: 15,
-        backgroundColor: "#006400",
-        borderRadius: 8,
-        alignItems: "center",
-    },
-    buttonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
-    },
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  headerImage: {
+    width: '100%',
+    height: 350,
+  },
+  greenSection: {
+    backgroundColor: '#006400',
+    padding: 20,
+    alignItems: 'center',
+  },
+  greenText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  featuresContainer: {
+    padding: 20,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  featureItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  featureIcon: {
+    marginBottom: 8,
+    height: 92,
+    width: 92,
+  },
+  featureText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#333',
+  },
+  banner: {
+    position: 'relative',
+    marginVertical: 20,
+    marginHorizontal: 20,
+  },
+  bannerImage: {
+    width: '100%',
+    height: 146,
+    borderRadius: 10,
+  },
+  bannerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 10,
+  },
+  bannerText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  highlight: {
+    fontWeight: 'bold',
+  },
+  button: {
+    marginHorizontal: 30,
+    paddingVertical: 15,
+    backgroundColor: '#006400',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });

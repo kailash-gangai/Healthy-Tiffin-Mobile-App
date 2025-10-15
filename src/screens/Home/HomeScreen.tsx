@@ -149,7 +149,7 @@ function applyPriceThresholds(
 
 const HomeScreen: React.FC = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
-  const { isCartCleared } = useAppSelector(state => state.cart);
+  const { isCartCleared, lines } = useAppSelector(state => state.cart);
 
   const [tab, setTab] = useState<0 | 1>(0);
   const [daysMeta, setDaysMeta] = useState<any[]>([]);
@@ -386,8 +386,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     }
   }, [currentDay, currentDayMetaObjectId, addonsMetaObjectId, dispatch]);
 
+  console.log({ selectedItemsToAddOnCart, lines });
   useEffect(() => {
-    if (isCartCleared) setSelectedItemsToAddOnCart([]);
+    if (isCartCleared || lines.length === 0) setSelectedItemsToAddOnCart([]);
     dispatch(cartFLag());
     setTiffinPlan(1);
     if (currentDay !== 'Saturday' && currentDay !== 'Sunday') {
@@ -396,7 +397,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setCategories([]);
       setAddonCategories([]);
     }
-  }, [isCartCleared, dispatch, fetchMetaAndData]);
+  }, [isCartCleared, dispatch, fetchMetaAndData, lines]);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -521,7 +522,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             onPress={handleAddNewTiffin}
             style={styles.addNewTiffin}
           >
-           <PlusIcon width={24} height={24} />
+            <PlusIcon width={24} height={24} />
             <Text style={styles.newTiffinText}>Add new tiffin</Text>
           </TouchableOpacity>
         )}

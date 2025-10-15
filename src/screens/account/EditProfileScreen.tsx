@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -9,10 +9,15 @@ import {
   ActionSheetIOS,
   Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
-import { COLORS, SPACING } from '../../ui/theme';
+import { COLORS } from '../../ui/theme';
 import FormInput from '../../components/FormInput';
 import LinearGradient from 'react-native-linear-gradient';
 import CameraIcon from '../../assets/htf-icon/icon-camera.svg';
@@ -27,10 +32,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { customerMetafieldUpdate, customerUpsert } from '../../shopify/mutation/CustomerAuth';
+import {
+  customerMetafieldUpdate,
+  customerUpsert,
+} from '../../shopify/mutation/CustomerAuth';
 import { setUser } from '../../store/slice/userSlice';
 import { checkCustomerTokens } from '../../store/Keystore/customerDetailsStore';
-
 import {
   showToastError,
   showToastSuccess,
@@ -39,15 +46,15 @@ import { uploadImageDirectFromRN } from '../../shopify/mutation/fileUploadShopif
 import { previewImage } from '../../shopify/mutation/FileUpload';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-type Props = {
-  navigation: AboutScreenNavigationProp;
-};
-
+type Props = { navigation: AboutScreenNavigationProp };
 
 export default function EditProfile({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user);
+
+  const scrollRef = useRef<ScrollView>(null);
+
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<string | undefined>();
@@ -58,6 +65,7 @@ export default function EditProfile({ navigation }: Props) {
   const [phone, setPhone] = useState<string | undefined>(
     user?.phone || undefined,
   );
+
   const openGallery = async () => {
     const opts: ImageLibraryOptions = {
       mediaType: 'photo',
@@ -68,7 +76,6 @@ export default function EditProfile({ navigation }: Props) {
     const res = await launchImageLibrary(opts);
     setFile(res);
     if (res.didCancel) return;
-    console.log('res', res);
     if (res.errorCode)
       return Alert.alert('Error', res.errorMessage || res.errorCode);
     const uri = res.assets?.[0]?.uri;
@@ -94,17 +101,13 @@ export default function EditProfile({ navigation }: Props) {
   const pickImage = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Camera', 'Gallery'],
-          cancelButtonIndex: 0,
-        },
-        buttonIndex => {
-          if (buttonIndex === 1) openCamera();
-          if (buttonIndex === 2) openGallery();
+        { options: ['Cancel', 'Camera', 'Gallery'], cancelButtonIndex: 0 },
+        idx => {
+          if (idx === 1) openCamera();
+          if (idx === 2) openGallery();
         },
       );
     } else {
-      // Android fallback (Alert is OK when component is active)
       Alert.alert('Profile photo', 'Choose source', [
         { text: 'Camera', onPress: openCamera },
         { text: 'Gallery', onPress: openGallery },
@@ -112,26 +115,24 @@ export default function EditProfile({ navigation }: Props) {
       ]);
     }
   };
-  const media = async (user: any) => {
-    const medias = await previewImage(user.avatar);
-    
-    setAvatar(medias.nodes[0]?.preview.image.url);
+
+  const media = async (u: any) => {
+    const medias = await previewImage(u.avatar);
+    setAvatar(medias?.nodes?.[0]?.preview?.image?.url);
   };
+
   useEffect(() => {
     media(user);
   }, []);
+
   const onSubmit = async () => {
     setLoading(true);
     let [firstName, lastName] = name?.split(' ') ?? [];
-    let userData = {
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      phone: phone,
-    };
-    const a = file?.assets[0] ?? null;
+    let userData = { firstName, lastName, email, phone };
+
+    const a = file?.assets?.[0] ?? null;
     if (avatar && a) {
-      const { fileId, previewUrl } = await uploadImageDirectFromRN(
+      const { fileId } = await uploadImageDirectFromRN(
         {
           uri: a.uri,
           name: a.fileName ?? 'upload.jpg',
@@ -139,117 +140,151 @@ export default function EditProfile({ navigation }: Props) {
         },
         user.avatar ?? '',
       );
-     
-      const response = await customerMetafieldUpdate([
-        { key: 'image', value: fileId, type: 'file_reference' },
-      ], user?.id ?? '');
-      
+      await customerMetafieldUpdate(
+        [{ key: 'image', value: fileId, type: 'file_reference' }],
+        user?.id ?? '',
+      );
     }
-    // optional: persist previewUrl/mediaId where you need them
-    // return;
+
     try {
       const res = await customerUpsert(userData, user?.customerToken || '');
-      // console.log('res', res);
       if (res?.customerUpdate?.customer?.id) {
-        let customerdetails = checkCustomerTokens();
-        customerdetails.then(result => {
-          if (result) {
-            dispatch(setUser(result));
-          }
-        });
-        setLoading(false);
+        const details = await checkCustomerTokens();
+        if (details) dispatch(setUser(details));
         showToastSuccess('Profile updated successfully.');
       }
-      setLoading(false);
     } catch (error) {
-      setLoading(false);
       showToastError(
         error instanceof Error ? error.message : 'An error occurred.',
       );
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Ensures field is visible when focused
+  const scrollToEndOnFocus = () => {
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollToEnd({ animated: true }),
+    );
+  };
+
+  const kbOffset = Platform.select({
+    ios: insets.top + 56,
+    android: 0,
+  }) as number;
 
   return (
     <SafeAreaView style={styles.safe}>
       <AppHeader title="Edit Profile" onBack={() => navigation.goBack()} />
-      <View style={styles.wrap}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatarWrap}>
-            <Image
-              source={
-                avatar ? { uri: avatar } : require('../../assets/LOGO.png')
-              }
-              style={styles.avatar}
-            />
-            <TouchableOpacity style={styles.cameraBtn} onPress={pickImage}>
-             <CameraIcon width={24} height={24} />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <FormInput
-          label="Name"
-          icon="person"
-          placeholder="Enter name"
-          value={name}
-          onChangeText={setName}
-          returnKeyType="next"
-        />
-        <FormInput
-          label="Email Address"
-          icon="email"
-          placeholder="Enter email address"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-          returnKeyType="next"
-        />
-        <FormInput
-          label="Phone Number"
-          icon="phone"
-          placeholder="Enter phone number"
-          keyboardType="phone-pad"
-          autoCapitalize="none"
-          value={phone}
-          onChangeText={setPhone}
-          returnKeyType="done"
-        />
 
-        <TouchableOpacity
-          activeOpacity={0.9}
-          disabled={loading}
-          style={styles.ctaBtn}
-          onPress={() => {
-            onSubmit();
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.select({ ios: 'padding', android: 'height' })}
+        keyboardVerticalOffset={kbOffset}
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: insets.bottom + 180,
           }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
         >
-          <LinearGradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            colors={[COLORS.green, COLORS.greenLight]}
-            style={styles.ctaGradient}
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatarWrap}>
+              <Image
+                source={
+                  avatar ? { uri: avatar } : require('../../assets/LOGO.png')
+                }
+                style={styles.avatar}
+              />
+              <TouchableOpacity style={styles.cameraBtn} onPress={pickImage}>
+                <CameraIcon width={24} height={24} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <FormInput
+            label="Name"
+            icon="person"
+            placeholder="Enter name"
+            value={name}
+            onChangeText={setName}
+            returnKeyType="next"
+            onFocus={scrollToEndOnFocus}
+          />
+
+          <FormInput
+            label="Email Address"
+            icon="email"
+            placeholder="Enter email address"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            returnKeyType="next"
+            onFocus={scrollToEndOnFocus}
+          />
+
+          <FormInput
+            label="Phone Number"
+            icon="phone"
+            placeholder="Enter phone number"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            value={phone}
+            onChangeText={setPhone}
+            returnKeyType="done"
+            onFocus={scrollToEndOnFocus}
+          />
+
+          <TouchableOpacity
+            activeOpacity={0.9}
+            disabled={loading}
+            style={styles.ctaBtn}
+            onPress={onSubmit}
           >
-            <Text style={styles.ctaText}>Save Details</Text>
-            {loading ? (
-              <ActivityIndicator style={{ marginLeft: 8 }} size="small" color={COLORS.white} />
-            ) : (
-              <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} />
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+            <LinearGradient
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              colors={[COLORS.green, COLORS.greenLight]}
+              style={styles.ctaGradient}
+            >
+              <Text style={styles.ctaText}>Save Details</Text>
+              {loading ? (
+                <ActivityIndicator
+                  style={{ marginLeft: 8 }}
+                  size="small"
+                  color={COLORS.white}
+                />
+              ) : (
+                <ContinueIcon
+                  height={24}
+                  width={24}
+                  style={{ marginLeft: 8 }}
+                />
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
-  wrap: { padding: 16, textAlign: 'center' },
+
   avatarContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
+
   ctaBtn: { marginTop: 18 },
   ctaGradient: {
     height: 54,
@@ -269,6 +304,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     fontSize: 16,
   },
+
   avatarWrap: {
     width: 130,
     height: 130,
@@ -277,7 +313,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.oranger,
     alignItems: 'center',
     justifyContent: 'center',
-    textAlign: 'center',
   },
   avatar: {
     width: 124,

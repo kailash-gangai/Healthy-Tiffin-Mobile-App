@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -37,16 +37,8 @@ import {
   showToastError,
   showToastSuccess,
 } from '../../config/ShowToastMessages';
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
-import {
-  GoogleAuthProvider,
-  getAuth,
-  signInWithCredential,
-} from '@react-native-firebase/auth';
 import Facebook from '../../assets/htf-icon/fb.svg';
 import Insta from '../../assets/htf-icon/insta.svg';
 import Google from '../../assets/htf-icon/google.svg';
@@ -68,6 +60,7 @@ type Props = { navigation: AboutScreenNavigationProp };
 const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
 
   // keep CTA visible with keyboard
   const kbOffset = Platform.select({
@@ -119,8 +112,8 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
       }
 
       const [firstName, lastName] = name.trim().split(' ');
-
       const userData = { email, password: pass, firstName, lastName };
+
       try {
         const response = await customerUpsert(userData);
         if (response?.customerCreate?.customerUserErrors?.length) {
@@ -161,8 +154,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     [name, email, pass, dispatch, navigation],
   );
 
-  useEffect(() => {}, []);
-
   async function onGoogleButtonPress() {
     try {
       await GoogleSignin.hasPlayServices({
@@ -173,7 +164,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         data?.data.idToken,
       );
       await auth().signInWithCredential(googleCredential);
-      return;
     } catch (e) {
       console.log('e: ', e);
     }
@@ -216,6 +206,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
       keyboardVerticalOffset={kbOffset}
     >
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         automaticallyAdjustKeyboardInsets
@@ -223,6 +214,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
           flexGrow: 1,
           paddingBottom: 24 + insets.bottom,
         }}
+        showsVerticalScrollIndicator={false}
         bounces={false}
       >
         <View style={styles.heroWrap}>
@@ -252,7 +244,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
           style={[
             styles.card,
             {
-              // extra room so CTA stays visible above keyboard
               paddingBottom:
                 28 + (Platform.OS === 'ios' ? 10 : 16) + 24 + insets.bottom,
             },
@@ -267,11 +258,11 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             autoCapitalize="words"
             returnKeyType="next"
           />
-          {errors.name && (
+          {errors.name ? (
             <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
               {errors.name}
             </Text>
-          )}
+          ) : null}
 
           <FormInput
             label="Password"
@@ -282,11 +273,11 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             onChangeText={setPass}
             returnKeyType="next"
           />
-          {errors.pass && (
+          {errors.pass ? (
             <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
               {errors.pass}
             </Text>
-          )}
+          ) : null}
 
           <FormInput
             label="Email Address"
@@ -297,12 +288,18 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             value={email}
             onChangeText={setEmail}
             returnKeyType="done"
+            onFocus={() => {
+              // ensure email field is visible
+              requestAnimationFrame(() => {
+                scrollRef.current?.scrollToEnd({ animated: true });
+              });
+            }}
           />
-          {errors.email && (
+          {errors.email ? (
             <Text style={{ color: COLORS.red, fontSize: 14, marginLeft: 12 }}>
               {errors.email}
             </Text>
-          )}
+          ) : null}
 
           <TouchableOpacity
             disabled={isloading}
@@ -343,21 +340,21 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
 
           <View style={styles.socialRow}>
             <CircleBtn
-            bg="#1877F2"
-            icon={<Facebook width={30} height={30} />}
-            onPress={() => {}}
-          />
-          <InstaBtn onPress={() => {}} />
-          <CircleBtn
-            bg="#EA4335"
-            icon={<Google width={30} height={40} />}
-            onPress={GoogleSingUp}
-          />
-          <CircleBtn
-            bg="#000000"
-            icon={<Apple height={30} width={30} />}
-            onPress={() => {}}
-          />
+              bg="#1877F2"
+              icon={<Facebook width={30} height={30} />}
+              onPress={() => {}}
+            />
+            <InstaBtn onPress={() => {}} />
+            <CircleBtn
+              bg="#EA4335"
+              icon={<Google width={30} height={40} />}
+              onPress={GoogleSingUp}
+            />
+            <CircleBtn
+              bg="#000000"
+              icon={<Apple height={30} width={30} />}
+              onPress={() => {}}
+            />
           </View>
 
           <View style={styles.footerRow}>
@@ -501,7 +498,7 @@ const styles = StyleSheet.create({
 export default SignUpScreen;
 
 /*
-Android manifest reminder (outside this file):
+Android manifest:
 <activity
   android:name=".MainActivity"
   android:windowSoftInputMode="adjustResize" />

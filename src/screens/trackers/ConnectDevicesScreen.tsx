@@ -96,7 +96,7 @@ export default function ConnectDevicesScreen({ navigation }: any) {
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
       <AppHeader
         title="Connect Fitness Devices"
-        onBack={() => navigation.goBack()}
+        onBack={() => navigation.navigate('Home')}
       />
       <View style={s.wrap}>
         <SectionTitle t="Connect To a Device" />
