@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -162,89 +163,97 @@ export default function EditProfile({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <AppHeader title="Edit Profile" onBack={() => navigation.goBack()} />
-
-      {/* Remove KeyboardAvoidingView to prevent over-lifting. */}
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets
-        contentInset={{ bottom: insets.bottom }}
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: insets.bottom + 24,
-        }}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
       >
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatarWrap}>
-            <Image
-              source={
-                avatar ? { uri: avatar } : require('../../assets/LOGO.png')
-              }
-              style={styles.avatar}
-            />
-            <TouchableOpacity style={styles.cameraBtn} onPress={pickImage}>
-              <CameraIcon width={24} height={24} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <FormInput
-          label="Name"
-          icon="person"
-          placeholder="Enter name"
-          value={name}
-          onChangeText={setName}
-          returnKeyType="next"
-        />
-
-        <FormInput
-          label="Email Address"
-          icon="email"
-          placeholder="Enter email address"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-          returnKeyType="next"
-        />
-
-        <FormInput
-          label="Phone Number"
-          icon="phone"
-          placeholder="Enter phone number"
-          keyboardType="phone-pad"
-          autoCapitalize="none"
-          value={phone}
-          onChangeText={setPhone}
-          returnKeyType="done"
-        />
-
-        <TouchableOpacity
-          activeOpacity={0.9}
-          disabled={loading}
-          style={styles.ctaBtn}
-          onPress={onSubmit}
+        {/* Remove KeyboardAvoidingView to prevent over-lifting. */}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          contentInset={{ bottom: insets.bottom }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: insets.bottom + 24,
+          }}
+          showsVerticalScrollIndicator={false}
         >
-          <LinearGradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            colors={[COLORS.green, COLORS.greenLight]}
-            style={styles.ctaGradient}
-          >
-            <Text style={styles.ctaText}>Save Details</Text>
-            {loading ? (
-              <ActivityIndicator
-                style={{ marginLeft: 8 }}
-                size="small"
-                color={COLORS.white}
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatarWrap}>
+              <Image
+                source={
+                  avatar ? { uri: avatar } : require('../../assets/LOGO.png')
+                }
+                style={styles.avatar}
               />
-            ) : (
-              <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} />
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
-      </ScrollView>
+              <TouchableOpacity style={styles.cameraBtn} onPress={pickImage}>
+                <CameraIcon width={24} height={24} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <FormInput
+            label="Name"
+            icon="person"
+            placeholder="Enter name"
+            value={name}
+            onChangeText={setName}
+            returnKeyType="next"
+          />
+
+          <FormInput
+            label="Email Address"
+            icon="email"
+            placeholder="Enter email address"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            returnKeyType="next"
+          />
+
+          <FormInput
+            label="Phone Number"
+            icon="phone"
+            placeholder="Enter phone number"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            value={phone}
+            onChangeText={setPhone}
+            returnKeyType="done"
+          />
+
+          <TouchableOpacity
+            activeOpacity={0.9}
+            disabled={loading}
+            style={styles.ctaBtn}
+            onPress={onSubmit}
+          >
+            <LinearGradient
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              colors={[COLORS.green, COLORS.greenLight]}
+              style={styles.ctaGradient}
+            >
+              <Text style={styles.ctaText}>Save Details</Text>
+              {loading ? (
+                <ActivityIndicator
+                  style={{ marginLeft: 8 }}
+                  size="small"
+                  color={COLORS.white}
+                />
+              ) : (
+                <ContinueIcon
+                  height={24}
+                  width={24}
+                  style={{ marginLeft: 8 }}
+                />
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

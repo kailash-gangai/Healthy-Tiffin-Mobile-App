@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-
 import { COLORS, SPACING } from '../../ui/theme';
 import HeaderGreeting from '../../components/HeaderGreeting';
 import StatChips from '../../components/StatChips';
@@ -19,11 +18,9 @@ import DishCard from '../../components/DishCard';
 import PriceSummary from '../../components/PriceSummary';
 import CTAButton from '../../components/CTAButton';
 import FitnessCarousel from '../../components/FitnessCarousel';
-
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { addItems, cartFLag } from '../../store/slice/cartSlice';
 import { upsertDay } from '../../store/slice/catalogSlice';
-
 import {
   getAllMetaobjects,
   getMetaObjectByHandle,
@@ -33,6 +30,11 @@ import { getAllArticles } from '../../shopify/queries/blogs';
 import AddonDishCard from '../../components/AddonDishCard';
 import SkeletonLoading from '../../components/SkeletonLoading';
 import EmptyState from '../../components/EmptyState';
+import {
+  buildEasternCutoff,
+  toUSEasternDate,
+  US_DAY_INDEX,
+} from '../../utils/ESTtime';
 
 type SectionKey = string;
 
@@ -46,7 +48,6 @@ interface CategoriesProps {
     image: string;
     price: string | number;
   }[];
-  // may or may not exist on your data
   _sectionType?: 'main' | 'addon';
 }
 
@@ -61,6 +62,9 @@ export type Item = {
   qty?: number;
   category?: string;
   price: string | number;
+  day?: string;
+  date?: string;
+  tiffinPlan?: number;
 };
 
 interface BlogProp {
@@ -147,6 +151,30 @@ function applyPriceThresholds(
   });
 }
 
+// Helper: convert hour value
+function formatHourValue(num: number) {
+  if (num === 0) return '12:00 AM';
+  if (num < 12) return `${num}:00 AM`;
+  if (num === 12) return '12:00 PM';
+  if (num > 12) return `${num - 12}:00 PM`;
+  return `${num}:00`;
+}
+
+// Helper: structure cutoff settings
+function structureCutoffData(raw: any[]) {
+  const obj: Record<string, any> = {};
+  raw.forEach(({ key, value }) => {
+    if (value === 'true' || value === 'false') {
+      obj[key] = value === 'true';
+    } else if (!isNaN(Number(value))) {
+      obj[key] = formatHourValue(Number(value));
+    } else {
+      obj[key] = value;
+    }
+  });
+  return obj;
+}
+
 const HomeScreen: React.FC = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
   const { isCartCleared, lines } = useAppSelector(state => state.cart);
@@ -159,21 +187,19 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [priceThreshold, setPriceThreshold] = useState<any[]>([]);
   const [blogs, setBlogs] = useState<BlogProp[]>([]);
   const [isLoading, setLoading] = useState(false);
+  const [menuCutOff, setMenuCutOff] = useState<Record<string, any>>({});
+  const [menuDisabled, setMenuDisabled] = useState(false);
 
   const [selectedItemsToAddOnCart, setSelectedItemsToAddOnCart] = useState<
     Item[]
   >([]);
   const [filteredIndex, setFilteredIndex] = useState(0);
-
-  // per-section open state
   const [openByKey, setOpenByKey] = useState<Record<SectionKey, boolean>>({});
+  const [tiffinPlan, setTiffinPlan] = useState<number>(1);
+
   const isOpen = (k: SectionKey) => openByKey[k] ?? true;
   const setOpen = (k: SectionKey, v: boolean) =>
     setOpenByKey(s => ({ ...s, [k]: v }));
-
-  // only MAIN: expand all visible main sections
-
-  const [tiffinPlan, setTiffinPlan] = useState<number>(1);
 
   const absoluteTodayIndex = useMemo(() => getAbsoluteTodayIndex(), []);
   const FILTERED_DAYS = useMemo(() => {
@@ -185,6 +211,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [absoluteTodayIndex, filteredIndex],
   );
   const currentDay = ALL_DAYS[absoluteDayIndex];
+  const lowerDay = currentDay.toLowerCase();
 
   const currentDayMetaObjectId = useMemo(
     () =>
@@ -223,7 +250,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [sortedCategories, priceThreshold],
   );
 
-  // keep addon logic intact
   const mergedCatalog = useMemo(
     () => [...updatedCategory, ...sortedAddons],
     [updatedCategory, sortedAddons],
@@ -232,7 +258,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const openAllMain = useCallback(() => {
     const next: Record<SectionKey, boolean> = {};
     updatedCategory.forEach(cat => {
-      // fallback to 'main' if _sectionType is absent in your data
       const t = (cat as any)._sectionType ?? 'main';
       const k = `${t}:${cat.key}`;
       next[k] = true;
@@ -247,7 +272,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     );
     return m;
   }, [categories]);
-
   const mainCats = useMemo(
     () => categories.map(s => s.key.toLowerCase()),
     [categories],
@@ -261,7 +285,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     () => selectedItemsToAddOnCart.some(i => i.type === 'addon'),
     [selectedItemsToAddOnCart],
   );
-
   const mealCost = useMemo(
     () =>
       selectedItemsToAddOnCart
@@ -269,7 +292,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         .reduce((total, item) => total + parseFloat(String(item.price)), 0),
     [selectedItemsToAddOnCart],
   );
-
   const addonCost = useMemo(
     () =>
       selectedItemsToAddOnCart
@@ -282,9 +304,74 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [selectedItemsToAddOnCart],
   );
 
+  // derive next tiffin plan from cart for current day
+  const nextPlanForDay = useMemo(() => {
+    const plans = lines
+      .filter(l => l.day === currentDay)
+      .map(l => Number(l.tiffinPlan) || 1);
+    const maxPlan = plans.length ? Math.max(...plans) : 0;
+    return maxPlan + 1;
+  }, [lines, currentDay]);
+
+  useEffect(() => {
+    setTiffinPlan(nextPlanForDay);
+  }, [nextPlanForDay]);
+
+  // sync local selection when items are removed from the cart
+  useEffect(() => {
+    setSelectedItemsToAddOnCart(prev =>
+      prev.filter(localItem =>
+        lines.some(
+          l =>
+            l.id === localItem.id &&
+            l.day === localItem.day &&
+            (Number(l.tiffinPlan) || 1) === (Number(localItem.tiffinPlan) || 1),
+        ),
+      ),
+    );
+  }, [lines]);
+
+  // validation uses cart+local for the current day
+  const dayCartItems = useMemo(
+    () => lines.filter(l => l.day === currentDay),
+    [lines, currentDay],
+  );
+
+  const combinedForDay = useMemo(() => {
+    return [
+      ...dayCartItems.map(i => ({
+        id: i.id,
+        type: i.type as 'main' | 'addon',
+        price: i.price,
+        category: String(i.category || '').toLowerCase(),
+        day: i.day,
+      })),
+      ...selectedItemsToAddOnCart.map(i => ({
+        id: i.id,
+        type: i.type,
+        price: i.price,
+        category: String(i.category || idToCat.get(i.id) || '').toLowerCase(),
+        day: i.day,
+      })),
+    ];
+  }, [dayCartItems, selectedItemsToAddOnCart, idToCat]);
+
+  const hasAnyMainDay = useMemo(
+    () => combinedForDay.some(i => i.type === 'main'),
+    [combinedForDay],
+  );
+
+  const addonCostDay = useMemo(
+    () =>
+      combinedForDay
+        .filter(i => i.type === 'addon')
+        .reduce((sum, i) => sum + (Number(i.price) || 0), 0),
+    [combinedForDay],
+  );
+
   const validation = useMemo(() => {
-    if (!hasAnyMain && hasAnyAddon) {
-      if (addonCost < 29)
+    if (!hasAnyMainDay && combinedForDay.some(i => i.type === 'addon')) {
+      if (addonCostDay < 29)
         return {
           ok: false,
           missing: [],
@@ -292,12 +379,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         };
       return { ok: true, missing: [], message: '' };
     }
-    if (hasAnyMain) {
+    if (hasAnyMainDay) {
       const missing = mainCats.filter(
-        c =>
-          !selectedItemsToAddOnCart.some(
-            i => (i.category || idToCat.get(i.id) || '').toLowerCase() === c,
-          ),
+        c => !combinedForDay.some(i => i.type === 'main' && i.category === c),
       );
       return {
         ok: missing.length === 0,
@@ -308,36 +392,30 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       };
     }
     return { ok: false, missing: [], message: '' };
-  }, [
-    hasAnyMain,
-    hasAnyAddon,
-    addonCost,
-    currentDay,
-    mainCats,
-    selectedItemsToAddOnCart,
-    idToCat,
-  ]);
+  }, [hasAnyMainDay, addonCostDay, currentDay, mainCats, combinedForDay]);
 
-  // MAIN ONLY: open all categories after adding a tiffin
   const handleAddNewTiffin = useCallback(() => {
-    setTiffinPlan(p => p + 1);
     dispatch(addItems(selectedItemsToAddOnCart as any));
     setSelectedItemsToAddOnCart([]);
     openAllMain();
+    // tiffinPlan auto-updates from cart via nextPlanForDay
   }, [dispatch, selectedItemsToAddOnCart, openAllMain]);
 
   const fetchMetaAndData = useCallback(async () => {
     setLoading(true);
     try {
-      const [mainList, addonList, thresholdList, blogResp] = await Promise.all([
-        getAllMetaobjects('main_menus'),
-        getAllMetaobjects('addon_menu'),
-        getAllMetaobjects('price_threshold'),
-        getAllArticles(),
-      ]);
+      const [mainList, addonList, thresholdList, blogResp, cutOffMenu] =
+        await Promise.all([
+          getAllMetaobjects('main_menus'),
+          getAllMetaobjects('addon_menu'),
+          getAllMetaobjects('price_threshold'),
+          getAllArticles(),
+          getAllMetaobjects('menu_cut_off_menu'),
+        ]);
 
       setDaysMeta(mainList ?? []);
       setAddonsMeta(addonList ?? []);
+
       if (thresholdList?.[0]?.id) {
         const priceMetaobject: any = await getMetaObjectByHandle(
           thresholdList[0].id,
@@ -362,6 +440,42 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         })) ?? [];
       setBlogs(blog);
 
+      // Cutoff meta
+      const single: any[] = await getMetaObjectByHandle(cutOffMenu?.[0]?.id);
+      const structured = structureCutoffData(single);
+      setMenuCutOff(structured);
+
+      // Disable flag
+      const disableKey = `disable_${lowerDay}_menu`;
+      if (structured[disableKey] === true) {
+        setMenuDisabled(true);
+        setCategories([]);
+        setAddonCategories([]);
+        setLoading(false);
+        return;
+      }
+
+      // US Eastern "today only" cutoff
+      const cutoffKey = `${lowerDay}_cut_off_time`;
+      const cutoffVal = structured[cutoffKey]; // e.g. "6:00 AM"
+      if (cutoffVal) {
+        const deviceNow = new Date();
+        const usNow = toUSEasternDate(deviceNow);
+        const usDayIdx = usNow.getDay(); // 0..6
+        const currentDayIndex = US_DAY_INDEX[lowerDay];
+        const cutoffUS = buildEasternCutoff(usNow, cutoffVal);
+        if (usDayIdx === currentDayIndex && usNow > cutoffUS) {
+          setMenuDisabled(true);
+          setCategories([]);
+          setAddonCategories([]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setMenuDisabled(false);
+
+      // Fetch categories
       const [mainCat, addOnCat] = await Promise.all([
         currentDayMetaObjectId
           ? expandCategoryFields(currentDayMetaObjectId)
@@ -370,6 +484,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           ? expandCategoryFields(addonsMetaObjectId)
           : Promise.resolve([]),
       ]);
+
       setCategories(mainCat);
       setAddonCategories(addOnCat);
 
@@ -384,20 +499,26 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     } finally {
       setLoading(false);
     }
-  }, [currentDay, currentDayMetaObjectId, addonsMetaObjectId, dispatch]);
+  }, [
+    currentDay,
+    currentDayMetaObjectId,
+    addonsMetaObjectId,
+    dispatch,
+    lowerDay,
+  ]);
 
-  console.log({ selectedItemsToAddOnCart, lines });
+  console.log({ lines, selectedItemsToAddOnCart, tiffinPlan, nextPlanForDay });
+
   useEffect(() => {
     if (isCartCleared || lines.length === 0) setSelectedItemsToAddOnCart([]);
     dispatch(cartFLag());
-    setTiffinPlan(1);
     if (currentDay !== 'Saturday' && currentDay !== 'Sunday') {
       fetchMetaAndData();
     } else {
       setCategories([]);
       setAddonCategories([]);
     }
-  }, [isCartCleared, dispatch, fetchMetaAndData, lines]);
+  }, [isCartCleared, dispatch, fetchMetaAndData, lines, currentDay]);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -420,12 +541,20 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           <OrderToggle index={tab} onChange={setTab} />
         </View>
 
-        {!categories.length &&
+        {menuDisabled && (
+          <EmptyState
+            key={'disabled-menu'}
+            currentDay={currentDay}
+            message="Menu not available for this day."
+          />
+        )}
+
+        {!menuDisabled &&
+          !categories.length &&
           currentDay !== 'Saturday' &&
           currentDay !== 'Sunday' && <SkeletonLoading count={5} />}
 
-        {/* Tab 0: MAIN categories only */}
-        {tab === 0 && (
+        {!menuDisabled && tab === 0 && (
           <View style={{ backgroundColor: COLORS.white }}>
             {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
               <EmptyState
@@ -434,9 +563,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 message="  Please check our weekday menu. Available Monday to Friday."
               />
             )}
-
             {updatedCategory.map(cat => {
-              // fallback to 'main' if data lacks _sectionType
               const sectionType =
                 ((cat as any)._sectionType as 'main' | 'addon') ?? 'main';
               const key = `${sectionType}:${cat.key}`;
@@ -473,8 +600,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           </View>
         )}
 
-        {/* Tab 1: addons only — unchanged */}
-        {tab === 1 && (
+        {!menuDisabled && tab === 1 && (
           <>
             {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
               <EmptyState
@@ -517,7 +643,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           </>
         )}
 
-        {validation.ok && (
+        {!menuDisabled && validation.ok && (
           <TouchableOpacity
             onPress={handleAddNewTiffin}
             style={styles.addNewTiffin}
@@ -527,35 +653,39 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           </TouchableOpacity>
         )}
 
-        <View
-          style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}
-        >
-          <PriceSummary
-            rows={[
-              ['Meal cost', toMoney(mealCost)],
-              ['Add on’s', toMoney(addonCost)],
-              ['Total', toMoney(mealCost + addonCost)],
-            ]}
-          />
-          <CTAButton
-            label={validation}
-            day={currentDay}
-            isDisabled={!validation.ok}
-            iconName="shopping-bag"
-            onPress={() => {
-              dispatch(addItems(selectedItemsToAddOnCart as any));
-              navigation.navigate('Cart');
-            }}
-            toast={{
-              type: 'success',
-              title: 'Added',
-              message: 'Items added to cart',
-              position: 'bottom',
-            }}
-          />
-        </View>
+        {!menuDisabled && (
+          <View
+            style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}
+          >
+            <PriceSummary
+              rows={[
+                ['Meal cost', toMoney(mealCost)],
+                ['Add on’s', toMoney(addonCost)],
+                ['Total', toMoney(mealCost + addonCost)],
+              ]}
+            />
+            <CTAButton
+              label={validation}
+              day={currentDay}
+              isDisabled={!validation.ok}
+              iconName="shopping-bag"
+              onPress={() => {
+                dispatch(addItems(selectedItemsToAddOnCart as any));
+                navigation.navigate('Cart');
+              }}
+              toast={{
+                type: 'success',
+                title: 'Added',
+                message: 'Items added to cart',
+                position: 'bottom',
+              }}
+            />
+          </View>
+        )}
 
-        {blogs?.length > 0 && <FitnessCarousel items={blogs} />}
+        {!menuDisabled && blogs?.length > 0 && (
+          <FitnessCarousel items={blogs} />
+        )}
       </ScrollView>
     </View>
   );

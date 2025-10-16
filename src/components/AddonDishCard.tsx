@@ -10,13 +10,14 @@ import {
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import EyeShow from '../assets/htf-icon/icon-eye.svg';
 import SkeletonLoading from './SkeletonLoading';
-import DeleteIcon from '../assets/htf-icon/icon-trans.svg'
+import DeleteIcon from '../assets/htf-icon/icon-trans.svg';
 type Dish = {
   id: string;
   title: string;
   price: string;
   image: string;
   description?: string;
+  type?: 'main' | 'addon';
   calories?: number;
   day?: string;
   selected?: boolean;
@@ -68,8 +69,9 @@ export default React.memo(function AddonDishCard({
       i.id === item.id &&
       i.variantId === item.variantId &&
       i.day === day &&
-      i.category === category,
-    [item.id, item.variantId, day, category],
+      i.category === category &&
+      i.type === 'addon',
+    [(item.id, item.variantId, day, category)],
   );
 
   const selectedEntry = useMemo(
@@ -187,7 +189,7 @@ export default React.memo(function AddonDishCard({
               disabled={!checked}
             >
               {qty <= 1 ? (
-               <DeleteIcon height={20} width={20} />
+                <DeleteIcon height={20} width={20} />
               ) : (
                 <Text style={s.pillBtnText}>−</Text>
               )}

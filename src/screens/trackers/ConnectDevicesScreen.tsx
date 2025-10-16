@@ -5,12 +5,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Alert,
   Platform,
   Linking,
+  BackHandler,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import { connectFitbit, getValidTokens } from '../../config/fitbitService';
@@ -18,16 +19,18 @@ import { initHealth } from '../../health/healthkit';
 import { COLORS as C } from '../../ui/theme';
 import FitbitLogo from '../../assets/logo-fitbit.svg';
 import AppleHealthLogo from '../../assets/logo-apple-health.svg';
+
 export default function ConnectDevicesScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState<any>(null);
   const redirected = useRef(false); // prevent loops
 
+  // Initial token check → go Home if already connected
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const t = await getValidTokens(); // load/refresh from Keychain
+        const t = await getValidTokens();
         if (!alive) return;
         setTokens(t);
         if (t && !redirected.current) {
@@ -42,17 +45,46 @@ export default function ConnectDevicesScreen({ navigation }: any) {
     return () => {
       alive = false;
     };
-  }, []); // no nav dep → run once
+  }, [navigation]);
+
+  // Android hardware back → Splash (not Home)
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') return () => {};
+
+      // 1) Catch physical back button
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+        return true; // consume event
+      });
+
+      // 2) Also guard against default "goBack" (gestures or system back fallback)
+      const removeBeforeRemove = navigation.addListener(
+        'beforeRemove',
+        (e: any) => {
+          // Intercept only the implicit back action
+          if (Platform.OS === 'android' && e.data.action?.type === 'GO_BACK') {
+            e.preventDefault();
+            navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+          }
+        },
+      );
+
+      return () => {
+        sub.remove();
+        removeBeforeRemove();
+      };
+    }, [navigation]),
+  );
 
   const onConnectFitbit = async () => {
-    if (Platform.OS == 'ios') {
+    if (Platform.OS === 'ios') {
       Alert.alert('Fitbit supported only on Android');
       return;
     }
     try {
       setLoading(true);
-      const t = await connectFitbit(); // OAuth + save tokens securely
-      console.log('connectFitbit res', t);
+      const t = await connectFitbit();
       setTokens(t);
       if (!redirected.current) {
         redirected.current = true;
@@ -71,13 +103,10 @@ export default function ConnectDevicesScreen({ navigation }: any) {
       Alert.alert('Apple Health supported only on IOS');
       return;
     }
-
     try {
-      // Triggers system prompt on first run. Returns fast if already authorized.
       await initHealth();
     } catch (e: any) {
       console.warn('Health init error', e);
-      // If permission was denied earlier, iOS won’t show the popup again.
       Alert.alert(
         'Permission needed',
         'Allow step access in Settings > Health > Data Access & Devices.',
@@ -96,8 +125,10 @@ export default function ConnectDevicesScreen({ navigation }: any) {
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
       <AppHeader
         title="Connect Fitness Devices"
+        // Header back button → Home
         onBack={() => navigation.navigate('Home')}
       />
+
       <View style={s.wrap}>
         <SectionTitle t="Connect To a Device" />
 
@@ -184,7 +215,6 @@ const s = StyleSheet.create({
     elevation: 4,
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  icon: { width: 44, height: 44, borderRadius: 10, resizeMode: 'contain' },
   title: { color: C.black, fontWeight: '800', fontSize: 16 },
   setup: { color: C.green, fontWeight: '800' },
 
