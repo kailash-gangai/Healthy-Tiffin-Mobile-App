@@ -6,11 +6,13 @@ import fitbitConnection from './slice/fitbitConnectionSlice';
 import days from './slice/daySlice';
 import favorite from './slice/favoriteSlice';
 import catalog from './slice/catalogSlice';
+import price from './slice/priceSlice';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persistReducer, persistStore } from 'redux-persist';
 
 const rootReducer = combineReducers({
+  price,
   cart,
   user,
   fitbitAvailability,

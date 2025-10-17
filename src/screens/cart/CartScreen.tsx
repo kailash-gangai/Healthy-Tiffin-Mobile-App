@@ -9,7 +9,6 @@ import {
   TextInput,
 } from 'react-native';
 
-
 import AppHeader from '../../components/AppHeader';
 import { COLORS as C } from '../../ui/theme';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
@@ -31,11 +30,14 @@ import MissingCategoryModal from '../../components/MissingCategoryModal';
 import CartIcon from '../../assets/htf-icon/icon-cart.svg';
 import InfoIcon from '../../assets/htf-icon/icon-info.svg';
 import TrashIcon from '../../assets/htf-icon/icon-trans.svg';
-import DownArrow from '../../assets/htf-icon/icon-down-arrow.svg'
-import CrossIcon from '../../assets/htf-icon/icon-cross.svg'
+import DownArrow from '../../assets/htf-icon/icon-down-arrow.svg';
+import CrossIcon from '../../assets/htf-icon/icon-cross.svg';
 
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
+
+const n = (v: any) => Number(v) || 0;
+const money = (v: number) => (Math.round(v * 100) / 100).toFixed(2);
 
 const catRank = (c?: string) => {
   const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
@@ -62,25 +64,24 @@ export default function CartScreen({ navigation }: any) {
   const [missingOpen, setMissingOpen] = useState(false);
   const { byDay } = useAppSelector(state => state.catalog);
   const { lines } = useAppSelector(state => state.cart);
-
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery'); // kept as-is
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
 
-  const handleAddFromModal = (payload: any) => {
-    dispatch(addItems([payload]));
-  };
-
   const mealCost = lines
     .filter(i => i.type === 'main')
     .reduce((s, x) => s + +x.price * x.qty, 0);
+  const uniqueDayCount = new Set(lines.map(it => it.day).filter(Boolean)).size;
+  const uniqueTiffinCount = new Set(
+    lines.map(it => it.tiffinPlan).filter(Boolean),
+  ).size;
   const addons = lines
     .filter(i => i.type === 'addon')
     .reduce((s, x) => s + +x.price * x.qty, 0);
 
   const nonMember = 0;
-  let tiffinPrice = 29;
+  let tiffinPrice = 29 * uniqueDayCount * uniqueTiffinCount;
   const hasAnyMain = useMemo(() => lines.some(l => l.type === 'main'), [lines]);
   const hasAnyAddon = useMemo(
     () => lines.some(l => l.type === 'addon'),
@@ -191,11 +192,7 @@ export default function CartScreen({ navigation }: any) {
   const onRemoveDayAddons = (d: string) =>
     dispatch(removeDayAddons({ day: d }));
 
-  const payDisabled = isEmpty || !!missingInfo || !!addonsMinInfo;
   const fmt = (n: number) => n.toFixed(2);
-  const uniqueDays = [
-    ...new Set(missingInfo && (missingInfo as any).map((m: any) => m.day)),
-  ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
@@ -225,9 +222,21 @@ export default function CartScreen({ navigation }: any) {
           <>
             {grouped.map(({ day, mains, addons, tiffinPlans }) => {
               const dayAddonsTotal = addons.reduce(
-                (s, x) => s + +x.price * x.qty,
+                (s, x) => s + Number(x.price || 0) * (x.qty ?? 1),
                 0,
               );
+
+              // per-day mains extras (priced mains)
+              const dayMainsExtra = mains
+                .filter(x => Number(x.price) > 0)
+                .reduce((s, x) => s + Number(x.price || 0) * (x.qty ?? 1), 0);
+
+              // base tiffin price = 29 * number of plans that day
+              const plansCount = new Set(mains.map(m => m.tiffinPlan)).size;
+              const dayBase = plansCount > 0 ? 29 * plansCount : 0;
+
+              const dayTotal = dayBase + dayMainsExtra + dayAddonsTotal;
+              const fmt = (n: number) => (Math.round(n * 100) / 100).toFixed(2);
 
               return (
                 <View key={day} style={s.dayCard}>
@@ -237,13 +246,16 @@ export default function CartScreen({ navigation }: any) {
                     activeOpacity={0.9}
                   >
                     <Text style={s.dayTitle}>{day} Summary</Text>
-                   {/* isOpen(day) ? 'chevron-up' : 'chevron-down'} */}
-                    <DownArrow height={30} width={20} 
-                     style={{
-                      transform: [
-                        { rotate: isOpen(day) ? '180deg' : '0deg' },
-                      ],
-                    }} />
+                    {/* isOpen(day) ? 'chevron-up' : 'chevron-down'} */}
+                    <DownArrow
+                      height={30}
+                      width={20}
+                      style={{
+                        transform: [
+                          { rotate: isOpen(day) ? '180deg' : '0deg' },
+                        ],
+                      }}
+                    />
                   </TouchableOpacity>
 
                   {isOpen(day) && (
@@ -257,7 +269,7 @@ export default function CartScreen({ navigation }: any) {
                               onPress={() => onRemoveDayMains(day)}
                               style={s.hdrTrashBtn}
                             >
-                            <TrashIcon height={20} width={20} />
+                              <TrashIcon height={20} width={20} />
                             </TouchableOpacity>
                           </View>
 
@@ -273,22 +285,24 @@ export default function CartScreen({ navigation }: any) {
                                 <Text style={s.planTitle}>
                                   Tiffin {plan.plan}
                                 </Text>
-                               <DownArrow
-  width={25}
-  height={25}
-  style={{
-    transform: [
-      { rotate: isPlanOpen(day, plan.plan) ? '180deg' : '0deg' },
-    ],
-  }}
-/>
+                                <DownArrow
+                                  width={25}
+                                  height={25}
+                                  style={{
+                                    transform: [
+                                      {
+                                        rotate: isPlanOpen(day, plan.plan)
+                                          ? '180deg'
+                                          : '0deg',
+                                      },
+                                    ],
+                                  }}
+                                />
 
-                             
-                                    {/* isPlanOpen(day, plan.plan)
+                                {/* isPlanOpen(day, plan.plan)
                                       ? 'chevron-up'
                                       : 'chevron-down'
                                   */}
-                              
                               </TouchableOpacity>
 
                               {isPlanOpen(day, plan.plan) && (
@@ -306,6 +320,7 @@ export default function CartScreen({ navigation }: any) {
                                               variantId: it.variantId,
                                               tiffinPlan:
                                                 it.tiffinPlan as number,
+                                              type: it.type,
                                             }),
                                           )
                                         }
@@ -313,9 +328,8 @@ export default function CartScreen({ navigation }: any) {
                                         accessibilityRole="button"
                                         accessibilityLabel="Remove item"
                                       >
-                            <TrashIcon height={15} width={15} />
-          {/* <CrossIcon width={25} height={25} stroke="red" /> */}
-                                      
+                                        <TrashIcon height={15} width={15} />
+                                        {/* <CrossIcon width={25} height={25} stroke="red" /> */}
                                       </TouchableOpacity>
 
                                       <View style={s.thumbWrap}>
@@ -323,11 +337,14 @@ export default function CartScreen({ navigation }: any) {
                                           source={{ uri: it.image }}
                                           style={s.imgMini}
                                         />
-                                        <View style={s.priceBadge}>
-                                          <Text style={s.priceText}>
-                                            ${it.price}
-                                          </Text>
-                                        </View>
+                                        {Number(it.price) > 0 ? (
+                                          <View style={s.priceBadge}>
+                                            <Text style={s.priceText}>
+                                              +{'('}${it.price}
+                                              {')'}
+                                            </Text>
+                                          </View>
+                                        ) : null}
                                       </View>
 
                                       <View style={s.cardContentMini}>
@@ -390,10 +407,10 @@ export default function CartScreen({ navigation }: any) {
                           ))}
 
                           {!missingInfo && (
-                            <View style={s.tiffinTotalBox}>
+                            <View style={[s.tiffinTotalBox, { marginTop: 8 }]}>
                               <Text style={s.tiffinTotalTxt}>
-                                Total for {day} ${tiffinPrice} + (${mealCost}) =
-                                ${mealCost + tiffinPrice}
+                                {day} total: ${fmt(dayBase)} + ($
+                                {fmt(dayMainsExtra)}) = ${fmt(dayTotal)}
                               </Text>
                             </View>
                           )}
@@ -409,7 +426,7 @@ export default function CartScreen({ navigation }: any) {
                               onPress={() => onRemoveDayAddons(day)}
                               style={s.hdrTrashBtn}
                             >
-                           <TrashIcon height={20} width={20} />
+                              <TrashIcon height={20} width={20} />
                             </TouchableOpacity>
                           </View>
 
@@ -425,6 +442,7 @@ export default function CartScreen({ navigation }: any) {
                                       id: it.id,
                                       variantId: it.variantId,
                                       tiffinPlan: it.tiffinPlan as number,
+                                      type: it.type,
                                     }),
                                   )
                                 }
@@ -432,8 +450,7 @@ export default function CartScreen({ navigation }: any) {
                                 accessibilityRole="button"
                                 accessibilityLabel="Remove add-on"
                               >
-                              <TrashIcon height={15} width={15} />
-
+                                <TrashIcon height={15} width={15} />
                               </TouchableOpacity>
 
                               <View style={s.thumbWrap}>
@@ -465,6 +482,7 @@ export default function CartScreen({ navigation }: any) {
                                           id: it.id,
                                           variantId: it.variantId,
                                           tiffinPlan: it.tiffinPlan as number,
+                                          type: it.type,
                                         }),
                                       );
                                     }}
@@ -480,6 +498,7 @@ export default function CartScreen({ navigation }: any) {
                                           id: it.id,
                                           variantId: it.variantId,
                                           tiffinPlan: it.tiffinPlan as number,
+                                          type: it.type,
                                         }),
                                       )
                                     }

@@ -170,7 +170,12 @@ export default function DishCard({
           <Text style={s.title} numberOfLines={1}>
             {item.title}
           </Text>
-          <Text style={s.price}>${item.price}</Text>
+          {Number(item.price) > 0 ? (
+            <Text style={s.price}>
+              +{'('}${item.price}
+              {')'}
+            </Text>
+          ) : null}
         </View>
 
         {/* New eye icon opens modal description */}

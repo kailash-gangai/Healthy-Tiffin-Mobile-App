@@ -16,7 +16,9 @@ import TrashIcon from '../assets/htf-icon/icon-trans.svg';
 import AddIcon from '../assets/htf-icon/icon-add.svg';
 import InfoIcon from '../assets/htf-icon/icon-info.svg';
 import Tiffin from '../assets/htf-icon/icon-myorder.svg';
-import CrossIcon from '../assets/htf-icon/icon-cross.svg'
+import CrossIcon from '../assets/htf-icon/icon-cross.svg';
+import { useAppSelector } from '../store/hooks';
+import { applyPriceThresholds } from '../screens/Home/HomeScreen';
 
 type DayName =
   | 'Monday'
@@ -70,11 +72,11 @@ export default function MissingCategoryModal({
     tiffinPlan: number;
   }) => void;
 }) {
+  const { raw } = useAppSelector(state => state.price);
   const days = useMemo(
     () => Array.from(new Set(missingList.map(m => m.day))),
     [missingList],
   );
-
   const [day, setDay] = useState<DayName>(days[0] || 'Wednesday');
 
   const plansForDay = useMemo(
@@ -93,11 +95,13 @@ export default function MissingCategoryModal({
     return (row?.missing ?? []).map(s => String(s).toUpperCase());
   }, [missingList, day, plan]);
 
-  const groups = useMemo(() => {
+  const _groups = useMemo(() => {
     const src = dataByDay[day] ?? [];
     const want = new Set(missingCats);
     return src.filter(g => want.has(String(g.key).toUpperCase()));
   }, [dataByDay, day, missingCats]);
+
+  const groups = applyPriceThresholds(_groups as any, raw);
 
   const Chip = ({
     label,
@@ -158,9 +162,7 @@ export default function MissingCategoryModal({
               style={s.iconBtn}
               hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
             >
-          <CrossIcon width={25} height={25} stroke="red" />
-
-
+              <CrossIcon width={25} height={25} stroke="red" />
             </TouchableOpacity>
           </View>
 
@@ -248,7 +250,12 @@ export default function MissingCategoryModal({
                         style={s.imgSm}
                       />
                       <View style={s.priceBadge}>
-                        <Text style={s.priceText}>${it.price}</Text>
+                        {Number(it.price) > 0 ? (
+                          <Text style={s.priceText}>
+                            +{'('}${it.price}
+                            {')'}
+                          </Text>
+                        ) : null}
                       </View>
                     </View>
 

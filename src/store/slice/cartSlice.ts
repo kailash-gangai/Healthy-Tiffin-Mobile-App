@@ -16,7 +16,12 @@ type AddPayload = {
 };
 
 type SetQtyPayload = { id: string; variantId?: string; qty: number };
-type RemovePayload = { id: string; variantId?: string; tiffinPlan: number };
+type RemovePayload = {
+  id: string;
+  variantId?: string;
+  tiffinPlan: number;
+  type: 'main' | 'addon';
+};
 
 type RemoveByDayPayload = { day: string };
 
@@ -118,11 +123,15 @@ const cartSlice = createSlice({
 
     // Decrease the quantity of an item
     decreaseItem: (s, a: PayloadAction<RemovePayload>) => {
-      const { id, variantId } = a.payload;
-      console.log({ id, variantId });
+      const { id, variantId, type, tiffinPlan } = a.payload;
+      console.log({ id, variantId, type });
 
       const existing = s.lines.find(
-        line => line.id === id && line.variantId === variantId,
+        line =>
+          line.id === id &&
+          line.variantId === variantId &&
+          line.type === type &&
+          tiffinPlan === line.tiffinPlan,
       );
 
       if (existing) {
