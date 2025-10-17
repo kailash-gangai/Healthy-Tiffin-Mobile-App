@@ -634,7 +634,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setAddonCategories([]);
     }
   }, [isCartCleared, dispatch, fetchMetaAndData, lines, currentDay]);
-
+  const tiffinSum = useMemo(
+    () => tiffinMainTotals.reduce((s, [, v]) => s + (Number(v) || 0), 0),
+    [tiffinMainTotals],
+  );
   // build summary rows with per-tiffin lines
   const summaryRows = useMemo(() => {
     const tiffinRows = tiffinMainTotals.map(
@@ -644,7 +647,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       ['Meal cost', toMoney(totalMealCostDay)],
       ['Add on’s', toMoney(addonsSubtotalDisplay)],
       ...tiffinRows,
-      ['Total', toMoney(totalMealCostDay + addonsSubtotalDisplay)],
+      ['Total', toMoney(totalMealCostDay + addonsSubtotalDisplay + tiffinSum)],
     ];
 
     return rows;
