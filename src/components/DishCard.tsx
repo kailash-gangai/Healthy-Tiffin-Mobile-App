@@ -16,6 +16,7 @@ import {
 import EyeShow from '../assets/htf-icon/icon-eye.svg';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import SkeletonLoading from './SkeletonLoading';
+import { EMPTY_STATE_URL } from '../constants';
 type Dish = {
   id: string;
   title: string;
@@ -143,7 +144,6 @@ export default function DishCard({
   };
 
   if (isLoading) return <SkeletonLoading />;
-
   return (
     <>
       {/* Whole row toggles selection now */}
@@ -163,7 +163,10 @@ export default function DishCard({
           {checked && <View style={s.radioDot} />}
         </TouchableOpacity>
 
-        <Image source={{ uri: item.image }} style={[s.thumb]} />
+        <Image
+          source={{ uri: item.image === null ? EMPTY_STATE_URL : item.image }}
+          style={[s.thumb]}
+        />
 
         {/* Tap anywhere selects; text not a button */}
         <View style={s.textContainer}>

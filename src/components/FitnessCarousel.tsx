@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../screens/navigation/types';
 import HealthFeedModal from './HealthFeedModal';
+import { EMPTY_STATE_URL } from '../constants';
 
 type Item = { id: string; title: string; image: any };
 
@@ -46,7 +47,12 @@ export default function FitnessCarousel({ items }: { items: any[] }) {
             accessibilityRole="button"
             accessibilityLabel={`Open ${item.title}`}
           >
-            <Image source={{ uri: item.image }} style={s.img} />
+            <Image
+              source={{
+                uri: item.image === null ? EMPTY_STATE_URL : item.image,
+              }}
+              style={s.img}
+            />
             <Text
               style={s.caption}
               numberOfLines={2}
