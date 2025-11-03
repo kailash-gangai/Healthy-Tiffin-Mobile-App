@@ -178,7 +178,7 @@ export default function StatsCard() {
 
 const s = StyleSheet.create({
   cardWrap: {
-    backgroundColor: COLORS.white,
+    backgroundColor: '#f6f6f8',
     alignItems: 'center',
     marginTop: -20,
     borderTopLeftRadius: RADIUS,

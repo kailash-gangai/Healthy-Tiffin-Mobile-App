@@ -327,7 +327,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               l.id === localItem.id &&
               l.day === localItem.day &&
               (Number(l.tiffinPlan) || 1) ===
-                (Number(localItem.tiffinPlan) || 1),
+              (Number(localItem.tiffinPlan) || 1),
           ),
       ),
     );
@@ -658,7 +658,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   ]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.white }}>
+    <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
       <ScrollView bounces={false}>
         <HeaderGreeting name="Sam" />
         <StatChips />
@@ -671,11 +671,11 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             padding: 4,
           }}
         >
+          <OrderToggle index={tab} onChange={setTab} />
           <DayTabs
             days={FILTERED_DAYS as string[]}
             onChange={setFilteredIndex}
           />
-          <OrderToggle index={tab} onChange={setTab} />
         </View>
 
         {menuDisabled && (
@@ -692,7 +692,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           currentDay !== 'Sunday' && <SkeletonLoading count={5} />}
 
         {!menuDisabled && tab === 0 && (
-          <View style={{ backgroundColor: COLORS.white }}>
+          <View >
             {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
               <EmptyState
                 key={'addon-menu'}
@@ -705,33 +705,38 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 ((cat as any)._sectionType as 'main' | 'addon') ?? 'main';
               const key = `${sectionType}:${cat.key}`;
               return (
+
                 <Section
                   key={key}
-                  hero={require('../../assets/banners/chana.jpg')}
+
                   title={cat.key.toUpperCase()}
-                  note={`Select from ${cat.value.length} options`}
+                  note={`Please Select One`}
                   open={isOpen(key)}
                   setOpen={(v: boolean) => setOpen(key, v)}
+
                 >
-                  {cat.value.map((d: any) => (
-                    <DishCard
-                      key={d.id}
-                      category={cat.key.toUpperCase()}
-                      day={currentDay}
-                      type="main"
-                      item={d as any}
-                      setSelectedItemsToAddOnCart={
-                        setSelectedItemsToAddOnCart as any
-                      }
-                      tiffinPlan={tiffinPlan}
-                      selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
-                      isLoading={isLoading}
-                      onChange={picked => {
-                        if (picked?.selected) setOpen(key, false);
-                      }}
-                    />
-                  ))}
+                  <View style={styles.gridWrap}>
+                    {cat.value.map((d: any) => (
+                      <DishCard
+                        key={d.id}
+                        category={cat.key.toUpperCase()}
+                        day={currentDay}
+                        type="main"
+                        item={d as any}
+                        setSelectedItemsToAddOnCart={
+                          setSelectedItemsToAddOnCart as any
+                        }
+                        tiffinPlan={tiffinPlan}
+                        selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
+                        isLoading={isLoading}
+                        onChange={picked => {
+                          if (picked?.selected) setOpen(key, false);
+                        }}
+                      />
+                    ))}
+                  </View>
                 </Section>
+
               );
             })}
           </View>
@@ -751,12 +756,13 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               return (
                 <Section
                   key={key}
-                  hero={require('../../assets/banners/chana.jpg')}
+
                   title={cat.key.toUpperCase()}
                   note={`Select from ${cat.value.length} options`}
                   open={isOpen(key)}
                   setOpen={(v: boolean) => setOpen(key, v)}
                 >
+                   <View style={styles.gridWrap}>
                   {cat.value.map(d => (
                     <AddonDishCard
                       key={d.id}
@@ -774,6 +780,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                       }}
                     />
                   ))}
+                  </View>
                 </Section>
               );
             })}
@@ -827,6 +834,14 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({
+  gridWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 8,
+    columnGap: 8,
+    marginTop: 8,
+  },
   pad: { paddingHorizontal: SPACING, marginTop: -34 },
   container: { padding: 10, marginLeft: 10, paddingTop: 15 },
   heading: { fontSize: 24, fontWeight: 'bold', color: '#333' },

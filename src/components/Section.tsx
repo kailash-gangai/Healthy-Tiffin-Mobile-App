@@ -1,30 +1,24 @@
-import React, { useImperativeHandle } from 'react';
-
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
-import { SHADOW } from '../ui/theme';
-import PlusIcon from '../assets/htf-icon/icon-add.svg';
-import MinusIcon from '../assets/htf-icon/icon-remove.svg';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { SHADOW, SPACING } from '../ui/theme';
+import ArrowUpIcon from '../assets/htf-icon/icon-up.svg';
+import ArrowDownIcon from '../assets/htf-icon/icon-down.svg';
 
 const COLORS = {
   bg: '#FFFFFF',
-  card: '#FFFFFF',
   text: '#232323',
-  sub: '#8E8E8E',
+  sub: '#9E9E9E',
   green: '#0B5733',
-  divider: '#EEEEEE',
-  shadow: 'rgba(0,0,0,0.08)',
+  border: '#F0F0F0',
+  mint: '#DFF3EB',
 };
 
 export type SectionProps = {
   title: string;
   note?: string;
-  hero: any;
   collapsed?: boolean;
   children?: React.ReactNode;
   onToggle?: (open: boolean) => void;
-
-  // new (controlled)
   open?: boolean;
   setOpen?: (v: boolean) => void;
 };
@@ -32,7 +26,6 @@ export type SectionProps = {
 export default function Section({
   title,
   note,
-  hero,
   collapsed = true,
   children,
   onToggle,
@@ -52,63 +45,75 @@ export default function Section({
 
   return (
     <View style={s.wrap}>
+      {/* HEADER */}
       <TouchableOpacity style={s.header} onPress={toggle} activeOpacity={0.8}>
-        <Image source={hero} style={s.hero} />
-        <View style={{ flex: 1 }}>
-          <View style={s.titleRow}>
-            <View style={s.dot} />
-            <Text style={s.title}>{title}</Text>
+        <Text style={s.title}>{title}:</Text>
+
+        {!!note && (
+          <View style={s.notePill}>
+            <Text style={s.noteText}>{note}</Text>
           </View>
-          {!!note && <Text style={s.note}>{note}</Text>}
-        </View>
-        <TouchableOpacity onPress={toggle} style={s.addBtn} activeOpacity={0.8}>
+        )}
+
+        <View style={s.iconBtn}>
           {open ? (
-            <MinusIcon width={24} height={24} />
+            <ArrowUpIcon width={14} height={14} />
           ) : (
-            <PlusIcon width={24} height={24} />
+            <ArrowDownIcon width={14} height={14} />
           )}
-        </TouchableOpacity>
+        </View>
       </TouchableOpacity>
 
-      {open && <View style={s.body}>{children}</View>}
+      {/* BODY */}
+      {open && <View style={s.body}><Text>{children}</Text></View>}
     </View>
   );
 }
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    marginVertical: 14,
-    borderColor: COLORS.green,
-    marginHorizontal: 16,
+    backgroundColor: COLORS.bg,
+    borderRadius: SPACING,
+    marginHorizontal: SPACING,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     ...SHADOW,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.divider,
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingVertical: 14,
   },
-  hero: {
-    width: 90,
-    height: 80,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+  title: {
+    flex: 1,
+    fontWeight: '700',
+    fontSize: 15,
+    color: COLORS.text,
   },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#17A34A' },
-  title: { fontWeight: '800', color: COLORS.text },
-  note: { marginTop: 6, color: COLORS.sub },
-  addBtn: {
+  notePill: {
+    backgroundColor: '#F3F3F3',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginHorizontal: 8,
+  },
+  noteText: {
+    fontSize: 14,
+    color: COLORS.text,
+  },
+  iconBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFF6',
+    backgroundColor: COLORS.mint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
   },
-  body: { paddingBottom: 12 },
+  body: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
 });

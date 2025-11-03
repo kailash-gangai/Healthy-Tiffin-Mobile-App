@@ -1,6 +1,5 @@
 import React, { useMemo, useCallback, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import DishDetailModal from './DishDetailModal';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
@@ -9,8 +8,9 @@ import {
 } from '../store/slice/favoriteSlice';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import EyeShow from '../assets/htf-icon/icon-eye.svg';
-import SkeletonLoading from './SkeletonLoading';
 import DeleteIcon from '../assets/htf-icon/icon-trans.svg';
+import SkeletonLoading from './SkeletonLoading';
+const width = Dimensions.get('window').width;
 type Dish = {
   id: string;
   title: string;
@@ -35,6 +35,7 @@ const COLORS = {
   borderStrong: '#D7E2DC',
   pill: '#F2F7F4',
   badge: '#0B5733',
+  shadow: 'rgba(0,0,0,0.08)',
 };
 
 function nowStr() {
@@ -44,7 +45,7 @@ function nowStr() {
 export default React.memo(function AddonDishCard({
   day,
   category,
-  type, // addons only
+  type,
   tiffinPlan,
   item,
   onChange,
@@ -64,6 +65,7 @@ export default React.memo(function AddonDishCard({
 }) {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
+
   const keyMatch = useCallback(
     (i: any) =>
       i.id === item.id &&
@@ -71,7 +73,7 @@ export default React.memo(function AddonDishCard({
       i.day === day &&
       i.category === category &&
       i.type === 'addon',
-    [(item.id, item.variantId, day, category)],
+    [item.id, item.variantId, day, category],
   );
 
   const selectedEntry = useMemo(
@@ -104,16 +106,7 @@ export default React.memo(function AddonDishCard({
       });
       onChange?.({ ...item, selected: false, liked: isFav });
     },
-    [
-      setSelectedItemsToAddOnCart,
-      keyMatch,
-      item,
-      category,
-      day,
-      tiffinPlan,
-      onChange,
-      isFav,
-    ],
+    [setSelectedItemsToAddOnCart, keyMatch, item, category, day, tiffinPlan, onChange, isFav],
   );
 
   const removeFromList = useCallback(() => {
@@ -123,7 +116,6 @@ export default React.memo(function AddonDishCard({
     onChange?.({ ...item, selected: false, liked: isFav });
   }, [setSelectedItemsToAddOnCart, keyMatch, onChange, item, isFav]);
 
-  // First tap => qty=1
   const onCardPress = useCallback(() => {
     if (!checked) addOrReplace(1);
   }, [checked, addOrReplace]);
@@ -163,61 +155,21 @@ export default React.memo(function AddonDishCard({
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={onCardPress}
-        style={[s.row, checked && { borderColor: COLORS.borderStrong }]}
+        style={[s.card, checked && { borderColor: COLORS.green }]}
       >
-        {/* Image with only price overlay */}
-        <View style={s.thumbWrap}>
+        {/* Image */}
+        <View style={s.imgWrap}>
           <Image source={{ uri: item.image }} style={s.thumb} />
           <View style={s.priceBadge}>
             <Text style={s.priceText}>${item.price}</Text>
           </View>
-        </View>
 
-        {/* Info + qty pill */}
-        <View style={s.infoCol}>
-          <Text style={s.title} numberOfLines={1}>
-            {item.title}
-          </Text>
-
-          <View style={s.qtyPill}>
-            <TouchableOpacity
-              onPress={e => {
-                e.stopPropagation();
-                qty <= 1 ? removeFromList() : decrement();
-              }}
-              style={[s.pillBtn, !checked && s.disabled]}
-              disabled={!checked}
-            >
-              {qty <= 1 ? (
-                <DeleteIcon height={20} width={20} />
-              ) : (
-                <Text style={s.pillBtnText}>−</Text>
-              )}
-            </TouchableOpacity>
-
-            <Text style={s.qtyNum}>{qty}</Text>
-
-            <TouchableOpacity
-              onPress={e => {
-                e.stopPropagation();
-                increment();
-              }}
-              style={s.pillBtn}
-            >
-              <Text style={s.pillBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* right column: eye + heart */}
-        <View style={s.rightCol}>
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
               setOpen(true);
             }}
-            style={s.circleBtn}
-            accessibilityLabel="View details"
+            style={[s.iconBtn, { left: 8, top: 8 }]}
           >
             <EyeShow width={16} height={16} />
           </TouchableOpacity>
@@ -227,10 +179,7 @@ export default React.memo(function AddonDishCard({
               e.stopPropagation();
               onHeartPress();
             }}
-            style={s.circleBtn}
-            accessibilityLabel={
-              isFav ? 'Remove from favorites' : 'Add to favorites'
-            }
+            style={[s.iconBtn, { right: 8, top: 8 }]}
           >
             <HeartIcon
               width={16}
@@ -239,12 +188,48 @@ export default React.memo(function AddonDishCard({
             />
           </TouchableOpacity>
         </View>
+
+        {/* Title */}
+        <View style={s.textWrap}>
+          <Text style={s.title} numberOfLines={2}>
+            {item.title}
+          </Text>
+        </View>
+
+        {/* Qty Control */}
+        <View style={s.qtyPill}>
+          <TouchableOpacity
+            onPress={e => {
+              e.stopPropagation();
+              qty <= 1 ? removeFromList() : decrement();
+            }}
+            style={[s.pillBtn, !checked && s.disabled]}
+            disabled={!checked}
+          >
+            {qty <= 1 ? (
+              <DeleteIcon height={20} width={20} />
+            ) : (
+              <Text style={s.pillBtnText}>−</Text>
+            )}
+          </TouchableOpacity>
+
+          <Text style={s.qtyNum}>{qty}</Text>
+
+          <TouchableOpacity
+            onPress={e => {
+              e.stopPropagation();
+              increment();
+            }}
+            style={s.pillBtn}
+          >
+            <Text style={s.pillBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
 
       <DishDetailModal
         visible={open}
         onClose={() => setOpen(false)}
-        onShare={() => {}}
         onToggleLike={onHeartPress}
         liked={isFav}
         dish={item as any}
@@ -254,44 +239,53 @@ export default React.memo(function AddonDishCard({
 });
 
 const s = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    marginHorizontal: 10,
-    marginTop: 10,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
+  card: {
+    width: (width / 2) - 40,
+    height: width / 2 + 40,
+    borderRadius: 14,
   },
-
-  /* image block */
-  thumbWrap: { position: 'relative' },
-  thumb: { width: 56, height: 56, borderRadius: 10, resizeMode: 'cover' },
+  imgWrap: {
+    position: 'relative',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  thumb: {
+    width: width / 2 - 40,
+    height: width / 2 - 40,
+    resizeMode: 'cover',
+  },
   priceBadge: {
     position: 'absolute',
-    right: 4,
-    bottom: 4,
+    bottom: 6,
+    right: 6,
+    backgroundColor: COLORS.green,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
-    backgroundColor: COLORS.badge,
   },
   priceText: { color: COLORS.white, fontSize: 10, fontWeight: '700' },
-
-  /* middle info */
-  infoCol: { flex: 1, marginLeft: 10 },
+  iconBtn: {
+    position: 'absolute',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  textWrap: { marginTop: 10, minHeight: 32 },
   title: { fontSize: 13, fontWeight: '700', color: COLORS.text },
-
   qtyPill: {
-    marginTop: 6,
-    alignSelf: 'flex-start',
+    marginTop: 10,
+    alignSelf: 'center',
     height: 28,
     borderRadius: 14,
     backgroundColor: COLORS.pill,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 6,
     gap: 6,
   },
@@ -313,18 +307,5 @@ const s = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: COLORS.text,
-  },
-
-  /* right side */
-  rightCol: { marginLeft: 8, gap: 6 },
-  circleBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
 });

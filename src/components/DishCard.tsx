@@ -5,23 +5,21 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Animated,
+  Dimensions,
 } from 'react-native';
 import DishDetailModal from './DishDetailModal';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import {
-  selectIsWishlisted,
-  toggleWishlist,
-} from '../store/slice/favoriteSlice';
+import { selectIsWishlisted, toggleWishlist } from '../store/slice/favoriteSlice';
 import EyeShow from '../assets/htf-icon/icon-eye.svg';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
-import SkeletonLoading from './SkeletonLoading';
 import { EMPTY_STATE_URL } from '../constants';
+import SkeletonLoading from './SkeletonLoading';
+const width = Dimensions.get('window').width;
 type Dish = {
   id: string;
   title: string;
-  price: string; // string per your data
-  image: string; // URL string per your data
+  price: string;
+  image: string;
   description?: string;
   calories?: number;
   day?: string;
@@ -30,15 +28,15 @@ type Dish = {
   tags?: string[];
   liked?: boolean;
 };
+
 const COLORS = {
   text: '#232323',
   sub: '#9E9E9E',
   green: '#0B5733',
-  rowBg: '#F0FBF4',
-  divider: '#EDEDED',
-  backdrop: 'rgba(0,0,0,0.35)',
-  accent: '#F6A868',
   white: '#FFFFFF',
+  lightGray: '#EDEDED',
+  veg: '#A6CE39',
+  nonveg: '#6A3A1D',
 };
 
 export default function DishCard({
@@ -51,17 +49,7 @@ export default function DishCard({
   setSelectedItemsToAddOnCart,
   selectedItemsToAddOnCart,
   isLoading,
-}: {
-  category: string;
-  day: string;
-  type: 'main' | 'addon';
-  item: Dish;
-  onChange?: (d: Dish) => void;
-  tiffinPlan?: number;
-  setSelectedItemsToAddOnCart?: any;
-  selectedItemsToAddOnCart: any;
-  isLoading?: boolean;
-}) {
+}: any) {
   const dispatch = useAppDispatch();
 
   const checked = React.useMemo(
@@ -77,41 +65,27 @@ export default function DishCard({
   );
 
   const [open, setOpen] = useState(false);
-  const isFav = useAppSelector(
-    selectIsWishlisted(item.id, item.variantId, category, day),
-  );
+  const isFav = useAppSelector(selectIsWishlisted(item.id, item.variantId, category, day));
 
-  // SINGLE SELECT per day+category
-  // SINGLE or MULTI select by type
   const toggleSelection = () => {
     const date = new Intl.DateTimeFormat('en-US').format(new Date());
-    const itemWithMeta: any = {
-      ...item,
-      type,
-      category,
-      day,
-      date,
-      tiffinPlan,
-    };
+    const itemWithMeta = { ...item, type, category, day, date, tiffinPlan };
     const nextChecked = !checked;
 
     setSelectedItemsToAddOnCart?.((prev: any[]) => {
       if (type === 'addon') {
-        // multi-select: add/remove only this item
         return nextChecked
           ? [...prev, itemWithMeta]
           : prev.filter(
-              i =>
-                !(
-                  i.id === item.id &&
-                  i.variantId === item.variantId &&
-                  i.day === day &&
-                  i.category === category
-                ),
-            );
+            i =>
+              !(
+                i.id === item.id &&
+                i.variantId === item.variantId &&
+                i.day === day &&
+                i.category === category
+              ),
+          );
       }
-
-      // type === 'main' → single-select within same day+category (do not touch addons)
       const withoutMainGroup = prev.filter(
         i => !(i.type === 'main' && i.day === day && i.category === category),
       );
@@ -144,70 +118,66 @@ export default function DishCard({
   };
 
   if (isLoading) return <SkeletonLoading />;
+
   return (
     <>
-      {/* Whole row toggles selection now */}
       <TouchableOpacity
-        activeOpacity={0.85}
+        activeOpacity={0.9}
         onPress={toggleSelection}
-        style={[s.row, checked && { backgroundColor: COLORS.rowBg }]}
+        style={s.card}
       >
-        {/* Radio UI (visual only; logic uses `checked`) */}
-        <TouchableOpacity
-          onPress={toggleSelection}
-          style={[s.radio, checked && s.radioOn]}
-          activeOpacity={0.85}
-          accessibilityRole="radio"
-          accessibilityState={{ selected: checked }}
-        >
-          {checked && <View style={s.radioDot} />}
-        </TouchableOpacity>
+        {/* Dish Image */}
+        <View style={s.imageWrap}>
+          <Image
+            source={{ uri: item.image || EMPTY_STATE_URL }}
+            style={s.image}
+          />
 
-        <Image
-          source={{ uri: item.image === null ? EMPTY_STATE_URL : item.image }}
-          style={[s.thumb]}
-        />
+          {/* Heart */}
+          <TouchableOpacity onPress={onHeartPress} style={s.heartBtn}>
+            <HeartIcon
+              width={20}
+              height={20}
+              fill={isFav ? '#FF4D4D' : 'rgba(255,255,255,0.8)'}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setOpen(true)} style={s.eyeBtn} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="View details" > <EyeShow width={20} height={20} /> </TouchableOpacity>
 
-        {/* Tap anywhere selects; text not a button */}
-        <View style={s.textContainer}>
-          <Text style={s.title} numberOfLines={1}>
-            {item.title}
+          {/* Selection circle */}
+          <Text style={[s.radio, checked && s.radioOn]}>
+            {checked && <Text style={s.radioDot} />}
           </Text>
-          {Number(item.price) > 0 ? (
-            <Text style={s.price}>
-              +{'('}${item.price}
-              {')'}
-            </Text>
-          ) : null}
+
+
         </View>
 
-        {/* New eye icon opens modal description */}
-        <TouchableOpacity
-          onPress={() => setOpen(true)}
-          style={s.iconBtn}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="View details"
-        >
-          <EyeShow width={24} height={24} />
-        </TouchableOpacity>
+        <View style={s.tagContainer}>
+          {item.tags?.slice(0, 2).map((tag, idx) => (
+            <View
+              key={idx}
+              style={[
+                s.tag,
+                tag.toLowerCase() === 'veg' && s.tagVeg,
+                tag.toLowerCase() === 'nv' && s.tagNV,
+                tag.toLowerCase() === 'fodmap' && s.tagFODMAP,
+                tag.toLowerCase() === 'vgn' && s.tagVGN,
+              ]}
+            >
+              <Text style={s.tagText}>{tag.toUpperCase()}</Text>
+            </View>
+          ))}
+        </View>
+        {/* Product Info */}
+        <View style={[s.textWrap, { flexDirection: 'row', justifyContent: 'space-between' }]}>
+          <Text style={s.title} numberOfLines={2}>
+            {item.title || 'Product Name'}
 
-        {/* Favorite stays as-is */}
-        <TouchableOpacity
-          onPress={onHeartPress}
-          style={s.iconBtn}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isFav ? 'Remove from favorites' : 'Add to favorites'
-          }
-        >
-          <HeartIcon
-            width={24}
-            height={24}
-            fill={isFav ? '#FF0000' : '#CCCCCC'}
-          />
-        </TouchableOpacity>
+          </Text>
+          <Text style={s.price}>
+            + ${item.price || '0.00'}
+          </Text>
+        </View>
+
       </TouchableOpacity>
 
       <DishDetailModal
@@ -222,61 +192,109 @@ export default function DishCard({
 }
 
 const s = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 12,
-    marginTop: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#EEF1EE',
-    backgroundColor: COLORS.white,
+  card: {
+    width: (width / 2) - 40,
+    height: width / 2 + 40,
+    borderRadius: 14,
   },
-  textContainer: { flex: 1, paddingRight: 8 },
-  // Radio visual
+  imageWrap: {
+    position: 'relative',
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  image: {
+    width: width / 2 - 40,
+    height: width / 2 - 40,
+    resizeMode: 'cover',
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 14,
+    padding: 6,
+  },
+  eyeBtn: {
+    position: 'absolute',
+    top: 8,
+    left: 48,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 14,
+    padding: 6,
+  },
   radio: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
     width: 20,
     height: 20,
     borderRadius: 10,
-    borderWidth: 1.4,
-    borderColor: '#C7D0C9',
+    borderWidth: 1.6,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
-    backgroundColor: COLORS.white,
   },
-  radioOn: { borderColor: COLORS.green },
+  radioOn: {
+    borderColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
+  },
   radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: COLORS.green,
   },
-  thumb: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    marginRight: 10,
-    resizeMode: 'cover',
-  },
-  title: { flex: 1, fontWeight: '700', color: COLORS.text },
-  heartWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  tagContainer: {
+    position: 'absolute',
+    top: width / 2 - 50,
+    right: 0,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
+    zIndex: 10,
   },
-  iconBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginHorizontal: 4,
+    backgroundColor: '#f7c612',
+    borderWidth: 2,
+    borderColor: '#fff',
+    marginBottom: 4,
   },
-  price: { fontSize: 14, color: 'gray', marginTop: 4 },
-
-  // keep existing modal/skeleton styles below (unchanged)...
+  tagVeg: { backgroundColor: '#A6CE39' },
+  tagNV: { backgroundColor: '#6A3A1D' },
+  tagFODMAP: { backgroundColor: '#A5B6A5' },
+  tagVGN: { backgroundColor: '#e58d2a' },
+  tagText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  textWrap: {
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingTop: 12,
+    paddingBottom: 8,
+    flexWrap: 'wrap',
+    marginTop: 6,
+  },
+  title: {
+    flex: 1,
+    fontWeight: '700',
+    fontSize: 14,
+    color: '#232323',
+    marginRight: 6,
+  },
+  price: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9E9E9E',
+    alignSelf: 'flex-start',
+  },
 });

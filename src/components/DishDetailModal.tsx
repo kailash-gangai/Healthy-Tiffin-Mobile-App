@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -8,13 +8,26 @@ import {
   TouchableOpacity,
   ScrollView,
   Pressable,
+  Animated,
+  PanResponder,
+  Dimensions,
   Alert,
 } from 'react-native';
 import Share from 'react-native-share';
 import Clipboard from '@react-native-clipboard/clipboard';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import ShearIcon from '../assets/htf-icon/icon-shre.svg';
-import CloseIcon from '../assets/htf-icon/icon-close.svg';
+
+const { height } = Dimensions.get('window');
+
+const COLORS = {
+  backdrop: 'rgba(0,0,0,0.45)',
+  white: '#FFFFFF',
+  text: '#1E1E1E',
+  sub: '#8F8F8F',
+  green: '#0B5733',
+  border: '#EEEEEE',
+};
 
 type Dish = {
   title: string;
@@ -25,17 +38,6 @@ type Dish = {
   tags?: string[];
   description?: string;
   liked?: boolean;
-};
-
-const COLORS = {
-  bg: 'rgba(0,0,0,0.55)',
-  white: '#FFFFFF',
-  text: '#1E1E1E',
-  sub: '#8F8F8F',
-  green: '#0B5733',
-  accent: '#F6A868',
-  border: '#EEEEEE',
-  shadow: 'rgba(0,0,0,0.18)',
 };
 
 export default function DishDetailModal({
@@ -51,180 +53,237 @@ export default function DishDetailModal({
   liked?: boolean;
   dish: Dish;
 }) {
-  // share handler
+  const translateY = useRef(new Animated.Value(height)).current; // start off-screen
+
+
+
   const handleShare = async () => {
     try {
       const url = `https://healthytiffin-dev.myshopify.com/products/${dish.handle}`;
-      await Share.open({
-        url,
-        title: 'Share Dish',
-      });
+      await Share.open({ url, title: 'Share Dish' });
     } catch (err: any) {
-      if (err?.message?.includes('User did not share')) return;
-      Alert.alert('Error', 'Share failed.');
+      if (!err?.message?.includes('User did not share')) {
+        Alert.alert('Error', 'Share failed.');
+      }
     }
   };
 
-  // copy link handler
   const handleCopyLink = () => {
     Clipboard.setString(dish.image || '');
     Alert.alert('Copied', 'Link copied to clipboard.');
   };
 
+  const handleAddToCart = () => {
+    onClose(); // close modal after adding
+  };
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+        damping: 18,
+        stiffness: 120,
+      }).start();
+    } else {
+      Animated.timing(translateY, {
+        toValue: height,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <Pressable style={s.backdrop} onPress={onClose} />
-      <View style={s.wrap}>
-        <View style={s.card}>
-          <TouchableOpacity
-            style={s.close}
-            onPress={onClose}
-            activeOpacity={0.9}
-          >
-            <CloseIcon width={33} height={33} />
-          </TouchableOpacity>
+      <Animated.View
+        style={[s.sheet, { transform: [{ translateY }] }]}
 
-          <View style={s.imgFrame}>
-            <Image source={{ uri: dish.image }} style={s.img} />
-          </View>
+      >
+        <View style={s.handle} />
 
-          <View style={s.titleRow}>
+
+
+        {/* Scrollable content */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 120 }}
+        >
+          {/* Header */}
+          <View style={s.headerRow}>
             <Text style={s.title} numberOfLines={2}>
-              {dish.title}
+              {dish.title || 'Product Name'}
             </Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity onPress={handleShare} hitSlop={8}>
-                <ShearIcon width={24} height={24} />
+            <View style={s.actions}>
+              <TouchableOpacity onPress={handleShare}>
+                <ShearIcon width={22} height={22} />
               </TouchableOpacity>
-
-              <TouchableOpacity onPress={handleCopyLink} hitSlop={8}>
-                <Text style={{ fontSize: 18, color: '#666' }}>⧉</Text>
+              <TouchableOpacity onPress={handleCopyLink}>
+                <Text style={s.copy}>⧉</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity onPress={onToggleLike} hitSlop={8}>
-                <HeartIcon
-                  width={30}
-                  height={30}
-                  fill={liked ? '#FF0000' : '#CCCCCC'}
-                />
+              <TouchableOpacity onPress={onToggleLike}>
+                <HeartIcon width={26} height={26} fill={liked ? '#FF0000' : '#C7C7C7'} />
               </TouchableOpacity>
             </View>
           </View>
 
-          <Text style={s.kcal}>
-            <Text style={s.kcalNum}>{dish.calories}</Text>
-            <Text style={s.kcalUnit}> CALORIES</Text>
-          </Text>
+          {/* Image */}
+          <Image source={{ uri: dish.image }} style={s.image} />
 
-          <View
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <View style={s.tags}>
-              {(dish.tags || ['High Protein', 'Low carb', '150 g']).map(t => (
-                <View key={t} style={s.tag}>
-                  <Text style={s.tagTxt}>{t}</Text>
+          {/* Tags */}
+          <View style={s.tagWrap}>
+            {(dish.tags || ['VEG', 'VGN', 'NV', 'FODMAP', 'PLATE METHOD'])
+              .slice(0, 5)
+              .map(t => (
+                <View key={t} style={[s.tag, getTagColor(t)]}>
+                  <Text style={s.tagText}>{t}</Text>
                 </View>
               ))}
-            </View>
-            <Text style={{ color: 'gray' }}>${dish.price}</Text>
           </View>
 
-          <ScrollView
-            contentContainerStyle={{ paddingBottom: 8 }}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={s.desc}>
-              {dish.description ||
-                `Savor the burst of summer flavors with each bite. This dish is perfect for picnics, barbecues, or as a light and satisfying lunch.`}
-            </Text>
-          </ScrollView>
+          {/* Description */}
+          <Text style={s.desc}>
+            {dish.description ||
+              'Lorem ipsum dolor sit amet consectetur. Amet aliquam scelerisque ut quisque non. Non adipiscing suspendisse eget nulla tempus eget malesuada at aliquam.'}
+          </Text>
+
+          {/* Nutrition Stats */}
+          <View style={s.nutritionWrap}>
+            {[
+              { label: 'Calories', value: '431 kcal', icon: '🔥' },
+              { label: 'Protein', value: '38 g', icon: '💪' },
+              { label: 'Total Carbs', value: '4.1 g', icon: '🥔' },
+              { label: 'Sugar', value: '0.9 g', icon: '🍬' },
+              { label: 'Cholesterol', value: '4.1 g', icon: '❤️' },
+              { label: 'Potassium', value: '125 mg', icon: '🧂' },
+            ].map((n, i) => (
+              <View key={i} style={s.nutriBox}>
+                <Text style={s.nutriIcon}>{n.icon}</Text>
+                <Text style={s.nutriValue}>{n.value}</Text>
+                <Text style={s.nutriLabel}>{n.label}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+
+        {/* FIXED BUTTON (non-scrollable) */}
+        <View style={s.footer}>
+          <TouchableOpacity style={s.addBtn} onPress={handleAddToCart} activeOpacity={0.9}>
+            <Text style={s.addText}>Add to Cart</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
     </Modal>
-  );
+  );  
+}
+
+function getTagColor(tag: string) {
+  switch (tag.toLowerCase()) {
+    case 'veg':
+      return { backgroundColor: '#A6CE39' };
+    case 'vgn':
+      return { backgroundColor: '#F2B740' };
+    case 'nv':
+      return { backgroundColor: '#6A3A1D' };
+    case 'fodmap':
+      return { backgroundColor: '#A5B6A5' };
+    default:
+      return { backgroundColor: '#E5E5E5' };
+  }
 }
 
 const s = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: COLORS.bg },
-  wrap: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 16,
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.backdrop,
   },
-  card: {
-    position: 'relative',
-    borderRadius: 18,
-    backgroundColor: COLORS.white,
-    padding: 16,
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-  },
-  close: {
+  sheet: {
     position: 'absolute',
-    top: -14,
-    right: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  imgFrame: {
-    borderRadius: 14,
-    padding: 6,
+    bottom: 0,
+    width: '100%',
     backgroundColor: COLORS.white,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-    marginBottom: 12,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: height * 0.9,
+    paddingTop: 8,
+    paddingHorizontal: 20,
   },
-  img: { width: '100%', height: 200, borderRadius: 10, resizeMode: 'cover' },
-  titleRow: {
+  handle: {
+    width: 50,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#E0E0E0',
+    alignSelf: 'center',
+    marginVertical: 10,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  title: {
-    color: COLORS.text,
-    fontWeight: '800',
-    fontSize: 18,
-    flex: 1,
-    paddingRight: 10,
+  title: { fontSize: 18, fontWeight: '700', color: COLORS.text, flex: 1 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  copy: { fontSize: 20, color: '#777' },
+  image: {
+    width: '100%',
+    height: 200,
+    borderRadius: 14,
+    marginVertical: 14,
+    resizeMode: 'cover',
   },
-  kcal: { marginTop: 8 },
-  kcalNum: { color: COLORS.green, fontWeight: '800', fontSize: 20 },
-  kcalUnit: {
-    color: COLORS.sub,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginLeft: 2,
-    fontSize: 11,
-  },
-  tags: {
+  tagWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
+    gap: 6,
+    marginBottom: 10,
   },
   tag: {
-    backgroundColor: COLORS.green,
-    borderRadius: 16,
-    paddingVertical: 6,
+    borderRadius: 12,
+    paddingVertical: 4,
     paddingHorizontal: 10,
   },
-  tagTxt: { color: '#fff', fontWeight: '700', fontSize: 12 },
-  desc: { color: COLORS.sub, marginTop: 12, lineHeight: 20 },
+  tagText: { color: '#fff', fontWeight: '700', fontSize: 11 },
+  desc: {
+    color: COLORS.sub,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  nutritionWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
+  },
+  nutriBox: {
+    width: '30%',
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
+    padding: 10,
+    alignItems: 'center',
+  },
+  nutriIcon: { fontSize: 18, marginBottom: 4 },
+  nutriValue: { fontWeight: '700', fontSize: 13, color: COLORS.text },
+  nutriLabel: { fontSize: 12, color: COLORS.sub },
+
+  /* Fixed Add Button */
+  footer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 20,
+    paddingBottom: 25,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#EEE',
+  },
+  addBtn: {
+    backgroundColor: COLORS.green,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addText: { color: COLORS.white, fontWeight: '700', fontSize: 16 },
 });

@@ -6,53 +6,67 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
-
-import { COLORS } from '../ui/theme';
 import ArrowLeftIcon from '../assets/htf-icon/icon-left.svg';
 import ArrowRightIcon from '../assets/htf-icon/icon-right.svg';
+import { COLORS, SHADOW, SPACING } from '../ui/theme';
 
 type Props = {
-  days: string[]; // e.g. ['Thursday','Friday','Saturday','Sunday']
-  onChange?: (i: number) => void; // index in this filtered list
+  days: string[];
+  onChange?: (i: number) => void;
 };
 
-const ITEM_W = 200;
+const ITEM_W = 60;
 
 export default function DayTabs({ days, onChange }: Props) {
   const listRef = useRef<FlatList<string>>(null);
   const WEEK = [
-    'sunday',
     'monday',
     'tuesday',
     'wednesday',
     'thursday',
     'friday',
     'saturday',
+    'sunday',
   ];
 
-  // today within the PROVIDED list: if today exists, pick it, else fall back to 0
+  // filter out weekend
+  const filteredDays = useMemo(
+    () => days.filter(d => !['saturday', 'sunday'].includes(d.toLowerCase())),
+    [days]
+  );
+
   const todayIdx = useMemo(() => {
-    const js = new Date().getDay(); // 0=Sun
-    const i = days.map(d => d.toLowerCase()).indexOf(WEEK[js]);
+    const js = new Date().getDay();
+    const i = filteredDays.map(d => d.toLowerCase()).indexOf(WEEK[js]);
     return i >= 0 ? i : 0;
-  }, [days]);
+  }, [filteredDays]);
 
   const [active, setActive] = useState(todayIdx);
 
   const dateForDayName = (name: string) => {
     const idx = WEEK.indexOf(name.toLowerCase());
     const now = new Date();
-    const sunday = new Date(now);
-    sunday.setDate(now.getDate() - now.getDay()); // start of this week
-    const d = new Date(sunday);
-    d.setDate(sunday.getDate() + (idx >= 0 ? idx : 0));
-    const m = d.toLocaleString('en-US', { month: 'short' });
-    return `${d.getDate()} ${m}`;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + idx);
+    return { day: String(d.getDate()).padStart(2, '0'), month: d.toLocaleString('en-US', { month: 'long' }) };
   };
 
+  const weekRangeLabel = useMemo(() => {
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const fmt = (d: Date) =>
+      `${String(d.getDate()).padStart(2, '0')} ${d.toLocaleString('en-US', {
+        month: 'long',
+      })}`;
+    return `${fmt(monday)} - ${fmt(sunday)} ${monday.getFullYear()}`;
+  }, []);
+
   useEffect(() => {
-    // center initial
     requestAnimationFrame(() => {
       listRef.current?.scrollToIndex({
         index: todayIdx,
@@ -75,96 +89,145 @@ export default function DayTabs({ days, onChange }: Props) {
 
   const renderItem = ({ item, index }: { item: string; index: number }) => {
     const isActive = index === active;
-    if (!isActive) {
-      return (
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => select(index)}
-          style={s.dimItem}
-        >
-          <Text style={s.dimText}>{item}</Text>
-        </TouchableOpacity>
-      );
-    }
+    const { day } = dateForDayName(item);
     return (
-      <View style={s.activeWrap}>
-        <Text style={s.badge}>{index === todayIdx ? 'TODAY' : ''}</Text>
-        {/* No past days in the list, so left chevron disables at 0 */}
-        <TouchableOpacity
-          style={[s.chev, { left: 12 }]}
-          onPress={() => select(Math.max(0, index - 1))}
-          disabled={index === 0}
-        >
-          <ArrowLeftIcon width={24} height={24} />
-        </TouchableOpacity>
-
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => select(index)}
+        style={[
+          s.dayItem,
+          
+        ]}
+      >
+        <Text style={[s.dayName, isActive && s.activeDayName]}>
+          {item.slice(0, 3).toUpperCase()}
+        </Text>
         <View
-          style={{
-            alignItems: 'center',
-          }}
+          style={[
+            s.dateBox,
+            isActive ? s.dateBoxActive : s.dateBoxInactive,
+          ]}
         >
-          <Text style={s.day}>{item}</Text>
-          <Text style={s.date}>{dateForDayName(item)}</Text>
+          <Text
+            style={[s.dateText, isActive && s.dateTextActive]}
+          >
+            {day}
+          </Text>
+          <View style={s.dot} />
         </View>
-
-        <TouchableOpacity
-          style={[s.chev, { right: 12 }]}
-          onPress={() => select(Math.min(days.length - 1, index + 1))}
-          disabled={index === days.length - 1}
-        >
-          <ArrowRightIcon width={24} height={24} />
-        </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
-    <FlatList
-      ref={listRef}
-      horizontal
-      data={days}
-      renderItem={renderItem}
-      keyExtractor={(d, i) => `${d}-${i}`}
-      getItemLayout={(_, i) => ({
-        length: ITEM_W,
-        offset: ITEM_W * i,
-        index: i,
-      })}
-      initialScrollIndex={todayIdx}
-      showsHorizontalScrollIndicator={false}
-    />
+    <View style={s.wrapper}>
+      <View style={s.header}>
+        <View style={s.iconWrap}>
+          <ArrowLeftIcon width={16} height={16} />
+        </View>
+        <Text style={s.rangeText}>{weekRangeLabel}</Text>
+        <View style={s.iconWrap}>
+          <ArrowRightIcon width={16} height={16} color={COLORS.green} />
+        </View>
+      </View>
+
+      <FlatList
+        ref={listRef}
+        horizontal
+        data={filteredDays}
+        renderItem={renderItem}
+        keyExtractor={(d, i) => `${d}-${i}`}
+        getItemLayout={(_, i) => ({
+          length: ITEM_W,
+          offset: ITEM_W * i,
+          index: i,
+        })}
+        initialScrollIndex={todayIdx}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={s.listContainer}
+      />
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  dimItem: {
-    width: ITEM_W,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: '#EDEDED',
+  wrapper: {
+    marginHorizontal: SPACING,
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    ...SHADOW
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 14,
+  },
+  iconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#d7f3e7',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 6,
   },
-  dimText: { color: '#D0D0D0', fontSize: 18, fontWeight: '800' },
-  activeWrap: {
-    width: ITEM_W,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: COLORS.green,
+  rangeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+  },
+  listContainer: {
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  dayItem: {
+    width: 64,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 'auto',
   },
-  badge: {
-    position: 'absolute',
-    top: 2,
-    left: 80,
+  dayName: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#eef5f0ff',
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 6,
   },
-  chev: { position: 'absolute', top: 20, padding: 6 },
-  day: { color: '#fff', fontSize: 15, fontWeight: '800', marginTop: 10 },
-  date: { color: '#F6D873', fontSize: 12, fontWeight: '700', marginTop: 2 },
+  activeDayName: {
+    color: '#8A8A8A',
+  },
+  dateBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  dateBoxActive: {
+    backgroundColor: '#FFCA40',
+  },
+  dateBoxInactive: {
+    // borderWidth: 1.5,
+    // borderColor: '#FFCA40',
+    // backgroundColor: '#FFFFFF',
+  },
+  dateText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#000',
+  },
+  dateTextActive: {
+    color: '#FFFFFF',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFCA40',
+    position: 'absolute',
+    bottom: 6,
+  },
+
 });
