@@ -87,13 +87,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
       };
       try {
         const response = await loginCustomer(userData);
-        if (response?.customerAccessTokenCreate?.customerUserErrors) {
-          setIsloading(false);
-          Alert.alert(
-            'Error',
-            response.customerAccessTokenCreate.customerUserErrors[0]?.message,
-          );
-        }
+
         if (
           response?.customerAccessTokenCreate?.customerAccessToken?.accessToken
         ) {
@@ -130,12 +124,12 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleGoogleLogin = async () => {
     try {
-     const a = await GoogleSignin.hasPlayServices({
+      const a = await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      console.log(a,"aa")
+      console.log(a, "aa")
       const so = await GoogleSignin.signOut();
-      console.log(so,"singout")
+      console.log(so, "singout")
       const signInResult = await GoogleSignin.signIn();
       console.log('signInResult', signInResult);
       const user = signInResult?.data?.user;
@@ -273,9 +267,9 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
           <CircleBtn
             bg="#1877F2"
             icon={<Facebook width={30} height={30} />}
-            onPress={() => {}}
+            onPress={() => { }}
           />
-          <InstaBtn onPress={() => {}} />
+          <InstaBtn onPress={() => { }} />
           <CircleBtn
             bg="#EA4335"
             icon={<Google width={30} height={40} />}
@@ -284,7 +278,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
           <CircleBtn
             bg="#000000"
             icon={<Apple height={30} width={30} />}
-            onPress={() => {}}
+            onPress={() => { }}
           />
         </View>
         {/* Footer */}

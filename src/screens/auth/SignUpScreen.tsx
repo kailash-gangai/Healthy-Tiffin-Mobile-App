@@ -43,7 +43,10 @@ import Facebook from '../../assets/htf-icon/fb.svg';
 import Insta from '../../assets/htf-icon/insta.svg';
 import Google from '../../assets/htf-icon/google.svg';
 import Apple from '../../assets/htf-icon/apple.svg';
-
+import PasswoedIcon from '../../assets/htf-icon/icon-passwoed.svg';
+import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
+import UserIcon from '../../assets/htf-icon/icon-user.svg';
+import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 GoogleSignin.configure({
   webClientId:
     '678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd.apps.googleusercontent.com',
@@ -234,10 +237,10 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         <View onLayout={onLayoutAt('name')}>
           <FormInput
             label="Full Name"
-            icon="person"
+            icon={<UserIcon width={24} height={24} />}
             placeholder="Enter full name"
             value={name}
-            onChangeText={setName}
+            onChangeText={setName}  
             autoCapitalize="words"
             returnKeyType="next"
             onFocus={() => ensureVisible('name')}
@@ -252,7 +255,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         <View onLayout={onLayoutAt('pass')}>
           <FormInput
             label="Password"
-            icon="unlocked"
+            icon={<PasswoedIcon width={24} height={24} />}
             placeholder="Enter password"
             secure
             value={pass}
@@ -270,7 +273,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         <View onLayout={onLayoutAt('email')}>
           <FormInput
             label="Email Address"
-            icon="email"
+             icon={<EmailIcon width={24} height={24} />}
             placeholder="Enter email address"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -306,11 +309,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                 color={COLORS.white}
               />
             ) : (
-              <FontAwesome5
-                iconStyle="solid"
-                name="sign-in-alt"
-                size={18}
-                color={COLORS.white}
+              <ContinueIcon
+                width={24}
+                height={24}
                 style={{ marginLeft: 8 }}
               />
             )}
@@ -383,7 +384,7 @@ const InstaBtn: React.FC<InstaBtnProps> = ({ onPress }) => (
       ]}
       style={styles.circle}
     >
-      <Fontisto name="instagram" size={20} color="#ffffff" />
+      <Insta height={30} width={30}/>
     </LinearGradient>
   </TouchableOpacity>
 );
