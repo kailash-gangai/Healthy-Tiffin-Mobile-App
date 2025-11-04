@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import PlusIcon from '../../assets/htf-icon/icon-add.svg';
+import PlusIcon from '../../assets/htf-icon/icon-plus.svg';
+import RightArrowIcon from '../../assets/htf-icon/icon-right-arriw.svg';
 import {
   ScrollView,
   View,
@@ -625,7 +626,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   ]);
 
   useEffect(() => {
-    if (isCartCleared || lines.length === 0) setSelectedItemsToAddOnCart([]);
+    // if (isCartCleared || lines.length === 0) setSelectedItemsToAddOnCart([]);
     dispatch(cartFLag());
     if (currentDay !== 'Saturday' && currentDay !== 'Sunday') {
       fetchMetaAndData();
@@ -657,6 +658,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     A_LA_CARTE_BASE,
   ]);
   console.log({
+    lines,
     categories,
     openByKey,
     selectedItemsToAddOnCart,
@@ -665,7 +667,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
       <ScrollView bounces={false}>
         <HeaderGreeting name="Sam" />
-        <StatChips />
+        {/* <StatChips /> */}
 
         <View
           style={{
@@ -798,17 +800,44 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         )}
 
         {/* per-tiffin add */}
-        {!menuDisabled && tiffinValidation.ok && (
-          <TouchableOpacity
-            onPress={handleAddNewTiffin}
-            style={styles.addNewTiffin}
-          >
-            <PlusIcon width={24} height={24} />
-            <Text style={styles.newTiffinText}>Add new tiffin</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.dualButtonWrap}>
+          {!menuDisabled && tiffinValidation.ok && (
+            <TouchableOpacity
+              onPress={handleAddNewTiffin}
+              activeOpacity={0.8}
+              style={[
+                styles.buttonBase,
+                styles.addNewTiffin,
+                styles.halfButton,
+                !tiffinValidation.ok && styles.fullButton,
+              ]}
+            >
+              <PlusIcon width={16} height={16} fill="#0B5733" />
+              <Text style={styles.newTiffinText}>Add another tiffin</Text>
+            </TouchableOpacity>
+          )}
 
-        {!menuDisabled && (
+          <TouchableOpacity
+            onPress={() => {
+              setFilteredIndex(i => Math.min(i + 1, FILTERED_DAYS.length - 1));
+              dispatch(addItems(selectedItemsToAddOnCart as any));
+              openAllMain();
+            }}
+            activeOpacity={0.8}
+            style={[
+              styles.buttonBase,
+              styles.goToNextDay,
+              !tiffinValidation.ok || menuDisabled
+                ? styles.fullButton
+                : styles.halfButton,
+            ]}
+          >
+            <Text style={styles.goToNextText}>Go to next day</Text>
+            <RightArrowIcon width={16} height={16} fill="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* {!menuDisabled && (
           <View
             style={[styles.pad, { marginTop: 24, marginBottom: 32, gap: 16 }]}
           >
@@ -831,11 +860,11 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               }}
             />
           </View>
-        )}
-
+        )} */}
+        {/* 
         {!menuDisabled && blogs?.length > 0 && (
           <FitnessCarousel items={blogs} />
-        )}
+        )} */}
       </ScrollView>
     </View>
   );
@@ -855,25 +884,56 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: SPACING, marginTop: -34 },
   container: { padding: 10, marginLeft: 10, paddingTop: 15 },
   heading: { fontSize: 24, fontWeight: 'bold', color: '#333' },
-  addNewTiffin: {
-    display: 'flex',
+  dualButtonWrap: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 20,
+    marginBottom: 20,
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+
+  buttonBase: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    borderColor: 'green',
-    borderWidth: 2,
-    padding: 10,
-    borderRadius: 40,
-    backgroundColor: 'white',
-    width: 350,
-    margin: 'auto',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 10, // perfect pill shape
   },
-  circleIcon: { fontSize: 20, color: 'green' },
+
+  halfButton: {
+    flex: 1,
+  },
+
+  fullButton: {
+    flex: 1,
+    width: '100%',
+  },
+
+  addNewTiffin: {
+    borderColor: '#0B5733',
+    backgroundColor: '#d0ece2',
+  },
+
   newTiffinText: {
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    fontSize: 16,
-    color: 'green',
+    color: '#22774fff',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+
+  goToNextDay: {
+    borderColor: '#0B5733',
+    backgroundColor: '#32be84',
+  },
+
+  goToNextText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });
