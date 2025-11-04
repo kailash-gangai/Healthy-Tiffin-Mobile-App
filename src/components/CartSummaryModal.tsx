@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
     Modal,
     View,
@@ -9,9 +9,20 @@ import {
     StyleSheet,
     Dimensions,
     Pressable,
+    LayoutAnimation,
+    UIManager,
+    Platform,
 } from 'react-native';
-
+import ArrowUp from '../assets/htf-icon/icon-up.svg';
+import ArrowDown from '../assets/htf-icon/icon-down.svg';
+import TrashIcon from '../assets/htf-icon/icon-trans.svg';
+import { SHADOW } from '../ui/theme';
+import LinearGradient from 'react-native-linear-gradient';
 const { height } = Dimensions.get('window');
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const COLORS = {
     white: '#FFFFFF',
@@ -25,15 +36,24 @@ const COLORS = {
     red: '#FF6B6B',
 };
 
-export default function CartSummaryModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export default function CartSummaryModal({
+    visible,
+    onClose,
+}: {
+    visible: boolean;
+    onClose: () => void;
+}) {
     const translateY = useRef(new Animated.Value(height)).current;
+    const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
+    const [selectedType, setSelectedType] = useState<'Steel' | 'ECO'>('Steel');
 
     useEffect(() => {
         if (visible) {
             Animated.spring(translateY, {
                 toValue: 0,
                 useNativeDriver: true,
-                damping: 20,
+                damping: 18,
+                stiffness: 120,
             }).start();
         } else {
             Animated.timing(translateY, {
@@ -44,35 +64,33 @@ export default function CartSummaryModal({ visible, onClose }: { visible: boolea
         }
     }, [visible]);
 
-    return (
-        <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-            <Pressable style={s.backdrop} onPress={onClose} />
-            <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-                <View style={s.handle} />
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-                    <Text style={s.title}>Cart Summary</Text>
+    const toggleExpand = (day: string) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpanded(prev => ({ ...prev, [day]: !prev[day] }));
+    };
 
-                    {/* Container Type */}
-                    <Text style={s.label}>Select container type</Text>
-                    <View style={s.toggleWrap}>
-                        <TouchableOpacity style={[s.toggleBtn, s.toggleActive]}>
-                            <Text style={[s.toggleText, s.toggleTextActive]}>Steel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={s.toggleBtn}>
-                            <Text style={s.toggleText}>ECO</Text>
-                        </TouchableOpacity>
+    const DayBlock = ({ day, items }: { day: string; items: string[] }) => {
+        const isOpen = expanded[day];
+        return (
+            <View style={s.dayCard}>
+                <TouchableOpacity
+                    style={s.dayHeader}
+                    activeOpacity={0.8}
+                    onPress={() => toggleExpand(day)}
+                >
+                    <Text style={s.dayText}>{day}</Text>
+                    <View style={s.priceTag}>
+                        <Text style={s.priceText}>$36.00</Text>
                     </View>
+                    <View style={s.arrowBox}>
+                        <Text style={{ color: COLORS.green }}>{isOpen ? <ArrowDown height={24} width={24} /> : <ArrowUp height={24} width={24} />}</Text>
+                    </View>
+                </TouchableOpacity>
 
-                    {/* Order Day Block */}
-                    <View style={s.dayCard}>
-                        <View style={s.dayHeader}>
-                            <Text style={s.dayText}>24 Oct, 2025 | Thursday</Text>
-                            <View style={s.priceTag}>
-                                <Text style={s.priceText}>$36.00</Text>
-                            </View>
-                        </View>
-
-                        {[1, 2, 3].map(i => (
+                {isOpen && (
+                    <View>
+                        <View style={s.divider} />
+                        {items.map((_, i) => (
                             <View key={i} style={s.itemRow}>
                                 <View style={s.thumb} />
                                 <View style={{ flex: 1 }}>
@@ -80,47 +98,107 @@ export default function CartSummaryModal({ visible, onClose }: { visible: boolea
                                     <Text style={s.productPrice}>$36.00</Text>
                                 </View>
                                 <TouchableOpacity style={s.deleteBtn}>
-                                    <Text style={s.deleteIcon}>🗑️</Text>
+                                    <Text style={s.deleteIcon}><TrashIcon height={24} width={24} /></Text>
                                 </TouchableOpacity>
                             </View>
                         ))}
                     </View>
+                )}
+            </View>
+        );
+    };
 
-                    {/* Another Day */}
-                    <View style={s.dayCard}>
-                        <View style={s.dayHeader}>
-                            <Text style={s.dayText}>25 Oct, 2025 | Friday</Text>
-                            <View style={s.priceTag}>
-                                <Text style={s.priceText}>$36.00</Text>
-                            </View>
-                        </View>
+
+    return (
+        <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+            <Pressable style={s.backdrop} onPress={onClose} />
+            <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}
+            >
+                <View style={s.handle} />
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                >
+                    <Text style={s.title}>Cart Summary</Text>
+
+                    {/* Container Type (toggleable) */}
+                    <Text style={s.label}>Select container type</Text>
+                    <View style={s.toggleWrap}>
+                        {['Steel', 'ECO'].map((opt, i) => {
+                            const isActive = selectedType === opt;
+                            return (
+                                <LinearGradient
+                                    key={opt}
+                                    colors={isActive ? ['#f2c113', '#e2b517'] : ['#f3f3f3', '#f3f3f3']} // Active gradient or inactive gradient
+                                    start={{ x: 0, y: 0 }} // Start gradient from top
+                                    end={{ x: 0, y: 1 }} // End gradient at the bottom
+                                    style={[s.toggleBtn]} // Apply gradient to active button
+                                >
+                                    <TouchableOpacity
+                                        onPress={() => setSelectedType(opt)}    
+                                        style={s.toggleBtnContent}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Text style={[s.toggleText, isActive && s.toggleTextActive]}>
+                                            {opt}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </LinearGradient>
+                            );
+                        })}
                     </View>
 
-                    {/* Summary */}
-                    <View style={s.summaryBox}>
-                        <Text style={s.note}>Minimum order total has to be $29 to process</Text>
-                        <View style={s.summaryRow}>
-                            <Text style={s.subLabel}>Subtotal</Text>
-                            <Text style={s.subValue}>$108</Text>
+
+                    {/* Collapsible Day Blocks */}
+                    <DayBlock day="24 Oct, 2025 | Thursday" items={['1', '2', '3']} />
+                    <DayBlock day="25 Oct, 2025 | Friday" items={['1']} />
+
+                    {/* Cart Summary */}
+                    <View style={s.summaryCard}>
+                        <View style={s.noticeBox}>
+                            <Text style={s.noticeText}>
+                                Minimum order total has to be $29 to process
+                            </Text>
                         </View>
+
                         <View style={s.summaryRow}>
-                            <Text style={s.subLabel}>Shipping Cost (+)</Text>
-                            <Text style={s.subValue}>$10.85</Text>
+                            <Text style={s.label}>Subtotal</Text>
+                            <Text style={s.value}>$108</Text>
                         </View>
+
                         <View style={s.summaryRow}>
-                            <Text style={s.subLabel}>Discount (−)</Text>
-                            <Text style={s.subValue}>$9.00</Text>
+                            <Text style={s.label}>Shipping Cost (+)</Text>
+                            <Text style={s.value}>$10.85</Text>
                         </View>
+
                         <View style={s.summaryRow}>
-                            <Text style={[s.subLabel, { fontWeight: '700' }]}>Total Payable</Text>
-                            <Text style={[s.subValue, { fontWeight: '700' }]}>$88.15</Text>
+                            <Text style={s.label}>Discount (−)</Text>
+                            <Text style={s.value}>$9.00</Text>
                         </View>
+
+                        <View style={s.divider} />
+
+                        <View style={s.summaryRow}>
+                            <Text style={s.totalLabel}>Total Payable</Text>
+                            <Text style={s.totalValue}>$88.15</Text>
+                        </View>
+
                     </View>
+
+
+                    <LinearGradient
+                        colors={['#5FBC9B', '#1E9E64']} // Set gradient colors (green shades)
+                        start={{ x: 0, y: 0 }} // Start position of the gradient
+                        end={{ x: 0, y: 1 }} // End position of the gradient (horizontal gradient)
+                        style={s.orderBtn} // Apply the gradient to the button
+                    >
+                        {/* Bottom Order Button */}
+                        <TouchableOpacity style={s.orderBtnContent} activeOpacity={0.9} onPress={onClose}>
+                            <Text style={s.orderText}>Place an Order ($88.15)</Text>
+                        </TouchableOpacity>
+                    </LinearGradient>
                 </ScrollView>
 
-                <TouchableOpacity style={s.orderBtn} activeOpacity={0.9} onPress={onClose}>
-                    <Text style={s.orderText}>Place an Order ($88.15)</Text>
-                </TouchableOpacity>
             </Animated.View>
         </Modal>
     );
@@ -135,7 +213,7 @@ const s = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         width: '100%',
-        backgroundColor: COLORS.white,
+        backgroundColor: '#f7f7f9',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         padding: 20,
@@ -154,39 +232,65 @@ const s = StyleSheet.create({
         marginBottom: 12,
     },
     title: { fontSize: 16, fontWeight: '700', color: COLORS.black, marginBottom: 10 },
-    label: { fontSize: 13, color: COLORS.gray, marginBottom: 8 },
+    label: { fontSize: 13, color: COLORS.black, marginBottom: 8 },
     toggleWrap: {
         flexDirection: 'row',
         borderRadius: 10,
         overflow: 'hidden',
         marginBottom: 20,
+        backgroundColor: '#f3f3f3',
+        padding: 2,
     },
+
     toggleBtn: {
         flex: 1,
-        paddingVertical: 10,
-        alignItems: 'center',
-        backgroundColor: COLORS.lightGray,
+        borderRadius: 10,
     },
-    toggleActive: { backgroundColor: COLORS.yellow },
-    toggleText: { fontWeight: '600', color: COLORS.gray },
-    toggleTextActive: { color: COLORS.white },
+    toggleBtnContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+    },
+
+    toggleText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333', // Default text color
+    },
+    toggleTextActive: {
+        color: '#fff', // Active text color
+    },
     dayCard: {
         backgroundColor: COLORS.white,
-        borderRadius: 16,
+        borderRadius: 22,
         padding: 12,
         marginBottom: 14,
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    dayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    dayText: { fontWeight: '600', color: COLORS.black },
+    dayHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    dayText: { fontWeight: '600', color: COLORS.black, flex: 1 },
     priceTag: {
         backgroundColor: COLORS.black,
         paddingVertical: 4,
         paddingHorizontal: 10,
         borderRadius: 8,
+        marginHorizontal: 8,
     },
     priceText: { color: COLORS.white, fontWeight: '600', fontSize: 12 },
+    arrowBox: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        backgroundColor: '#d7f3e7',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     itemRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -194,7 +298,13 @@ const s = StyleSheet.create({
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: COLORS.border,
     },
-    thumb: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#EEE', marginRight: 10 },
+    thumb: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#EEE',
+        marginRight: 10,
+    },
     productName: { fontSize: 13, fontWeight: '600', color: COLORS.black },
     productPrice: { fontSize: 12, color: COLORS.gray },
     deleteBtn: {
@@ -206,34 +316,67 @@ const s = StyleSheet.create({
         borderRadius: 15,
     },
     deleteIcon: { fontSize: 14 },
-    summaryBox: {
-        backgroundColor: '#F9F9F9',
-        borderRadius: 14,
+    note: { fontSize: 12, color: COLORS.gray, marginBottom: 10 },
+    summaryCard: {
+        backgroundColor: '#fff',
+        borderTopEndRadius: 22,
+        borderTopStartRadius: 22,
         padding: 14,
         marginTop: 12,
+        ...SHADOW
     },
-    note: {
-        fontSize: 12,
-        color: COLORS.gray,
-        marginBottom: 10,
+    noticeBox: {
+        backgroundColor: '#ececee',
+        borderRadius: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        marginBottom: 12,
+    },
+    noticeText: {
+        fontSize: 14,
+        color: '#000000',
+        textAlign: 'center',
     },
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 6,
+        marginBottom: 8,
     },
-    subLabel: { fontSize: 13, color: COLORS.gray },
-    subValue: { fontSize: 13, color: COLORS.black },
+
+    value: { fontSize: 13, color: '#111', fontWeight: '700' },
+
+    totalLabel: { fontSize: 14, fontWeight: '700', color: '#111' },
+    totalValue: { fontSize: 15, fontWeight: '800', color: '#000' },
+
     orderBtn: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: COLORS.green,
-        paddingVertical: 16,
+        borderRadius: 8,
+        marginTop: 20,
         alignItems: 'center',
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
+        justifyContent: 'center',
+
     },
-    orderText: { color: COLORS.white, fontWeight: '700', fontSize: 15 },
+    orderBtnContent: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 15,
+    },
+
+
+    orderText: { color: COLORS.white, fontWeight: '700', fontSize: 18 },
+    divider: {
+        height: 1,
+        backgroundColor: 'rgba(0,0,0,0.06)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 0.5 },
+        shadowOpacity: 0.08,
+        shadowRadius: 1.5,
+        elevation: 1,
+        marginTop: 10,
+        marginBottom: 10,
+        borderRadius: 1,
+    },
+
+
+
 });

@@ -30,9 +30,9 @@ export default function OrderToggle({ index = 0, onChange }: Props) {
       >
         {leftActive ? (
           <LinearGradient
-            colors={['#FFC83C', '#FDBA2D']}
+            colors={['#f2c113', '#e2b517']}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            end={{ x: 0, y: 1 }}
             style={[s.gradient, { borderRadius: 8 }]}
           >
             <Text style={[s.text, s.textOn]}>Tiffin $29+</Text>
@@ -53,9 +53,9 @@ export default function OrderToggle({ index = 0, onChange }: Props) {
       >
         {rightActive ? (
           <LinearGradient
-            colors={['#FFC83C', '#FDBA2D']}
+            colors={['#f2c113', '#e2b517']}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            end={{ x: 0, y: 1 }}
             style={[s.gradient, { borderRadius: 8 }]}
           >
             <Text style={[s.text, s.textOn]}>A La Carte</Text>
