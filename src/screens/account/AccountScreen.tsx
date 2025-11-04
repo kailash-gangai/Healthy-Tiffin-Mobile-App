@@ -101,7 +101,7 @@ const AccountScreen: React.FC<Props> = ({ navigation }) => {
                         <StatsCard />
                         <View style={s.wrap}>
                               <View style={s.header}>
-                                    <Image source={image ? { uri: image } : require('../../../assets/images.png')}  style={s.avatar} />
+                                    <Image source={image ? { uri: image } : require('../../assets/images.png')}  style={s.avatar} />
                                     <View style={{ flex: 1 }}>
                                           <Text style={s.name}>{user.name}</Text>
                                           <TouchableOpacity onPress={() => {
