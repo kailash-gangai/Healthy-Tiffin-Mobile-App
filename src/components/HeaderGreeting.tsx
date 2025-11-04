@@ -26,10 +26,11 @@ export default function HeaderGreeting({ name }: { name: string }) {
       }, []);
       return (
             <View>
+
                   <View style={s.orange}>
                         <View style={s.row}>
                               <View style={s.left}>
-                                    <Image source={{ uri: image || 'https://i.pravatar.cc/80' }} style={s.avatar} />
+                                    <Image source={image ? { uri: image } : require('../assets/images.png')} style={s.avatar} />
                                     <Text style={s.hello}>Hello, {user.name}!</Text>
                               </View>
 
@@ -58,11 +59,14 @@ export default function HeaderGreeting({ name }: { name: string }) {
 
 const s = StyleSheet.create({
       orange: {
-            backgroundColor: '#F9B233',
-            height: 130,
+            backgroundColor: '#222222',
+            height: 125,
             paddingHorizontal: 16,
-            justifyContent: 'center',
-            paddingTop: SPACING,
+            justifyContent: 'flex-end',
+            paddingBottom: SPACING,
+            marginBottom: SPACING,
+            borderBottomLeftRadius: 32,
+            borderBottomRightRadius: 32,
       },
       row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
       left: { flexDirection: 'row', alignItems: 'center', gap: 10 },
