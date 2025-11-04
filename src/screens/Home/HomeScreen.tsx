@@ -327,7 +327,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               l.id === localItem.id &&
               l.day === localItem.day &&
               (Number(l.tiffinPlan) || 1) ===
-              (Number(localItem.tiffinPlan) || 1),
+                (Number(localItem.tiffinPlan) || 1),
           ),
       ),
     );
@@ -656,7 +656,11 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     addonMinRemaining,
     A_LA_CARTE_BASE,
   ]);
-
+  console.log({
+    categories,
+    openByKey,
+    selectedItemsToAddOnCart,
+  });
   return (
     <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
       <ScrollView bounces={false}>
@@ -692,7 +696,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           currentDay !== 'Sunday' && <SkeletonLoading count={5} />}
 
         {!menuDisabled && tab === 0 && (
-          <View >
+          <View>
             {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
               <EmptyState
                 key={'addon-menu'}
@@ -704,16 +708,20 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               const sectionType =
                 ((cat as any)._sectionType as 'main' | 'addon') ?? 'main';
               const key = `${sectionType}:${cat.key}`;
-              return (
+              const selectedItem = selectedItemsToAddOnCart.find(
+                i =>
+                  i.day === currentDay &&
+                  i.category?.toLowerCase() === cat.key.toLowerCase() &&
+                  i.type === 'main',
+              );
 
+              return (
                 <Section
                   key={key}
-
                   title={cat.key.toUpperCase()}
-                  note={`Please Select One`}
+                  note={selectedItem ? selectedItem.title : 'Please Select One'}
                   open={isOpen(key)}
                   setOpen={(v: boolean) => setOpen(key, v)}
-
                 >
                   <View style={styles.gridWrap}>
                     {cat.value.map((d: any) => (
@@ -727,16 +735,17 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                           setSelectedItemsToAddOnCart as any
                         }
                         tiffinPlan={tiffinPlan}
-                        selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
+                        selectedItemsToAddOnCart={
+                          selectedItemsToAddOnCart as any
+                        }
                         isLoading={isLoading}
-                        onChange={picked => {
+                        onChange={(picked: any) => {
                           if (picked?.selected) setOpen(key, false);
                         }}
                       />
                     ))}
                   </View>
                 </Section>
-
               );
             })}
           </View>
@@ -756,30 +765,31 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               return (
                 <Section
                   key={key}
-
                   title={cat.key.toUpperCase()}
                   note={`Select from ${cat.value.length} options`}
                   open={isOpen(key)}
                   setOpen={(v: boolean) => setOpen(key, v)}
                 >
-                   <View style={styles.gridWrap}>
-                  {cat.value.map(d => (
-                    <AddonDishCard
-                      key={d.id}
-                      category={cat.key.toUpperCase()}
-                      day={currentDay}
-                      type="addon"
-                      item={d as any}
-                      setSelectedItemsToAddOnCart={
-                        setSelectedItemsToAddOnCart as any
-                      }
-                      selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
-                      isLoading={isLoading}
-                      onChange={picked => {
-                        if (picked?.selected) setOpen(key, false);
-                      }}
-                    />
-                  ))}
+                  <View style={styles.gridWrap}>
+                    {cat.value.map(d => (
+                      <AddonDishCard
+                        key={d.id}
+                        category={cat.key.toUpperCase()}
+                        day={currentDay}
+                        type="addon"
+                        item={d as any}
+                        setSelectedItemsToAddOnCart={
+                          setSelectedItemsToAddOnCart as any
+                        }
+                        selectedItemsToAddOnCart={
+                          selectedItemsToAddOnCart as any
+                        }
+                        isLoading={isLoading}
+                        onChange={picked => {
+                          if (picked?.selected) setOpen(key, false);
+                        }}
+                      />
+                    ))}
                   </View>
                 </Section>
               );
