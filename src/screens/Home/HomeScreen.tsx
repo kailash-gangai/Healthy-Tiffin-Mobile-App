@@ -215,7 +215,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
   const [showCart, setShowCart] = useState(false);
 
-
   const [selectedItemsToAddOnCart, setSelectedItemsToAddOnCart] = useState<
     Item[]
   >([]);
@@ -776,24 +775,26 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                   open={isOpen(key)}
                   setOpen={(v: boolean) => setOpen(key, v)}
                 >
-                   <View style={styles.gridWrap}>
-                  {cat.value.map(d => (
-                    <AddonDishCard
-                      key={d.id}
-                      category={cat.key.toUpperCase()}
-                      day={currentDay}
-                      type="addon"
-                      item={d as any}
-                      setSelectedItemsToAddOnCart={
-                        setSelectedItemsToAddOnCart as any
-                      }
-                      selectedItemsToAddOnCart={selectedItemsToAddOnCart as any}
-                      isLoading={isLoading}
-                      onChange={picked => {
-                        if (picked?.selected) setOpen(key, false);
-                      }}
-                    />
-                  ))}
+                  <View style={styles.gridWrap}>
+                    {cat.value.map(d => (
+                      <AddonDishCard
+                        key={d.id}
+                        category={cat.key.toUpperCase()}
+                        day={currentDay}
+                        type="addon"
+                        item={d as any}
+                        setSelectedItemsToAddOnCart={
+                          setSelectedItemsToAddOnCart as any
+                        }
+                        selectedItemsToAddOnCart={
+                          selectedItemsToAddOnCart as any
+                        }
+                        isLoading={isLoading}
+                        onChange={picked => {
+                          if (picked?.selected) setOpen(key, false);
+                        }}
+                      />
+                    ))}
                   </View>
                 </Section>
               );
@@ -863,25 +864,28 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             />
           </View>
         )} */}
-{/*         
+        {/*         
         {!menuDisabled && blogs?.length > 0 && (
           <FitnessCarousel items={blogs} />
         )} */}
       </ScrollView>
-       <TouchableOpacity
-          onPress={() => setShowCart(true)}
-          activeOpacity={0.9}
-          style={styles.cartBar}
-        >
-          <View style={styles.cartNotch} />
-          <View style={styles.cartBarContent}>
-            <Text style={styles.cartLabel}>Cart Summary</Text>
-            <Text style={styles.cartTotal}>Total $122</Text>
-          </View>
-        </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => setShowCart(true)}
+        activeOpacity={0.9}
+        style={styles.cartBar}
+      >
+        <View style={styles.cartNotch} />
+        <View style={styles.cartBarContent}>
+          <Text style={styles.cartLabel}>Cart Summary</Text>
+          <Text style={styles.cartTotal}>Total $122</Text>
+        </View>
+      </TouchableOpacity>
 
-
-        <CartSummaryModal visible={showCart} onClose={() => setShowCart(false)} />
+      <CartSummaryModal
+        visible={showCart}
+        navigation={navigation}
+        onClose={() => setShowCart(false)}
+      />
     </View>
   );
 };
@@ -954,48 +958,47 @@ const styles = StyleSheet.create({
   },
 
   cartBar: {
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  backgroundColor: '#101010',
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  paddingTop: 14,
-  paddingBottom: 14,
-  alignItems: 'center',
-  justifyContent: 'center',
-  shadowColor: '#232323',
-  shadowOffset: { width: 0, height: -3 },
-  shadowOpacity: 0.2,
-  shadowRadius: 5,
-  elevation: 6,
-},
-cartNotch: {
-  position: 'absolute',
-  top: 6,
-  width: 40,
-  height: 6,
-  backgroundColor: '#FFFFFF',
-  borderRadius: 3,
-  opacity: 0.9,
-},
-cartBarContent: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '90%',
-  marginTop: 10,
-},
-cartLabel: {
-  color: '#FFFFFF',
-  fontSize: 15,
-  fontWeight: '600',
-},
-cartTotal: {
-  color: '#FFFFFF',
-  fontSize: 15,
-  fontWeight: '800',
-},
-
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#101010',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 14,
+    paddingBottom: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#232323',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  cartNotch: {
+    position: 'absolute',
+    top: 6,
+    width: 40,
+    height: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 3,
+    opacity: 0.9,
+  },
+  cartBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '90%',
+    marginTop: 10,
+  },
+  cartLabel: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  cartTotal: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
 });

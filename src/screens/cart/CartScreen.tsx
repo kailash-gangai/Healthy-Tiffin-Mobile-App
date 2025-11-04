@@ -36,14 +36,6 @@ import CrossIcon from '../../assets/htf-icon/icon-cross.svg';
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 
-const n = (v: any) => Number(v) || 0;
-const money = (v: number) => (Math.round(v * 100) / 100).toFixed(2);
-
-const catRank = (c?: string) => {
-  const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
-  return i === -1 ? 1e9 : i;
-};
-
 const WEEK = [
   'Monday',
   'Tuesday',
@@ -53,6 +45,14 @@ const WEEK = [
   'Saturday',
   'Sunday',
 ];
+const n = (v: any) => Number(v) || 0;
+const money = (v: number) => (Math.round(v * 100) / 100).toFixed(2);
+
+const catRank = (c?: string) => {
+  const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
+  return i === -1 ? 1e9 : i;
+};
+
 const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 const rotateFromToday = (arr: string[]) => {
   const i = arr.indexOf(todayName);
