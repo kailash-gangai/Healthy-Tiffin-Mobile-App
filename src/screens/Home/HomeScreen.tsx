@@ -588,7 +588,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         </View>
 
         {/* Tiffin Plan Indicator */}
-        {!menuDisabled && tab === 0 && (
+        {/* {!menuDisabled && tab === 0 && (
           <View style={styles.tiffinIndicator}>
             <Text style={styles.tiffinText}>
               Tiffin {currentTiffinPlan}
@@ -596,7 +596,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 ` of ${Math.max(totalTiffinCount, currentTiffinPlan)}`}
             </Text>
           </View>
-        )}
+        )} */}
 
         {menuDisabled && (
           <EmptyState
