@@ -48,6 +48,7 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     // Add multiple items to the cart
+    // In your cartSlice.ts
     addItems: (s, a: PayloadAction<AddPayload[]>) => {
       s.isCartCleared = false;
 
@@ -56,12 +57,41 @@ const cartSlice = createSlice({
         tiffinPlan?: number;
         id: string;
         variantId: string;
-      }) => `${x.day}::${x.tiffinPlan ?? ''}::${x.id}::${x.variantId}`;
+        type: 'main' | 'addon';
+        category: string;
+      }) =>
+        `${x.day}::${x.tiffinPlan ?? ''}::${x.type}::${x.category}::${x.id}::${
+          x.variantId
+        }`;
 
-      // existing keys in cart
+      // For main items: remove existing items with same day, tiffinPlan, category, and type
+      const newMainItems = a.payload.filter(item => item.type === 'main');
+
+      if (newMainItems.length > 0) {
+        // Remove existing main items that conflict with new main items
+        // (same day, tiffinPlan, category, and type)
+        const conflicts = new Set();
+        newMainItems.forEach(item => {
+          conflicts.add(
+            `${item.day}::${item.tiffinPlan ?? ''}::${item.type}::${
+              item.category
+            }`,
+          );
+        });
+
+        s.lines = s.lines.filter(
+          line =>
+            !conflicts.has(
+              `${line.day}::${line.tiffinPlan ?? ''}::${line.type}::${
+                line.category
+              }`,
+            ) || line.type !== 'main',
+        );
+      }
+
+      // Also prevent duplicates within the same incoming batch
       const seen = new Set(s.lines.map(keyOf));
 
-      // also prevent duplicates within the same incoming batch
       for (const p of a.payload) {
         const k = keyOf(p);
         if (seen.has(k)) continue; // already in cart -> ignore

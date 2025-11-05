@@ -26,6 +26,8 @@ import {
   clearCart,
   decreaseItem,
   increaseItem,
+  removeDayMains,
+  removeDayAddons,
 } from '../store/slice/cartSlice';
 
 const { height } = Dimensions.get('window');
@@ -41,6 +43,7 @@ const WEEK = [
   'Saturday',
   'Sunday',
 ];
+
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -60,6 +63,18 @@ const COLORS = {
   red: '#FF6B6B',
 };
 
+const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+const rotateFromToday = (arr: string[]) => {
+  const i = arr.indexOf(todayName);
+  if (i < 0) return arr;
+  return [...arr.slice(i), ...arr.slice(0, i)];
+};
+
+const catRank = (c?: string) => {
+  const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
+  return i === -1 ? 1e9 : i;
+};
+
 export default function CartSummaryModal({
   visible,
   onClose,
@@ -70,10 +85,15 @@ export default function CartSummaryModal({
   navigation: any;
 }) {
   const translateY = useRef(new Animated.Value(height)).current;
-  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
+  const [expandedDays, setExpandedDays] = useState<{ [key: string]: boolean }>(
+    {},
+  );
+  const [expandedPlans, setExpandedPlans] = useState<{
+    [key: string]: boolean;
+  }>({});
   const [selectedType, setSelectedType] = useState<'Steel' | 'ECO'>('Steel');
   const dispatch = useAppDispatch();
-  const { lines } = useAppSelector(state => state.cart); // Getting the cart lines
+  const { lines } = useAppSelector(state => state.cart);
 
   useEffect(() => {
     if (visible) {
@@ -92,140 +112,329 @@ export default function CartSummaryModal({
     }
   }, [visible]);
 
-  const toggleExpand = (day: string) => {
+  const toggleDayExpand = (day: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(prev => ({ ...prev, [day]: !prev[day] }));
+    setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
   };
 
-  const fmt = (n: number) => n.toFixed(2);
+  const togglePlanExpand = (day: string, plan: number) => {
+    const key = `${day}:${plan}`;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedPlans(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
-  // Helper function to format and group items by day and tiffin plan
-  const grouped = useMemo(() => {
-    const days = [...new Set(lines.map(l => l.day))].filter(
+  const isDayOpen = (day: string) => expandedDays[day] ?? true;
+  const isPlanOpen = (day: string, plan: number) =>
+    expandedPlans[`${day}:${plan}`] ?? true;
+
+  // Calculate totals and validation
+  const mealCost = lines
+    .filter(i => i.type === 'main')
+    .reduce((s, x) => s + +x.price * x.qty, 0);
+
+  const uniqueDayCount = new Set(lines.map(it => it.day).filter(Boolean)).size;
+  const uniqueTiffinCount = new Set(
+    lines.map(it => it.tiffinPlan).filter(Boolean),
+  ).size;
+
+  const addons = lines
+    .filter(i => i.type === 'addon')
+    .reduce((s, x) => s + +x.price * x.qty, 0);
+
+  const hasAnyMain = useMemo(() => lines.some(l => l.type === 'main'), [lines]);
+  const hasAnyAddon = useMemo(
+    () => lines.some(l => l.type === 'addon'),
+    [lines],
+  );
+
+  let tiffinPrice = 29 * uniqueDayCount * uniqueTiffinCount;
+  if (!hasAnyMain) tiffinPrice = 0;
+
+  const subtotal = mealCost + addons;
+  const total = subtotal + tiffinPrice;
+
+  // Group items by day and tiffin plan
+  const days = useMemo(() => {
+    const byDaySet = [...new Set(lines.map(l => l.day))].filter(
       Boolean,
     ) as string[];
-    return days.map(day => {
-      const mains = lines.filter(x => x.day === day && x.type === 'main');
-      const addons = lines.filter(x => x.day === day && x.type === 'addon');
-
-      const plansMap = mains.reduce((acc: any, item: any) => {
-        if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
-        acc[item.tiffinPlan].push(item);
-        return acc;
-      }, {});
-
-      const tiffinPlans = Object.entries(plansMap)
-        .map(([planNumber, items]: any) => ({
-          plan: parseInt(planNumber),
-          items: items.sort(
-            (a: any, b: any) =>
-              MAIN_CAT_ORDER.indexOf(a.category) -
-              MAIN_CAT_ORDER.indexOf(b.category),
-          ),
-        }))
-        .sort((a, b) => a.plan - b.plan);
-
-      return { day, mains, tiffinPlans, addons };
-    });
+    const ring = rotateFromToday(WEEK);
+    return byDaySet.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
   }, [lines]);
 
-  const validateCategories = (planItems: any[]) => {
-    const catsPresent = new Set(
-      planItems.map((item: any) => item.category.toUpperCase()),
-    );
-    const missing = REQUIRED_CATS.filter(cat => !catsPresent.has(cat));
-    return missing;
-  };
+  const grouped = useMemo(
+    () =>
+      days.map(d => {
+        const allMains = lines.filter(x => x.day === d && x.type === 'main');
+        const addons = lines.filter(x => x.day === d && x.type === 'addon');
 
-  const formatDate = (date: string) => {
-    // Split the date string into parts: MM/DD/YYYY
-    const [month, day, year] = date.split('/');
+        const plansMap = allMains.reduce((acc: any, item: any) => {
+          if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
+          acc[item.tiffinPlan].push(item);
+          return acc;
+        }, {});
 
-    // Create a new Date object with the parsed date parts
-    const parsedDate = new Date(`${year}-${month}-${day}`);
+        const tiffinPlans = Object.entries(plansMap)
+          .map(([planNumber, items]: any) => ({
+            plan: parseInt(planNumber),
+            items: items.sort(
+              (a: any, b: any) => catRank(a.category) - catRank(b.category),
+            ),
+          }))
+          .sort((a, b) => a.plan - b.plan);
 
-    // Check if the date is valid
-    if (isNaN(parsedDate.getTime())) {
-      return 'Invalid date';
+        return { day: d, mains: allMains, tiffinPlans, addons };
+      }),
+    [days, lines],
+  );
+
+  // Missing categories validation
+  const missingInfo = useMemo(() => {
+    if (!hasAnyMain) return null;
+    const ring = rotateFromToday(WEEK);
+    const daysInCart = [...new Set(lines.map(l => l.day))].filter(
+      Boolean,
+    ) as string[];
+    const scan = ring.filter(d => daysInCart.includes(d));
+    const allMissing: any[] = [];
+
+    for (const d of scan) {
+      const tiffinPlans = [
+        ...new Set(
+          lines
+            .filter(l => l.day === d && l.type === 'main')
+            .map(l => l.tiffinPlan),
+        ),
+      ].sort();
+
+      for (const plan of tiffinPlans) {
+        const catsPresent = new Set(
+          lines
+            .filter(
+              l => l.day === d && l.type === 'main' && l.tiffinPlan === plan,
+            )
+            .map(l => String(l.category).toUpperCase()),
+        );
+        const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
+        if (missing.length)
+          allMissing.push({ day: d, tiffinPlan: plan, missing });
+      }
     }
+    return allMissing.length ? allMissing : null;
+  }, [lines, hasAnyMain]);
 
-    // Format the date into "24 Nov, 2025"
-    const options: any = {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+  // Add-ons minimum validation
+  const ADDONS_MIN = 29;
+  const addonsOnly = hasAnyAddon && !hasAnyMain;
+  const addonsMinInfo = useMemo(() => {
+    if (!addonsOnly) return null;
+    if (addons >= ADDONS_MIN) return null;
+    const remaining = Math.max(0, ADDONS_MIN - addons);
+    return {
+      total: addons,
+      remaining,
+      message: `Minimum $${ADDONS_MIN} for A La Carte orders`,
     };
-    return parsedDate.toLocaleDateString('en-US', options);
-  };
+  }, [addonsOnly, addons]);
 
-  const DayBlock = ({ day, items }: { day: string; items: any[] }) => {
-    const isOpen = expanded[day];
-    const missingCategories = validateCategories(items); // Validate categories for each tiffin plan
+  const canProceed = !missingInfo && !addonsMinInfo && lines.length > 0;
+
+  const DayBlock = ({ day, mains, addons, tiffinPlans }: any) => {
+    const dayAddonsTotal = addons.reduce(
+      (s: number, x: any) => s + Number(x.price || 0) * (x.qty ?? 1),
+      0,
+    );
+    const dayMainsExtra = mains
+      .filter((x: any) => Number(x.price) > 0)
+      .reduce(
+        (s: number, x: any) => s + Number(x.price || 0) * (x.qty ?? 1),
+        0,
+      );
+    const plansCount = new Set(mains.map((m: any) => m.tiffinPlan)).size;
+    const dayBase = plansCount > 0 ? 29 * plansCount : 0;
+    const dayTotal = dayBase + dayMainsExtra + dayAddonsTotal;
+
     return (
       <View style={s.dayCard}>
         <TouchableOpacity
           style={s.dayHeader}
           activeOpacity={0.8}
-          onPress={() => toggleExpand(day)}
+          onPress={() => toggleDayExpand(day)}
         >
-          <Text style={s.dayText}>
-            {`${formatDate(items?.[0]?.date)} | ${day}`}
-          </Text>
+          <Text style={s.dayText}>{day}</Text>
           <View style={s.priceTag}>
-            <Text style={s.priceText}>
-              $
-              {items
-                .reduce((total, item) => total + item.price * item.qty, 0)
-                .toFixed(2)}
-            </Text>
+            <Text style={s.priceText}>${dayTotal.toFixed(2)}</Text>
           </View>
           <View style={s.arrowBox}>
-            <Text style={{ color: COLORS.green }}>
-              {isOpen ? (
-                <ArrowDown height={24} width={24} />
-              ) : (
-                <ArrowUp height={24} width={24} />
-              )}
-            </Text>
+            {isDayOpen(day) ? (
+              <ArrowDown height={20} width={20} />
+            ) : (
+              <ArrowUp height={20} width={20} />
+            )}
           </View>
         </TouchableOpacity>
 
-        {isOpen && (
+        {isDayOpen(day) && (
           <View>
-            <View style={s.divider} />
-            {items.map((item, i) => (
-              <View key={i} style={s.itemRow}>
-                <View style={s.thumb}>
-                  <Image source={{ uri: item.image }} style={s.imgMini} />
+            {/* Mains Section */}
+            {mains.length > 0 && (
+              <View style={s.section}>
+                <View style={s.sectionHeader}>
+                  <Text style={s.sectionChip}>Main</Text>
+                  <TouchableOpacity
+                    onPress={() => dispatch(removeDayMains({ day }))}
+                    style={s.trashBtn}
+                  >
+                    <TrashIcon height={16} width={16} />
+                  </TouchableOpacity>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.productName}>{item.title}</Text>
-                  <Text style={s.productPrice}>${item.price.toFixed(2)}</Text>
-                </View>
-                <TouchableOpacity
-                  style={s.deleteBtn}
-                  onPress={() =>
-                    dispatch(
-                      removeItem({
-                        id: item.id,
-                        variantId: item.variantId,
-                        tiffinPlan: item.tiffinPlan,
-                        type: item.type,
-                      }),
-                    )
-                  }
-                >
-                  <Text style={s.deleteIcon}>
-                    <TrashIcon height={24} width={24} />
-                  </Text>
-                </TouchableOpacity>
+
+                {tiffinPlans.map((plan: any) => (
+                  <View key={`tiffin-${plan.plan}`} style={s.planSection}>
+                    <TouchableOpacity
+                      style={s.planHeader}
+                      onPress={() => togglePlanExpand(day, plan.plan)}
+                    >
+                      <Text style={s.planTitle}>Tiffin {plan.plan}</Text>
+                      {isPlanOpen(day, plan.plan) ? (
+                        <ArrowDown height={16} width={16} />
+                      ) : (
+                        <ArrowUp height={16} width={16} />
+                      )}
+                    </TouchableOpacity>
+
+                    {isPlanOpen(day, plan.plan) && (
+                      <View style={s.planItems}>
+                        {plan.items.map((item: any) => (
+                          <View
+                            key={`${item.id}-${item.variantId}-${item.tiffinPlan}`}
+                            style={s.itemRow}
+                          >
+                            <View style={s.thumb}>
+                              <Image
+                                source={{ uri: item.image }}
+                                style={s.imgMini}
+                              />
+                              {Number(item.price) > 0 && (
+                                <View style={s.priceBadge}>
+                                  <Text style={s.priceBadgeText}>
+                                    +${item.price}
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+                            <View style={s.itemContent}>
+                              <Text style={s.itemCategory}>
+                                {item.category}
+                              </Text>
+                              <Text style={s.itemName}>{item.title}</Text>
+                              <Text style={s.itemQty}>{item.qty} Qty</Text>
+                            </View>
+                            <TouchableOpacity
+                              style={s.deleteBtn}
+                              onPress={() =>
+                                dispatch(
+                                  removeItem({
+                                    id: item.id,
+                                    variantId: item.variantId,
+                                    tiffinPlan: item.tiffinPlan,
+                                    type: item.type,
+                                  }),
+                                )
+                              }
+                            >
+                              <TrashIcon height={16} width={16} />
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))}
               </View>
-            ))}
-            {missingCategories.length > 0 && (
-              <Text style={s.missingText}>
-                Missing Categories: {missingCategories.join(', ')}
-              </Text>
+            )}
+
+            {/* Add-ons Section */}
+            {addons.length > 0 && (
+              <View style={s.section}>
+                <View style={s.sectionHeader}>
+                  <Text style={[s.sectionChip, s.addonChip]}>Add-ons</Text>
+                  <TouchableOpacity
+                    onPress={() => dispatch(removeDayAddons({ day }))}
+                    style={s.trashBtn}
+                  >
+                    <TrashIcon height={16} width={16} />
+                  </TouchableOpacity>
+                </View>
+
+                {addons.map((item: any) => (
+                  <View
+                    key={`${item.id}-${item.variantId}`}
+                    style={[s.itemRow, s.addonItem]}
+                  >
+                    <View style={s.thumb}>
+                      <Image source={{ uri: item.image }} style={s.imgMini} />
+                      <View style={[s.priceBadge, s.addonPriceBadge]}>
+                        <Text style={s.priceBadgeText}>${item.price}</Text>
+                      </View>
+                    </View>
+                    <View style={s.itemContent}>
+                      <Text style={[s.itemCategory, s.addonCategory]}>
+                        {item.category}
+                      </Text>
+                      <Text style={s.itemName}>{item.title}</Text>
+                      <View style={s.qtyControls}>
+                        <TouchableOpacity
+                          style={s.qtyBtn}
+                          onPress={() =>
+                            dispatch(
+                              decreaseItem({
+                                id: item.id,
+                                variantId: item.variantId,
+                                tiffinPlan: item.tiffinPlan,
+                                type: item.type,
+                              }),
+                            )
+                          }
+                        >
+                          <Text style={s.qtyBtnText}>−</Text>
+                        </TouchableOpacity>
+                        <Text style={s.qtyText}>{item.qty}</Text>
+                        <TouchableOpacity
+                          style={s.qtyBtn}
+                          onPress={() =>
+                            dispatch(
+                              increaseItem({
+                                id: item.id,
+                                variantId: item.variantId,
+                                tiffinPlan: item.tiffinPlan,
+                                type: item.type,
+                              }),
+                            )
+                          }
+                        >
+                          <Text style={s.qtyBtnText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={s.deleteBtn}
+                      onPress={() =>
+                        dispatch(
+                          removeItem({
+                            id: item.id,
+                            variantId: item.variantId,
+                            tiffinPlan: item.tiffinPlan,
+                            type: item.type,
+                          }),
+                        )
+                      }
+                    >
+                      <TrashIcon height={16} width={16} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
             )}
           </View>
         )}
@@ -249,20 +458,18 @@ export default function CartSummaryModal({
         >
           <Text style={s.title}>Cart Summary</Text>
 
-          {/* Container Type (toggleable) */}
+          {/* Container Type */}
           <Text style={s.label}>Select container type</Text>
           <View style={s.toggleWrap}>
-            {['Steel', 'ECO'].map((opt, i) => {
+            {['Steel', 'ECO'].map(opt => {
               const isActive = selectedType === opt;
               return (
                 <LinearGradient
                   key={opt}
                   colors={
                     isActive ? ['#f2c113', '#e2b517'] : ['#f3f3f3', '#f3f3f3']
-                  } // Active gradient or inactive gradient
-                  start={{ x: 0, y: 0 }} // Start gradient from top
-                  end={{ x: 0, y: 1 }} // End gradient at the bottom
-                  style={[s.toggleBtn]} // Apply gradient to active button
+                  }
+                  style={s.toggleBtn}
                 >
                   <TouchableOpacity
                     onPress={() => setSelectedType(opt as any)}
@@ -280,15 +487,36 @@ export default function CartSummaryModal({
             })}
           </View>
 
-          {/* Collapsible Day Blocks */}
-          {grouped.map(({ day, mains, addons }) => {
-            const dayTotal =
-              mains.reduce((total, item) => total + +item.price * item.qty, 0) +
-              addons.reduce((total, item) => total + +item.price * item.qty, 0);
-            return (
-              <DayBlock key={day} day={day} items={[...mains, ...addons]} />
-            );
-          })}
+          {/* Cart Items */}
+          {grouped.map(({ day, mains, addons, tiffinPlans }) => (
+            <DayBlock
+              key={day}
+              day={day}
+              mains={mains}
+              addons={addons}
+              tiffinPlans={tiffinPlans}
+            />
+          ))}
+
+          {/* Validation Messages */}
+          {missingInfo && (
+            <View style={s.validationBox}>
+              <Text style={s.validationTitle}>Missing Items</Text>
+              <Text style={s.validationText}>
+                Please complete all tiffins before proceeding
+              </Text>
+            </View>
+          )}
+
+          {addonsMinInfo && (
+            <View style={s.validationBox}>
+              <Text style={s.validationTitle}>Minimum Not Met</Text>
+              <Text style={s.validationText}>{addonsMinInfo.message}</Text>
+              <Text style={s.validationSubtext}>
+                Add ${addonsMinInfo.remaining.toFixed(2)} more to proceed
+              </Text>
+            </View>
+          )}
 
           {/* Cart Summary */}
           <View style={s.summaryCard}>
@@ -299,19 +527,15 @@ export default function CartSummaryModal({
             </View>
 
             <View style={s.summaryRow}>
-              <Text style={s.label}>Subtotal</Text>
+              <Text style={s.label}>Meal Box Price</Text>
               <Text style={s.value}>
-                $
-                {grouped
-                  .reduce(
-                    (total, { mains, addons }) =>
-                      total +
-                      mains.reduce((s, i) => s + +i.price * i.qty, 0) +
-                      addons.reduce((s, i) => s + +i.price * i.qty, 0),
-                    0,
-                  )
-                  .toFixed(2)}
+                ${(mealCost + tiffinPrice).toFixed(2)}
               </Text>
+            </View>
+
+            <View style={s.summaryRow}>
+              <Text style={s.label}>Add-ons</Text>
+              <Text style={s.value}>${addons.toFixed(2)}</Text>
             </View>
 
             <View style={s.summaryRow}>
@@ -329,47 +553,27 @@ export default function CartSummaryModal({
             <View style={s.summaryRow}>
               <Text style={s.totalLabel}>Total Payable</Text>
               <Text style={s.totalValue}>
-                $
-                {(
-                  grouped.reduce(
-                    (total, { mains, addons }) =>
-                      total +
-                      mains.reduce((s, i) => s + +i.price * i.qty, 0) +
-                      addons.reduce((s, i) => s + +i.price * i.qty, 0),
-                    0,
-                  ) +
-                  10.85 -
-                  9
-                ).toFixed(2)}
+                ${(total + 10.85 - 9).toFixed(2)}
               </Text>
             </View>
           </View>
 
           <LinearGradient
-            colors={['#5FBC9B', '#1E9E64']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
+            colors={
+              canProceed ? ['#5FBC9B', '#1E9E64'] : ['#CCCCCC', '#999999']
+            }
             style={s.orderBtn}
           >
             <TouchableOpacity
               style={s.orderBtnContent}
               activeOpacity={0.9}
-              onPress={() => navigation.navigate('OrderTrack')}
+              onPress={() => canProceed && navigation.navigate('OrderTrack')}
+              disabled={!canProceed}
             >
               <Text style={s.orderText}>
-                Place an Order ($$
-                {(
-                  grouped.reduce(
-                    (total, { mains, addons }) =>
-                      total +
-                      mains.reduce((s, i) => s + +i.price * i.qty, 0) +
-                      addons.reduce((s, i) => s + +i.price * i.qty, 0),
-                    0,
-                  ) +
-                  10.85 -
-                  9
-                ).toFixed(2)}
-                )
+                {canProceed
+                  ? `Place an Order ($${(total + 10.85 - 9).toFixed(2)})`
+                  : 'Complete Your Order'}
               </Text>
             </TouchableOpacity>
           </LinearGradient>
@@ -407,12 +611,18 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
     color: COLORS.black,
-    marginBottom: 10,
+    marginBottom: 16,
+    textAlign: 'center',
   },
-  label: { fontSize: 13, color: COLORS.black, marginBottom: 8 },
+  label: {
+    fontSize: 14,
+    color: COLORS.black,
+    marginBottom: 8,
+    fontWeight: '600',
+  },
   toggleWrap: {
     flexDirection: 'row',
     borderRadius: 10,
@@ -429,71 +639,228 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   toggleText: { fontSize: 14, fontWeight: '600', color: '#333' },
   toggleTextActive: { color: '#fff' },
+
+  // Day Card Styles
   dayCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 22,
-    padding: 12,
-    marginBottom: 14,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
+    ...SHADOW,
   },
   dayHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  dayText: { fontWeight: '600', color: COLORS.black, flex: 1 },
+  dayText: { fontWeight: '700', color: COLORS.black, fontSize: 16, flex: 1 },
   priceTag: {
-    backgroundColor: COLORS.black,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    backgroundColor: COLORS.green,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     marginHorizontal: 8,
   },
-  priceText: { color: COLORS.white, fontWeight: '600', fontSize: 12 },
+  priceText: { color: COLORS.white, fontWeight: '600', fontSize: 14 },
   arrowBox: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: 8,
     backgroundColor: '#d7f3e7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  itemRow: {
+
+  // Section Styles
+  section: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  thumb: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#EEE',
-    marginRight: 10,
+  sectionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#EAF6EF',
+    color: COLORS.green,
+    fontWeight: '700',
+    fontSize: 12,
   },
-  productName: { fontSize: 13, fontWeight: '600', color: COLORS.black },
-  productPrice: { fontSize: 12, color: COLORS.gray },
-  deleteBtn: {
-    width: 30,
-    height: 30,
+  addonChip: {
+    backgroundColor: '#FFF4E8',
+    color: '#E67C24',
+  },
+  trashBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#FFECEC',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 15,
   },
-  deleteIcon: { fontSize: 14 },
-  missingText: {
-    color: COLORS.red,
+
+  // Plan Section Styles
+  planSection: {
+    marginBottom: 8,
+  },
+  planHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    backgroundColor: '#F8F9F8',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E7EBE8',
+  },
+  planTitle: { fontSize: 14, fontWeight: '700', color: COLORS.black },
+  planItems: {
+    marginTop: 8,
+    gap: 8,
+  },
+
+  // Item Row Styles
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EEE',
+  },
+  addonItem: {
+    backgroundColor: '#F8FAFF',
+    borderColor: '#E0E8FF',
+  },
+  thumb: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  imgMini: {
+    width: 60,
+    height: 50,
+    borderRadius: 8,
+    resizeMode: 'cover',
+  },
+  priceBadge: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: COLORS.green,
+  },
+  addonPriceBadge: {
+    backgroundColor: '#1B4FBF',
+  },
+  priceBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  itemContent: {
+    flex: 1,
+  },
+  itemCategory: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.green,
+    marginBottom: 2,
+  },
+  addonCategory: {
+    color: '#1B4FBF',
+  },
+  itemName: {
+    fontSize: 14,
     fontWeight: '600',
-    marginTop: 10,
-    fontSize: 12,
+    color: COLORS.black,
+    marginBottom: 4,
   },
+  itemQty: {
+    fontSize: 12,
+    color: COLORS.gray,
+    fontWeight: '600',
+  },
+  qtyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  qtyBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: '#D9E3DC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.green,
+  },
+  qtyText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.black,
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  deleteBtn: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#FFECEC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+
+  // Validation Styles
+  validationBox: {
+    backgroundColor: '#FFF6E5',
+    borderColor: '#FFD699',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  validationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#8A5A00',
+    marginBottom: 4,
+  },
+  validationText: {
+    fontSize: 14,
+    color: '#8A5A00',
+    marginBottom: 4,
+  },
+  validationSubtext: {
+    fontSize: 12,
+    color: '#8A5A00',
+    fontWeight: '600',
+  },
+
+  // Summary Styles
   noticeBox: {
     backgroundColor: '#ececee',
     borderRadius: 8,
@@ -504,9 +871,8 @@ const s = StyleSheet.create({
   noticeText: { fontSize: 14, color: '#000000', textAlign: 'center' },
   summaryCard: {
     backgroundColor: '#fff',
-    borderTopEndRadius: 22,
-    borderTopStartRadius: 22,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     marginTop: 12,
     ...SHADOW,
   },
@@ -515,11 +881,11 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  value: { fontSize: 13, color: '#111', fontWeight: '700' },
-  totalLabel: { fontSize: 14, fontWeight: '700', color: '#111' },
-  totalValue: { fontSize: 15, fontWeight: '800', color: '#000' },
+  value: { fontSize: 14, color: '#111', fontWeight: '700' },
+  totalLabel: { fontSize: 16, fontWeight: '700', color: '#111' },
+  totalValue: { fontSize: 18, fontWeight: '800', color: '#000' },
   orderBtn: {
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -528,20 +894,13 @@ const s = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 15,
+    paddingVertical: 16,
   },
-  orderText: { color: COLORS.white, fontWeight: '700', fontSize: 18 },
-  imgMini: { width: 40, height: 40, borderRadius: 8, resizeMode: 'cover' },
+  orderText: { color: COLORS.white, fontWeight: '700', fontSize: 16 },
   divider: {
     height: 1,
     backgroundColor: 'rgba(0,0,0,0.06)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0.5 },
-    shadowOpacity: 0.08,
-    shadowRadius: 1.5,
-    elevation: 1,
-    marginTop: 10,
-    marginBottom: 10,
+    marginVertical: 12,
     borderRadius: 1,
   },
 });
