@@ -9,25 +9,17 @@ import {
 } from 'react-native';
 import DishDetailModal from './DishDetailModal';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { selectIsWishlisted, toggleWishlist } from '../store/slice/favoriteSlice';
+import {
+  selectIsWishlisted,
+  toggleWishlist,
+} from '../store/slice/favoriteSlice';
 import EyeShow from '../assets/htf-icon/icon-eye.svg';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import { EMPTY_STATE_URL } from '../constants';
 import SkeletonLoading from './SkeletonLoading';
+import { addItems, removeItem } from '../store/slice/cartSlice';
+
 const width = Dimensions.get('window').width;
-type Dish = {
-  id: string;
-  title: string;
-  price: string;
-  image: string;
-  description?: string;
-  calories?: number;
-  day?: string;
-  selected?: boolean;
-  variantId: string;
-  tags?: string[];
-  liked?: boolean;
-};
 
 const COLORS = {
   text: '#232323',
@@ -46,32 +38,50 @@ export default function DishCard({
   tiffinPlan,
   item,
   onChange,
-  setSelectedItemsToAddOnCart,
-  selectedItemsToAddOnCart,
   isLoading,
 }: any) {
   const dispatch = useAppDispatch();
+  const { lines } = useAppSelector(state => state.cart);
 
-  const checked = React.useMemo(
+  // Check if this specific item is in cart
+  const isItemInCart = React.useMemo(
     () =>
-      selectedItemsToAddOnCart.some(
+      lines.some(
         (it: any) =>
           it.id === item.id &&
           it.variantId === item.variantId &&
           it.day === day &&
-          it.category === category,
+          it.category === category &&
+          it.tiffinPlan === tiffinPlan,
       ),
-    [selectedItemsToAddOnCart, item.id, item.variantId, day, category],
+    [lines, item.id, item.variantId, day, category, tiffinPlan],
+  );
+
+  // Check if any item in the same category for this tiffin plan is selected
+  const isCategorySelected = React.useMemo(
+    () =>
+      lines.some(
+        (it: any) =>
+          it.day === day &&
+          it.category === category &&
+          it.type === 'main' &&
+          it.tiffinPlan === tiffinPlan,
+      ),
+    [lines, day, category, tiffinPlan],
   );
 
   const [open, setOpen] = useState(false);
-  const isFav = useAppSelector(selectIsWishlisted(item.id, item.variantId, category, day));
-  let customTags = item?.metafields?.find((mf: any) => mf && mf.key === 'dietary_tags');
+  const isFav = useAppSelector(
+    selectIsWishlisted(item.id, item.variantId, category, day),
+  );
+  let customTags = item?.metafields?.find(
+    (mf: any) => mf && mf.key === 'dietary_tags',
+  );
   if (customTags) {
     try {
       customTags = JSON.parse(customTags.value); // Safely parse the JSON string
     } catch (error) {
-      console.error("Error parsing dietary tags:", error);
+      console.error('Error parsing dietary tags:', error);
       customTags = []; // Default to empty array if parsing fails
     }
   } else {
@@ -80,32 +90,32 @@ export default function DishCard({
 
   const toggleSelection = () => {
     const date = new Intl.DateTimeFormat('en-US').format(new Date());
-    const itemWithMeta = { ...item, type, category, day, date, tiffinPlan };
-    const nextChecked = !checked;
+    const itemWithMeta = {
+      ...item,
+      type,
+      category,
+      day,
+      date,
+      tiffinPlan,
+      qty: 1,
+    };
 
-    setSelectedItemsToAddOnCart?.((prev: any[]) => {
-      if (type === 'addon') {
-        return nextChecked
-          ? [...prev, itemWithMeta]
-          : prev.filter(
-            i =>
-              !(
-                i.id === item.id &&
-                i.variantId === item.variantId &&
-                i.day === day &&
-                i.category === category
-              ),
-          );
-      }
-      const withoutMainGroup = prev.filter(
-        i => !(i.type === 'main' && i.day === day && i.category === category),
+    if (isItemInCart) {
+      // Remove if already selected
+      dispatch(
+        removeItem({
+          id: item.id,
+          variantId: item.variantId,
+          tiffinPlan,
+          type,
+        }),
       );
-      return nextChecked
-        ? [...withoutMainGroup, itemWithMeta]
-        : withoutMainGroup;
-    });
-
-    onChange?.({ ...itemWithMeta, selected: nextChecked, liked: isFav });
+      onChange?.({ ...itemWithMeta, selected: false, liked: isFav });
+    } else {
+      // Add new item (cart slice will handle replacement of same category)
+      dispatch(addItems([itemWithMeta]));
+      onChange?.({ ...itemWithMeta, selected: true, liked: isFav });
+    }
   };
 
   const onHeartPress = () => {
@@ -125,7 +135,7 @@ export default function DishCard({
         tags: item.tags,
       }),
     );
-    onChange?.({ ...item, selected: checked, liked: !isFav });
+    onChange?.({ ...item, selected: isItemInCart, liked: !isFav });
   };
 
   if (isLoading) return <SkeletonLoading />;
@@ -152,43 +162,63 @@ export default function DishCard({
               fill={isFav ? '#FF4D4D' : 'rgba(255,255,255,0.8)'}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setOpen(true)} style={s.eyeBtn} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="View details" > <EyeShow width={20} height={20} /> </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setOpen(true)}
+            style={s.eyeBtn}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="View details"
+          >
+            <EyeShow width={20} height={20} />
+          </TouchableOpacity>
 
           {/* Selection circle */}
-          <Text style={[s.radio, checked && s.radioOn]}>
-            {checked && <Text style={s.radioDot} />}
+          <Text style={[s.radio, isItemInCart && s.radioOn]}>
+            {isItemInCart && <Text style={s.radioDot} />}
           </Text>
-
-
         </View>
 
         <View style={s.tagContainer}>
-          {customTags && customTags.length > 0 && customTags.map((tag, idx) => (
-            <View
-              key={idx}
-              style={[
-                s.tag,
-                tag.toLowerCase() === 'veg' && s.tagVeg,
-                tag.toLowerCase() === 'nv' && s.tagNV,
-                tag.toLowerCase() === 'fodmap' && s.tagFODMAP,
-                tag.toLowerCase() === 'vgn' && s.tagVGN,
-              ]}
-            >
-              <Text style={s.tagText}>{tag.toUpperCase()}</Text>
-            </View>
-          ))}
+          {customTags &&
+            customTags.length > 0 &&
+            customTags.map((tag: any, idx: any) => (
+              <View
+                key={idx}
+                style={[
+                  s.tag,
+                  tag.toLowerCase() === 'veg' && s.tagVeg,
+                  tag.toLowerCase() === 'nv' && s.tagNV,
+                  tag.toLowerCase() === 'fodmap' && s.tagFODMAP,
+                  tag.toLowerCase() === 'vgn' && s.tagVGN,
+                ]}
+              >
+                <Text style={s.tagText}>{tag.toUpperCase()}</Text>
+              </View>
+            ))}
         </View>
+
         {/* Product Info */}
-        <View style={[s.textWrap, { flexDirection: 'row', justifyContent: 'space-between' }]}>
+        <View
+          style={[
+            s.textWrap,
+            { flexDirection: 'row', justifyContent: 'space-between' },
+          ]}
+        >
           <Text style={s.title} numberOfLines={2}>
             {item.title || 'Product Name'}
-
           </Text>
-          <Text style={s.price}>
-            + ${item.price || '0.00'}
-          </Text>
+          <Text style={s.price}>+ ${item.price || '0.00'}</Text>
         </View>
 
+        {/* Show indicator if category is occupied by another item */}
+        {isCategorySelected && !isItemInCart && (
+          <View style={s.occupiedIndicator}>
+            <Text style={s.occupiedText}>
+              Another item selected in this category
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       <DishDetailModal
@@ -204,8 +234,8 @@ export default function DishCard({
 
 const s = StyleSheet.create({
   card: {
-    width: (width / 2) - 40,
-    height: width / 2 + 40,
+    width: width / 2 - 40,
+    height: width / 2 + 60, // Increased height for indicator
     borderRadius: 14,
   },
   imageWrap: {
@@ -307,5 +337,17 @@ const s = StyleSheet.create({
     fontWeight: '600',
     color: '#9E9E9E',
     alignSelf: 'flex-start',
+  },
+  occupiedIndicator: {
+    backgroundColor: '#FFF3CD',
+    padding: 4,
+    borderRadius: 4,
+    marginHorizontal: 8,
+    marginTop: 4,
+  },
+  occupiedText: {
+    fontSize: 10,
+    color: '#856404',
+    textAlign: 'center',
   },
 });

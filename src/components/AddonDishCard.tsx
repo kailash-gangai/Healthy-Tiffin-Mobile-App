@@ -1,5 +1,12 @@
 import React, { useMemo, useCallback, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
 import DishDetailModal from './DishDetailModal';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
@@ -10,7 +17,10 @@ import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import EyeShow from '../assets/htf-icon/icon-eye.svg';
 import DeleteIcon from '../assets/htf-icon/icon-trans.svg';
 import SkeletonLoading from './SkeletonLoading';
+import { addItem, decreaseItem, removeItem } from '../store/slice/cartSlice';
+
 const width = Dimensions.get('window').width;
+
 type Dish = {
   id: string;
   title: string;
@@ -49,8 +59,6 @@ export default React.memo(function AddonDishCard({
   tiffinPlan,
   item,
   onChange,
-  setSelectedItemsToAddOnCart,
-  selectedItemsToAddOnCart,
   isLoading,
 }: {
   category: string;
@@ -58,76 +66,102 @@ export default React.memo(function AddonDishCard({
   type: 'main' | 'addon';
   item: Dish;
   onChange?: (d: Dish) => void;
-  tiffinPlan?: number;
-  setSelectedItemsToAddOnCart?: any;
-  selectedItemsToAddOnCart: any[];
+  tiffinPlan?: number | any;
   isLoading?: boolean;
 }) {
   const dispatch = useAppDispatch();
+  const { lines } = useAppSelector(state => state.cart);
   const [open, setOpen] = useState(false);
 
-  const keyMatch = useCallback(
-    (i: any) =>
-      i.id === item.id &&
-      i.variantId === item.variantId &&
-      i.day === day &&
-      i.category === category &&
-      i.type === 'addon',
-    [item.id, item.variantId, day, category],
+  // Find this item in cart
+  const cartItem = useMemo(
+    () =>
+      lines.find(
+        (line: any) =>
+          line.id === item.id &&
+          line.variantId === item.variantId &&
+          line.day === day &&
+          line.category === category &&
+          line.type === 'addon',
+      ),
+    [lines, item.id, item.variantId, day, category],
   );
 
-  const selectedEntry = useMemo(
-    () => selectedItemsToAddOnCart.find(keyMatch),
-    [selectedItemsToAddOnCart, keyMatch],
-  );
-  const qty = selectedEntry?.qty ?? 0;
+  const qty = cartItem?.qty ?? 0;
   const checked = qty > 0;
 
   const isFav = useAppSelector(
     selectIsWishlisted(item.id, item.variantId, category, day),
   );
 
-  const addOrReplace = useCallback(
-    (nextQty: number) => {
-      setSelectedItemsToAddOnCart?.((prev: any[]) => {
-        const without = prev.filter((i: any) => !keyMatch(i));
-        return [
-          ...without,
-          {
-            ...item,
-            type: 'addon',
-            category,
-            day,
-            date: nowStr(),
-            tiffinPlan,
-            qty: nextQty,
-          },
-        ];
-      });
-      onChange?.({ ...item, selected: false, liked: isFav });
-    },
-    [setSelectedItemsToAddOnCart, keyMatch, item, category, day, tiffinPlan, onChange, isFav],
-  );
+  const addToCart = useCallback(() => {
+    const itemWithMeta = {
+      ...item,
+      type: 'addon',
+      category,
+      day,
+      date: nowStr(),
+      tiffinPlan,
+      qty: 1,
+    };
+    dispatch(addItem(itemWithMeta as any));
+    onChange?.({ ...item, selected: true, liked: isFav });
+  }, [dispatch, item, category, day, tiffinPlan, onChange, isFav]);
 
-  const removeFromList = useCallback(() => {
-    setSelectedItemsToAddOnCart?.((prev: any[]) =>
-      prev.filter((i: any) => !keyMatch(i)),
-    );
-    onChange?.({ ...item, selected: false, liked: isFav });
-  }, [setSelectedItemsToAddOnCart, keyMatch, onChange, item, isFav]);
+  const increment = useCallback(() => {
+    const itemWithMeta = {
+      ...item,
+      type: 'addon',
+      category,
+      day,
+      date: nowStr(),
+      tiffinPlan,
+      qty: 1,
+    };
+    dispatch(addItem(itemWithMeta as any));
+    onChange?.({ ...item, selected: true, liked: isFav });
+  }, [dispatch, item, category, day, tiffinPlan, onChange, isFav]);
+
+  const decrement = useCallback(() => {
+    if (qty <= 1) {
+      // Remove item completely
+      dispatch(
+        removeItem({
+          id: item.id,
+          variantId: item.variantId,
+          tiffinPlan,
+          type: 'addon',
+        }),
+      );
+      onChange?.({ ...item, selected: false, liked: isFav });
+    } else {
+      // Decrease quantity
+      dispatch(
+        decreaseItem({
+          id: item.id,
+          variantId: item.variantId,
+          tiffinPlan,
+          type: 'addon',
+        }),
+      );
+      onChange?.({ ...item, selected: true, liked: isFav });
+    }
+  }, [
+    dispatch,
+    item.id,
+    item.variantId,
+    tiffinPlan,
+    qty,
+    onChange,
+    item,
+    isFav,
+  ]);
 
   const onCardPress = useCallback(() => {
-    if (!checked) addOrReplace(1);
-  }, [checked, addOrReplace]);
-
-  const increment = useCallback(
-    () => addOrReplace(qty > 0 ? qty + 1 : 1),
-    [qty, addOrReplace],
-  );
-  const decrement = useCallback(() => {
-    if (qty <= 1) removeFromList();
-    else addOrReplace(qty - 1);
-  }, [qty, removeFromList, addOrReplace]);
+    if (!checked) {
+      addToCart();
+    }
+  }, [checked, addToCart]);
 
   const onHeartPress = useCallback(() => {
     dispatch(
@@ -145,8 +179,8 @@ export default React.memo(function AddonDishCard({
         tags: item.tags,
       }),
     );
-    onChange?.({ ...item, selected: false, liked: !isFav });
-  }, [dispatch, item, category, day, onChange, isFav]);
+    onChange?.({ ...item, selected: checked, liked: !isFav });
+  }, [dispatch, item, category, day, onChange, isFav, checked]);
 
   if (isLoading) return <SkeletonLoading />;
 
@@ -201,7 +235,7 @@ export default React.memo(function AddonDishCard({
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
-              qty <= 1 ? removeFromList() : decrement();
+              decrement();
             }}
             style={[s.pillBtn, !checked && s.disabled]}
             disabled={!checked}
@@ -240,9 +274,13 @@ export default React.memo(function AddonDishCard({
 
 const s = StyleSheet.create({
   card: {
-    width: (width / 2) - 40,
+    width: width / 2 - 40,
     height: width / 2 + 40,
     borderRadius: 14,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 8,
   },
   imgWrap: {
     position: 'relative',
@@ -250,7 +288,7 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
   thumb: {
-    width: width / 2 - 40,
+    width: '100%',
     height: width / 2 - 40,
     resizeMode: 'cover',
   },
@@ -275,8 +313,17 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  textWrap: { marginTop: 10, minHeight: 32 },
-  title: { fontSize: 13, fontWeight: '700', color: COLORS.text },
+  textWrap: {
+    marginTop: 10,
+    minHeight: 32,
+    paddingHorizontal: 4,
+  },
+  title: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.text,
+    lineHeight: 16,
+  },
   qtyPill: {
     marginTop: 10,
     alignSelf: 'center',
@@ -300,7 +347,12 @@ const s = StyleSheet.create({
     borderColor: COLORS.border,
   },
   disabled: { opacity: 0.35 },
-  pillBtnText: { fontSize: 14, fontWeight: '800', color: COLORS.green },
+  pillBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.green,
+    lineHeight: 16,
+  },
   qtyNum: {
     minWidth: 16,
     textAlign: 'center',
