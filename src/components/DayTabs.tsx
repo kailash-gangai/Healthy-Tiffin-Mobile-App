@@ -12,7 +12,12 @@ import { COLORS, SHADOW, SPACING } from '../ui/theme';
 
 const ITEM_W = 60;
 
-export default function DayTabs({ days, onChange }: { days: string[]; onChange?: (i: number) => void }) {
+export default function DayTabs({
+  days, onChange, activeDay, // Accept activeDay as a prop
+}: {
+  days: string[]; onChange?: (i: number) => void; activeDay?: number;
+
+}) {
   const listRef = useRef<FlatList<string>>(null);
   const WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -27,7 +32,7 @@ export default function DayTabs({ days, onChange }: { days: string[]; onChange?:
     return i >= 0 ? i : 0;
   }, [filteredDays]);
 
-  const [active, setActive] = useState(todayIdx);
+  const [active, setActive] = useState(activeDay);
 
   const dateForDayName = (name: string) => {
     const idx = WEEK.indexOf(name.toLowerCase());
@@ -53,11 +58,18 @@ export default function DayTabs({ days, onChange }: { days: string[]; onChange?:
     return `${fmt(monday)} - ${fmt(sunday)} ${monday.getFullYear()}`;
   }, []);
 
-  useEffect(() => {
-    listRef.current?.scrollToIndex({ index: todayIdx, viewPosition: 0.5, animated: true });
-    onChange?.(todayIdx);
-  }, [todayIdx, onChange]);
+  // useEffect(() => {
+  //   listRef.current?.scrollToIndex({ index: todayIdx, viewPosition: 0.5, animated: true });
+  //   onChange?.(todayIdx);
+  // }, [todayIdx, onChange]);
 
+
+  useEffect(() => {
+    // Update the active state when the parent changes the active day
+    setActive(activeDay);
+    listRef.current?.scrollToIndex({ index: todayIdx, viewPosition: 0.5, animated: true });
+   
+  }, [activeDay, todayIdx]);
   const select = (i: number) => {
     if (i < 0 || i >= filteredDays.length) return;
     setActive(i);
@@ -139,8 +151,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   rangeText: { fontSize: 14, fontWeight: '500', color: '#333' },
-  listContainer: { justifyContent: 'center', gap:20, width: '100%' },
-  dayItem: {  alignItems: 'center' },
+  listContainer: { justifyContent: 'center', gap: 20, width: '100%' },
+  dayItem: { alignItems: 'center' },
   dayName: { fontSize: 11, fontWeight: '600', color: '#000', marginBottom: 6 },
   activeDayName: { color: '#8A8A8A' },
   dateBox: {

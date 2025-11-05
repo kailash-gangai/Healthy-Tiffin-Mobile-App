@@ -95,6 +95,7 @@ const ALL_DAYS = [
   'Friday',
   'Saturday',
   'Sunday',
+
 ] as const;
 
 const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
@@ -122,13 +123,12 @@ function rankOf(key: string, ordered: string[]) {
 function getAbsoluteTodayIndex() {
   const js = new Date().getDay();
   const week = [
-    'Sunday',
     'Monday',
     'Tuesday',
     'Wednesday',
     'Thursday',
     'Friday',
-    'Saturday',
+  
   ];
   return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
 }
@@ -571,6 +571,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const handleTagChange = (updatedTags: string[]) => {
     setSelectedTags(updatedTags); // Update the selected tags
   };
+   const handleDayChange = (index: number) => {
+    setFilteredIndex(index);
+  };
   return (
     <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
       <ScrollView bounces={false}>
@@ -587,7 +590,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           <OrderToggle index={tab} onChange={setTab} />
           <DayTabs
             days={FILTERED_DAYS as string[]}
-            onChange={setFilteredIndex}
+            onChange={handleDayChange}
+            activeDay={filteredIndex} 
           />
           <TagListFilter selectedTags={selectedTags} onChange={handleTagChange} />
 
