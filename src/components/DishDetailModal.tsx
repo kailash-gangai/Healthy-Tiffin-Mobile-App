@@ -18,12 +18,20 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import ShearIcon from '../assets/htf-icon/icon-shre.svg';
 
+import CaloriesIcon from '../assets/htf-icon/icon-calories.svg'
+import ProteinIcon from '../assets/htf-icon/icon-protein.svg'
+import CarbsIcon from '../assets/htf-icon/icon-carbs.svg'
+import SugarIcon from '../assets/htf-icon/icon-sugar.svg'
+import CholesterolIcon from '../assets/htf-icon/icon-cholesterol.svg'
+import PotassiumIcon from '../assets/htf-icon/icon-potassium.svg'
+import LinearGradient from 'react-native-linear-gradient';
 const { height } = Dimensions.get('window');
+const width = Dimensions.get('window').width;
 
 const COLORS = {
   backdrop: 'rgba(0,0,0,0.45)',
-  white: '#FFFFFF',
-  text: '#1E1E1E',
+  white: '#ffffff',
+  text: '#1B1B1B',
   sub: '#8F8F8F',
   green: '#0B5733',
   border: '#EEEEEE',
@@ -40,6 +48,9 @@ type Dish = {
   liked?: boolean;
 };
 
+
+
+
 export default function DishDetailModal({
   visible,
   onClose,
@@ -55,6 +66,35 @@ export default function DishDetailModal({
 }) {
   const translateY = useRef(new Animated.Value(height)).current; // start off-screen
 
+  const nutritionInfo = [
+    { label: 'Calories', value: '', icon: <CaloriesIcon height={20} width={20} /> },
+    { label: 'Protein', value: '', icon: <ProteinIcon height={20} width={20} /> },
+    { label: 'Total Carbs', value: '', icon: <CarbsIcon height={20} width={20} /> },
+    { label: 'Sugar', value: '', icon: <SugarIcon height={20} width={20} /> },
+    { label: 'Cholesterol', value: '', icon: <CholesterolIcon height={20} width={20} /> },
+    { label: 'Potassium', value: '', icon: <PotassiumIcon height={20} width={20} /> },
+  ];
+
+  const metaobject = dish?.metafields?.find((mf: any) => mf && mf.key === 'nutrients_information');
+
+  if (metaobject) {
+    const nutrientsInformation = JSON.parse(metaobject.value);
+    const updatedNutritionInfo = nutritionInfo.map((nutrient, i) => {
+      const nutrientData = nutrientsInformation.find(n => n.toLowerCase().includes(nutrient.label.toLowerCase()));
+
+      if (nutrientData) {
+        const [label, value] = nutrientData.split(" || ");
+        return {
+          ...nutrient,
+          value: value || '',
+        };
+      }
+
+      return nutrient;
+    });
+
+    nutritionInfo.splice(0, nutritionInfo.length, ...updatedNutritionInfo);
+  }
 
 
   const handleShare = async () => {
@@ -143,37 +183,46 @@ export default function DishDetailModal({
           {/* Description */}
           <Text style={s.desc}>
             {dish.description ||
-              'Lorem ipsum dolor sit amet consectetur. Amet aliquam scelerisque ut quisque non. Non adipiscing suspendisse eget nulla tempus eget malesuada at aliquam.'}
+              ' '}
           </Text>
 
-          {/* Nutrition Stats */}
           <View style={s.nutritionWrap}>
-            {[
-              { label: 'Calories', value: '431 kcal', icon: '🔥' },
-              { label: 'Protein', value: '38 g', icon: '💪' },
-              { label: 'Total Carbs', value: '4.1 g', icon: '🥔' },
-              { label: 'Sugar', value: '0.9 g', icon: '🍬' },
-              { label: 'Cholesterol', value: '4.1 g', icon: '❤️' },
-              { label: 'Potassium', value: '125 mg', icon: '🧂' },
-            ].map((n, i) => (
-              <View key={i} style={s.nutriBox}>
-                <Text style={s.nutriIcon}>{n.icon}</Text>
-                <Text style={s.nutriValue}>{n.value}</Text>
-                <Text style={s.nutriLabel}>{n.label}</Text>
-              </View>
+            {nutritionInfo.map((n, i) => (
+              n.value !== '' && (
+                <View key={i} style={s.nutriBox}>
+                  <View>
+                    <Text style={s.nutriIcon}>{n.icon}</Text>
+                  </View>
+                  <View>
+                    <Text style={s.nutriLabel}>{n.label}</Text>
+                    <Text style={s.nutriValue}>{n.value}</Text>
+                  </View>
+                </View>
+              )
             ))}
+
           </View>
         </ScrollView>
 
         {/* FIXED BUTTON (non-scrollable) */}
         <View style={s.footer}>
-          <TouchableOpacity style={s.addBtn} onPress={handleAddToCart} activeOpacity={0.9}>
-            <Text style={s.addText}>Add to Cart</Text>
-          </TouchableOpacity>
+
+          <LinearGradient
+            colors={
+              ['#42D296', '#2AB47B']
+            } // Active gradient or inactive gradient
+            start={{ x: 0, y: 0 }} // Start gradient from top
+            end={{ x: 0, y: 1 }} // End gradient at the bottom
+            style={[s.addBtn]} // Apply gradient to active button
+          >
+            <TouchableOpacity style={s.toggleBtnContent} onPress={handleAddToCart} activeOpacity={0.9}>
+              <Text style={s.addText}>Add to Cart</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       </Animated.View>
     </Modal>
-  );  
+  );
 }
 
 function getTagColor(tag: string) {
@@ -184,14 +233,15 @@ function getTagColor(tag: string) {
       return { backgroundColor: '#F2B740' };
     case 'nv':
       return { backgroundColor: '#6A3A1D' };
-    case 'fodmap':
+    case 'foodmap':
       return { backgroundColor: '#A5B6A5' };
     default:
-      return { backgroundColor: '#E5E5E5' };
+      return { backgroundColor: '#0B5733' };
   }
 }
 
 const s = StyleSheet.create({
+
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: COLORS.backdrop,
@@ -200,7 +250,7 @@ const s = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: COLORS.white,
+    backgroundColor: '#f7f7f9',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: height * 0.9,
@@ -243,26 +293,32 @@ const s = StyleSheet.create({
   },
   tagText: { color: '#fff', fontWeight: '700', fontSize: 11 },
   desc: {
-    color: COLORS.sub,
-    fontSize: 14,
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: '300',
     lineHeight: 20,
     marginBottom: 16,
+    letterSpacing: 0.24,
   },
   nutritionWrap: {
-    flexDirection: 'row',
     flexWrap: 'wrap',
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    rowGap: 10,
+    gap: 10,
   },
   nutriBox: {
-    width: '30%',
-    backgroundColor: '#F9F9F9',
-    borderRadius: 12,
+    display: 'flex',
+    gap: 6,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    flexDirection: 'row',
+    width: (width - 33.33) / 3 - 10,
     padding: 10,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   nutriIcon: { fontSize: 18, marginBottom: 4 },
-  nutriValue: { fontWeight: '700', fontSize: 13, color: COLORS.text },
+  nutriValue: { fontWeight: '500', fontSize: 12, color: COLORS.text },
   nutriLabel: { fontSize: 12, color: COLORS.sub },
 
   /* Fixed Add Button */
@@ -271,19 +327,23 @@ const s = StyleSheet.create({
     bottom: 30,
     left: 0,
     right: 0,
-    backgroundColor: COLORS.white,
     paddingHorizontal: 20,
     paddingBottom: 25,
     paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#EEE',
+
   },
   addBtn: {
-    backgroundColor: COLORS.green,
-    borderRadius: 12,
-    paddingVertical: 16,
+
+    borderRadius: 8,
+
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addText: { color: COLORS.white, fontWeight: '700', fontSize: 16 },
+  addText: { color: COLORS.white, fontWeight: '500', lineHeight: 24, fontSize: 16 },
+  toggleBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
 });

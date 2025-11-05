@@ -75,9 +75,8 @@ const s = StyleSheet.create({
     marginHorizontal: SPACING,
     flexDirection: 'row', 
     backgroundColor: COLORS.white,
-
-    // marginVertical: 8,
-    height: 60,
+    height: 36,
+   
     overflow: 'hidden',
 
   },

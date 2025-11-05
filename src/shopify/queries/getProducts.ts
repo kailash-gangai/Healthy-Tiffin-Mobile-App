@@ -10,7 +10,13 @@ export const getProductsByIds = async (productIds: string) => {
             title
             tags
             description
-           
+          metafields(identifiers: [
+                {namespace: "custom", key: "dietary_tags"},
+                {namespace: "custom", key: "nutrients_information"}
+              ]) {
+                key
+                value
+              }
               variants(first: 1) {
                 edges {
                   node {
@@ -51,6 +57,7 @@ export const getProductsByIds = async (productIds: string) => {
         tags: product.tags,
         image: product.images.edges[0]?.node.src || null,
         price: product.variants.edges?.[0]?.node.priceV2?.amount || 'N/A',
+        metafields: product.metafields,
       }));
     } else {
       console.log('No products found.');

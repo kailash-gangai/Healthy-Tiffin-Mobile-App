@@ -66,6 +66,17 @@ export default function DishCard({
 
   const [open, setOpen] = useState(false);
   const isFav = useAppSelector(selectIsWishlisted(item.id, item.variantId, category, day));
+  let customTags = item?.metafields?.find((mf: any) => mf && mf.key === 'dietary_tags');
+  if (customTags) {
+    try {
+      customTags = JSON.parse(customTags.value); // Safely parse the JSON string
+    } catch (error) {
+      console.error("Error parsing dietary tags:", error);
+      customTags = []; // Default to empty array if parsing fails
+    }
+  } else {
+    customTags = []; // Default to empty array if no tags are found
+  }
 
   const toggleSelection = () => {
     const date = new Intl.DateTimeFormat('en-US').format(new Date());
@@ -152,7 +163,7 @@ export default function DishCard({
         </View>
 
         <View style={s.tagContainer}>
-          {item.tags?.slice(0, 2).map((tag, idx) => (
+          {customTags && customTags.length > 0 && customTags.map((tag, idx) => (
             <View
               key={idx}
               style={[
@@ -238,7 +249,7 @@ const s = StyleSheet.create({
   },
   radioOn: {
     borderColor: '#FFFFFF',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0B5733',
   },
   radioDot: {
     width: 8,

@@ -38,6 +38,7 @@ import {
 } from '../../utils/ESTtime';
 import { setAll } from '../../store/slice/priceSlice';
 import CartSummaryModal from '../../components/CartSummaryModal';
+import TagListFilter from '../../components/TagListFilter';
 
 type SectionKey = string;
 
@@ -212,6 +213,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [isLoading, setLoading] = useState(false);
   const [menuCutOff, setMenuCutOff] = useState<Record<string, any>>({});
   const [menuDisabled, setMenuDisabled] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const [showCart, setShowCart] = useState(false);
 
@@ -331,7 +333,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               l.id === localItem.id &&
               l.day === localItem.day &&
               (Number(l.tiffinPlan) || 1) ===
-                (Number(localItem.tiffinPlan) || 1),
+              (Number(localItem.tiffinPlan) || 1),
           ),
       ),
     );
@@ -637,7 +639,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setCategories([]);
       setAddonCategories([]);
     }
-  }, [isCartCleared, dispatch, fetchMetaAndData, lines, currentDay]);
+    console.log('selected Tags on day change', selectedTags);
+  }, [isCartCleared, dispatch, fetchMetaAndData, lines, currentDay, selectedTags]);
 
   // build summary rows with per-tiffin lines
   const summaryRows = useMemo(() => {
@@ -666,6 +669,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     openByKey,
     selectedItemsToAddOnCart,
   });
+
+  const handleTagChange = (updatedTags: string[]) => {
+    setSelectedTags(updatedTags); // Update the selected tags
+  };
   return (
     <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
       <ScrollView bounces={false}>
@@ -685,6 +692,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             days={FILTERED_DAYS as string[]}
             onChange={setFilteredIndex}
           />
+          <TagListFilter selectedTags={selectedTags} onChange={handleTagChange} />
         </View>
 
         {menuDisabled && (
