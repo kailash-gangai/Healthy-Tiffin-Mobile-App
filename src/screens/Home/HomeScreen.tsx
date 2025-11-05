@@ -43,7 +43,7 @@ import {
 import { setAll } from '../../store/slice/priceSlice';
 import CartSummaryModal from '../../components/CartSummaryModal';
 import Toast from 'react-native-toast-message';
-
+import TagListFilter from '../../components/TagListFilter';
 type SectionKey = string;
 
 interface CategoriesProps {
@@ -213,7 +213,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [priceThreshold, setPriceThreshold] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [menuDisabled, setMenuDisabled] = useState(false);
-
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [filteredIndex, setFilteredIndex] = useState(0);
   const [openByKey, setOpenByKey] = useState<Record<SectionKey, boolean>>({});
@@ -552,7 +552,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setCategories([]);
       setAddonCategories([]);
     }
-  }, [dispatch, fetchMetaAndData, currentDay]);
+    console.log('selected Tags on day change', selectedTags);
+
+  }, [dispatch, fetchMetaAndData, currentDay, selectedTags]);
 
   // Calculate cart total
   const cartTotal = useMemo(() => {
@@ -566,7 +568,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const totalTiffinCount = useMemo(() => {
     return dayTiffinPlans.length;
   }, [dayTiffinPlans]);
-
+  const handleTagChange = (updatedTags: string[]) => {
+    setSelectedTags(updatedTags); // Update the selected tags
+  };
   return (
     <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
       <ScrollView bounces={false}>
@@ -585,6 +589,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             days={FILTERED_DAYS as string[]}
             onChange={setFilteredIndex}
           />
+          <TagListFilter selectedTags={selectedTags} onChange={handleTagChange} />
+
         </View>
 
         {/* Tiffin Plan Indicator */}
@@ -680,7 +686,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                   title={cat.key.toUpperCase()}
                   note={`Select from ${cat.value.length} options`}
                   open={true} // Always open for addons
-                  setOpen={() => {}} // No-op function since we don't want to close addons
+                  setOpen={() => { }} // No-op function since we don't want to close addons
                 >
                   <View style={styles.gridWrap}>
                     {cat.value.map(d => (
