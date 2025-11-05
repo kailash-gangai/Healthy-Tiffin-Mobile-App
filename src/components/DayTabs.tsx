@@ -139,8 +139,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   rangeText: { fontSize: 14, fontWeight: '500', color: '#333' },
-  listContainer: { justifyContent: 'space-between', width: '100%' },
-  dayItem: { width: 64, alignItems: 'center' },
+  listContainer: { justifyContent: 'center', gap:20, width: '100%' },
+  dayItem: {  alignItems: 'center' },
   dayName: { fontSize: 11, fontWeight: '600', color: '#000', marginBottom: 6 },
   activeDayName: { color: '#8A8A8A' },
   dateBox: {
@@ -155,5 +155,5 @@ const s = StyleSheet.create({
   dateBoxInactive: {},
   dateText: { fontSize: 15, fontWeight: '700', color: '#000' },
   dateTextActive: { color: '#fff' },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#FFCA40', position: 'absolute', bottom: 6 },
+  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#ffff', position: 'absolute', bottom: 6 },
 });
