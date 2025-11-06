@@ -509,16 +509,6 @@ export default function CartSummaryModal({
             />
           ))}
 
-          {/* Validation Messages */}
-          {missingInfo && (
-            <View style={s.validationBox}>
-              <Text style={s.validationTitle}>Missing Items</Text>
-              <Text style={s.validationText}>
-                Please complete all tiffins before proceeding
-              </Text>
-            </View>
-          )}
-
           {addonsMinInfo && (
             <View style={s.validationBox}>
               <Text style={s.validationTitle}>Minimum Not Met</Text>
@@ -530,13 +520,15 @@ export default function CartSummaryModal({
           )}
 
           {/* Cart Summary */}
-          <View style={s.summaryCard}>
+          {(missingInfo || addonsMinInfo) && (
             <View style={s.noticeBox}>
               <Text style={s.noticeText}>
-                Minimum order total has to be $29 to process
+                {missingInfo && 'Please complete all tiffins before proceeding'}
+                {addonsMinInfo && addonsMinInfo.message}
               </Text>
             </View>
-
+          )}
+          <View style={s.summaryCard}>
             <View style={s.summaryRow}>
               <Text style={s.label}>Meal Box Price</Text>
               <Text style={s.value}>
@@ -549,7 +541,7 @@ export default function CartSummaryModal({
               <Text style={s.value}>${addons.toFixed(2)}</Text>
             </View>
 
-            <View style={s.summaryRow}>
+            {/* <View style={s.summaryRow}>
               <Text style={s.label}>Shipping Cost (+)</Text>
               <Text style={s.value}>$10.85</Text>
             </View>
@@ -557,15 +549,13 @@ export default function CartSummaryModal({
             <View style={s.summaryRow}>
               <Text style={s.label}>Discount (−)</Text>
               <Text style={s.value}>$9.00</Text>
-            </View>
+            </View> */}
 
             <View style={s.divider} />
 
             <View style={s.summaryRow}>
               <Text style={s.totalLabel}>Total Payable</Text>
-              <Text style={s.totalValue}>
-                ${(total + 10.85 - 9).toFixed(2)}
-              </Text>
+              <Text style={s.totalValue}>${total.toFixed(2)}</Text>
             </View>
           </View>
 
