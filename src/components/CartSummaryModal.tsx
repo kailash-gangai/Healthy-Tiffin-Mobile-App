@@ -292,7 +292,7 @@ export default function CartSummaryModal({
                   <View key={`tiffin-${plan.plan}`} style={s.planSection}>
                     <View
                       style={s.planHeader}
-                    // onPress={() => togglePlanExpand(day, plan.plan)}
+                      // onPress={() => togglePlanExpand(day, plan.plan)}
                     >
                       <Text style={s.planTitle}>Tiffin {plan.plan}</Text>
 
@@ -558,9 +558,8 @@ export default function CartSummaryModal({
                 </Text>
               </View>
             </View>
-
           </View>
-  
+
           <LinearGradient
             colors={
               canProceed ? ['#5FBC9B', '#1E9E64'] : ['#CCCCCC', '#999999']

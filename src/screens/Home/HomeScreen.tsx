@@ -755,7 +755,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                     key={key}
                     title={cat.key.toUpperCase()}
                     note={`Select from ${cat.value.length} options`}
-                    open={isOpen(key)}
+                    open={isOpen(key)} // Always open for addons
                     setOpen={(v: boolean) => setOpen(key, v)}
                   >
                     <View style={styles.gridWrap}>
