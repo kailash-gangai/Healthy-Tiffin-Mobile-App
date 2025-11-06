@@ -522,7 +522,7 @@ export default function CartSummaryModal({
             </View>
           )}
 
-          {addonsMinInfo && (
+          {/* {addonsMinInfo && (
             <View style={s.validationBox}>
               <Text style={s.validationTitle}>Minimum Not Met</Text>
               <Text style={s.validationText}>{addonsMinInfo.message}</Text>
@@ -530,15 +530,19 @@ export default function CartSummaryModal({
                 Add ${addonsMinInfo.remaining.toFixed(2)} more to proceed
               </Text>
             </View>
-          )}
+          )} */}
 
           {/* Cart Summary */}
           <View style={s.summaryCard}>
-            <View style={s.noticeBox}>
-              <Text style={s.noticeText}>
-                Minimum order total has to be $29 to process
-              </Text>
-            </View>
+            {(addonsMinInfo || missingInfo) && (
+              <View style={s.noticeBox}>
+                <Text style={s.noticeText}>
+                  {addonsMinInfo && addonsMinInfo.message}
+                  {missingInfo &&
+                    'Please complete all tiffins before proceeding'}
+                </Text>
+              </View>
+            )}
 
             <View>
               <View style={s.summaryRow}>
@@ -547,15 +551,18 @@ export default function CartSummaryModal({
                   ${(mealCost + tiffinPrice).toFixed(2)}
                 </Text>
               </View>
+              <View style={s.summaryRow}>
+                <Text style={s.label}>Addons</Text>
+                <Text style={s.value}>${addons.toFixed(2)}</Text>
+              </View>
+
               <View style={{ marginBottom: 16 }}>
                 <Divider />
               </View>
 
               <View style={s.summaryRow}>
                 <Text style={s.totalLabel}>Total Payable</Text>
-                <Text style={s.totalValue}>
-                  ${(total + 10.85 - 9).toFixed(2)}
-                </Text>
+                <Text style={s.totalValue}>${total.toFixed(2)}</Text>
               </View>
             </View>
           </View>
@@ -574,7 +581,7 @@ export default function CartSummaryModal({
             >
               <Text style={s.orderText}>
                 {canProceed
-                  ? `Place an Order ($${(total + 10.85 - 9).toFixed(2)})`
+                  ? `Place an Order ($${total.toFixed(2)})`
                   : 'Complete Your Order'}
               </Text>
             </TouchableOpacity>
