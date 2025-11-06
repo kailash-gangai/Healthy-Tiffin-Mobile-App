@@ -17,6 +17,7 @@ import {
 import ArrowUp from '../assets/htf-icon/icon-up.svg';
 import ArrowDown from '../assets/htf-icon/icon-down.svg';
 import TrashIcon from '../assets/htf-icon/icon-trans.svg';
+import Divider from '../assets/newicon/divider.svg';
 import { SHADOW } from '../ui/theme';
 import LinearGradient from 'react-native-linear-gradient';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -52,7 +53,7 @@ if (
 }
 
 const COLORS = {
-  white: '#FFFFFF',
+  white: '#ffffff',
   black: '#000000',
   gray: '#8A8A8A',
   green: '#0B5733',
@@ -273,35 +274,39 @@ export default function CartSummaryModal({
             )}
           </View>
         </TouchableOpacity>
+        <View
+          style={{ marginTop: 12, display: isDayOpen(day) ? 'flex' : 'none' }}
+        >
+          <Divider />
+        </View>
 
         {isDayOpen(day) && (
           <View>
             {/* Mains Section */}
             {mains.length > 0 && (
               <View style={s.section}>
-                <View style={s.sectionHeader}>
-                  <Text style={s.sectionChip}>Main</Text>
-                  <TouchableOpacity
-                    onPress={() => dispatch(removeDayMains({ day }))}
-                    style={s.trashBtn}
-                  >
-                    <TrashIcon height={16} width={16} />
-                  </TouchableOpacity>
-                </View>
-
                 {tiffinPlans.map((plan: any) => (
                   <View key={`tiffin-${plan.plan}`} style={s.planSection}>
-                    <TouchableOpacity
+                    <View
                       style={s.planHeader}
-                      onPress={() => togglePlanExpand(day, plan.plan)}
+                      // onPress={() => togglePlanExpand(day, plan.plan)}
                     >
                       <Text style={s.planTitle}>Tiffin {plan.plan}</Text>
-                      {isPlanOpen(day, plan.plan) ? (
-                        <ArrowDown height={16} width={16} />
-                      ) : (
-                        <ArrowUp height={16} width={16} />
-                      )}
-                    </TouchableOpacity>
+
+                      {/* <View style={s.sectionHeader}>
+                        <TouchableOpacity
+                          onPress={() => dispatch(removeDayMains({ day }))}
+                          style={s.trashBtn}
+                        >
+                          <TrashIcon height={16} width={16} />
+                        </TouchableOpacity>
+                        {isPlanOpen(day, plan.plan) ? (
+                          <ArrowDown height={16} width={16} />
+                        ) : (
+                          <ArrowUp height={16} width={16} />
+                        )}
+                      </View> */}
+                    </View>
 
                     {isPlanOpen(day, plan.plan) && (
                       <View style={s.planItems}>
@@ -310,41 +315,47 @@ export default function CartSummaryModal({
                             key={`${item.id}-${item.variantId}-${item.tiffinPlan}`}
                             style={s.itemRow}
                           >
-                            <View style={s.thumb}>
-                              <Image
-                                source={{ uri: item.image }}
-                                style={s.imgMini}
-                              />
-                              {Number(item.price) > 0 && (
-                                <View style={s.priceBadge}>
-                                  <Text style={s.priceBadgeText}>
-                                    +${item.price}
+                            <View style={s.itemContent}>
+                              <View style={s.itemContent2}>
+                                <View style={s.thumb}>
+                                  <Image
+                                    source={{ uri: item.image }}
+                                    style={s.imgMini}
+                                  />
+                                </View>
+                                <View style={s.content}>
+                                  <Text style={s.itemCategory}>
+                                    {item.category}
+                                  </Text>
+                                  <Text style={s.itemName}>{item.title}</Text>
+                                  <Text style={s.itemQty}>
+                                    {Number(item.price) > 0 && (
+                                      <View style={s.priceBadge}>
+                                        <Text style={s.priceBadgeText}>
+                                          +${item.price}
+                                        </Text>
+                                      </View>
+                                    )}
                                   </Text>
                                 </View>
-                              )}
+                              </View>
+
+                              <TouchableOpacity
+                                style={s.deleteBtn}
+                                onPress={() =>
+                                  dispatch(
+                                    removeItem({
+                                      id: item.id,
+                                      variantId: item.variantId,
+                                      tiffinPlan: item.tiffinPlan,
+                                      type: item.type,
+                                    }),
+                                  )
+                                }
+                              >
+                                <TrashIcon height={16} width={16} />
+                              </TouchableOpacity>
                             </View>
-                            <View style={s.itemContent}>
-                              <Text style={s.itemCategory}>
-                                {item.category}
-                              </Text>
-                              <Text style={s.itemName}>{item.title}</Text>
-                              <Text style={s.itemQty}>{item.qty} Qty</Text>
-                            </View>
-                            <TouchableOpacity
-                              style={s.deleteBtn}
-                              onPress={() =>
-                                dispatch(
-                                  removeItem({
-                                    id: item.id,
-                                    variantId: item.variantId,
-                                    tiffinPlan: item.tiffinPlan,
-                                    type: item.type,
-                                  }),
-                                )
-                              }
-                            >
-                              <TrashIcon height={16} width={16} />
-                            </TouchableOpacity>
                           </View>
                         ))}
                       </View>
@@ -661,7 +672,7 @@ const s = StyleSheet.create({
   },
   dayText: { fontWeight: '700', color: COLORS.black, fontSize: 16, flex: 1 },
   priceTag: {
-    backgroundColor: COLORS.green,
+    backgroundColor: COLORS.black,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
@@ -681,7 +692,7 @@ const s = StyleSheet.create({
   section: {
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 1,
+    // borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
   sectionHeader: {
@@ -720,12 +731,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    backgroundColor: '#F8F9F8',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E7EBE8',
   },
   planTitle: { fontSize: 14, fontWeight: '700', color: COLORS.black },
   planItems: {
@@ -737,11 +742,8 @@ const s = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
     borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#EEE',
+    paddingVertical: 2,
   },
   addonItem: {
     backgroundColor: '#F8FAFF',
@@ -752,30 +754,41 @@ const s = StyleSheet.create({
     marginRight: 12,
   },
   imgMini: {
-    width: 60,
-    height: 50,
-    borderRadius: 8,
+    width: 54,
+    height: 54,
+    borderRadius: 16,
     resizeMode: 'cover',
   },
-  priceBadge: {
-    position: 'absolute',
-    right: -4,
-    bottom: -4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: COLORS.green,
-  },
+  priceBadge: {},
   addonPriceBadge: {
     backgroundColor: '#1B4FBF',
   },
   priceBadgeText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: '700',
+    color: '#000000',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 20,
   },
   itemContent: {
+    display: 'flex',
+    flexDirection: 'row',
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  itemContent2: {
+    display: 'flex',
+    justifyContent: 'center',
+    // paddingHorizontal: 8,
+    flexDirection: 'row',
+    // alignItems:"center",
+    // flex:1
+  },
+  content: {
+    display: 'flex',
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    width: 200,
   },
   itemCategory: {
     fontSize: 11,
@@ -787,9 +800,10 @@ const s = StyleSheet.create({
     color: '#1B4FBF',
   },
   itemName: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
     color: COLORS.black,
+    lineHeight: 20,
     marginBottom: 4,
   },
   itemQty: {
@@ -830,7 +844,7 @@ const s = StyleSheet.create({
     backgroundColor: '#FFECEC',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: 8,
     marginLeft: 8,
   },
 

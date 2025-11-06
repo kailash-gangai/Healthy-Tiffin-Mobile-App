@@ -6,24 +6,35 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import ArrowLeftIcon from '../assets/newicon/icon-left.svg';
+import ArrowLeftIcon from '../assets/newicon/left-arrow.svg';
 import ArrowRightIcon from '../assets/newicon/right-arrow.svg';
 import { COLORS, SHADOW, SPACING } from '../ui/theme';
 
 const ITEM_W = 60;
 
 export default function DayTabs({
-  days, onChange, activeDay, // Accept activeDay as a prop
+  days,
+  onChange,
+  activeDay, // Accept activeDay as a prop
 }: {
-  days: string[]; onChange?: (i: number) => void; activeDay?: number;
-
+  days: string[];
+  onChange?: (i: number) => void;
+  activeDay?: number;
 }) {
   const listRef = useRef<FlatList<string>>(null);
-  const WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const WEEK = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ];
 
   const filteredDays = useMemo(
     () => days.filter(d => !['saturday', 'sunday'].includes(d.toLowerCase())),
-    [days]
+    [days],
   );
 
   const todayIdx = useMemo(() => {
@@ -54,7 +65,9 @@ export default function DayTabs({
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     const fmt = (d: Date) =>
-      `${String(d.getDate()).padStart(2, '0')} ${d.toLocaleString('en-US', { month: 'long' })}`;
+      `${String(d.getDate()).padStart(2, '0')} ${d.toLocaleString('en-US', {
+        month: 'long',
+      })}`;
     return `${fmt(monday)} - ${fmt(sunday)} ${monday.getFullYear()}`;
   }, []);
 
@@ -63,29 +76,41 @@ export default function DayTabs({
   //   onChange?.(todayIdx);
   // }, [todayIdx, onChange]);
 
-
   useEffect(() => {
     // Update the active state when the parent changes the active day
     setActive(activeDay);
-    listRef.current?.scrollToIndex({ index: todayIdx, viewPosition: 0.5, animated: true });
-   
+    listRef.current?.scrollToIndex({
+      index: todayIdx,
+      viewPosition: 0.5,
+      animated: true,
+    });
   }, [activeDay, todayIdx]);
   const select = (i: number) => {
     if (i < 0 || i >= filteredDays.length) return;
     setActive(i);
     onChange?.(i);
-    listRef.current?.scrollToIndex({ index: i, viewPosition: 0.4, animated: true });
+    listRef.current?.scrollToIndex({
+      index: i,
+      viewPosition: 0.4,
+      animated: true,
+    });
   };
 
   const renderItem = ({ item, index }: { item: string; index: number }) => {
     const isActive = index === active;
     const { day } = dateForDayName(item);
     return (
-      <TouchableOpacity activeOpacity={0.9} onPress={() => select(index)} style={s.dayItem}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => select(index)}
+        style={s.dayItem}
+      >
         <Text style={[s.dayName, isActive && s.activeDayName]}>
           {item.slice(0, 3).toUpperCase()}
         </Text>
-        <View style={[s.dateBox, isActive ? s.dateBoxActive : s.dateBoxInactive]}>
+        <View
+          style={[s.dateBox, isActive ? s.dateBoxActive : s.dateBoxInactive]}
+        >
           <Text style={[s.dateText, isActive && s.dateTextActive]}>{day}</Text>
           <View style={s.dot} />
         </View>
@@ -96,7 +121,10 @@ export default function DayTabs({
   return (
     <View style={s.wrapper}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => select(active - 1)} disabled={active === 0}>
+        <TouchableOpacity
+          onPress={() => select(active - 1)}
+          disabled={active === 0}
+        >
           <View style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}>
             <ArrowLeftIcon width={16} height={16} />
           </View>
@@ -104,8 +132,16 @@ export default function DayTabs({
 
         <Text style={s.rangeText}>{weekRangeLabel}</Text>
 
-        <TouchableOpacity onPress={() => select(active + 1)} disabled={active === filteredDays.length - 1}>
-          <View style={[s.iconWrap, active === filteredDays.length - 1 && { opacity: 0.3 }]}>
+        <TouchableOpacity
+          onPress={() => select(active + 1)}
+          disabled={active === filteredDays.length - 1}
+        >
+          <View
+            style={[
+              s.iconWrap,
+              active === filteredDays.length - 1 && { opacity: 0.3 },
+            ]}
+          >
             <ArrowRightIcon width={16} height={16} />
           </View>
         </TouchableOpacity>
@@ -117,7 +153,11 @@ export default function DayTabs({
         data={filteredDays}
         renderItem={renderItem}
         keyExtractor={(d, i) => `${d}-${i}`}
-        getItemLayout={(_, i) => ({ length: ITEM_W, offset: ITEM_W * i, index: i })}
+        getItemLayout={(_, i) => ({
+          length: ITEM_W,
+          offset: ITEM_W * i,
+          index: i,
+        })}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s.listContainer}
       />
@@ -167,5 +207,12 @@ const s = StyleSheet.create({
   dateBoxInactive: {},
   dateText: { fontSize: 15, fontWeight: '700', color: '#000' },
   dateTextActive: { color: '#fff' },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#ffff', position: 'absolute', bottom: 6 },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#ffff',
+    position: 'absolute',
+    bottom: 6,
+  },
 });
