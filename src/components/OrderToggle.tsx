@@ -73,10 +73,10 @@ export default function OrderToggle({ index = 0, onChange }: Props) {
 const s = StyleSheet.create({
   container: {
     marginHorizontal: SPACING,
-    flexDirection: 'row', 
+    flexDirection: 'row',
     backgroundColor: COLORS.white,
-    height: 36,
-   
+    height: 38,
+    padding: 2,
     overflow: 'hidden',
 
   },
@@ -96,8 +96,11 @@ const s = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   text: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 20,
+    fontFamily: 'Poppins',
+    letterSpacing: 0.24,
   },
   textOn: {
     color: '#FFFFFF',
