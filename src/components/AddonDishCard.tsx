@@ -209,9 +209,7 @@ export default React.memo(function AddonDishCard({
         {/* Image */}
         <View style={s.imgWrap}>
           <Image source={{ uri: item.image }} style={s.thumb} />
-          <View style={s.priceBadge}>
-            <Text style={s.priceText}>${item.price}</Text>
-          </View>
+
 
           <TouchableOpacity
             onPress={e => {
@@ -257,42 +255,48 @@ export default React.memo(function AddonDishCard({
             ))}
         </View>
 
-        {/* Title */}
-        <View style={s.textWrap}>
-          <Text style={s.title} numberOfLines={2}>
-            {item.title}
-          </Text>
+        <View >
+          {/* Title */}
+          <View style={s.textWrap}>
+            <Text style={s.title} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <View >
+              <Text style={s.priceText}>${item.price}</Text>
+            </View>
+          </View>
+
+          {/* Qty Control */}
+          <View style={s.qtyPill}>
+            <TouchableOpacity
+              onPress={e => {
+                e.stopPropagation();
+                decrement();
+              }}
+              style={[s.pillBtn, !checked && s.disabled]}
+              disabled={!checked}
+            >
+              {qty <= 1 ? (
+                <DeleteIcon height={20} width={20} />
+              ) : (
+                <Text style={s.pillBtnText}>−</Text>
+              )}
+            </TouchableOpacity>
+
+            <Text style={s.qtyNum}>{qty}</Text>
+
+            <TouchableOpacity
+              onPress={e => {
+                e.stopPropagation();
+                increment();
+              }}
+              style={s.pillBtn}
+            >
+              <Text style={s.pillBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Qty Control */}
-        <View style={s.qtyPill}>
-          <TouchableOpacity
-            onPress={e => {
-              e.stopPropagation();
-              decrement();
-            }}
-            style={[s.pillBtn, !checked && s.disabled]}
-            disabled={!checked}
-          >
-            {qty <= 1 ? (
-              <DeleteIcon height={20} width={20} />
-            ) : (
-              <Text style={s.pillBtnText}>−</Text>
-            )}
-          </TouchableOpacity>
-
-          <Text style={s.qtyNum}>{qty}</Text>
-
-          <TouchableOpacity
-            onPress={e => {
-              e.stopPropagation();
-              increment();
-            }}
-            style={s.pillBtn}
-          >
-            <Text style={s.pillBtnText}>+</Text>
-          </TouchableOpacity>
-        </View>
       </TouchableOpacity>
 
       <DishDetailModal
@@ -309,33 +313,29 @@ export default React.memo(function AddonDishCard({
 const s = StyleSheet.create({
   card: {
     width: width / 2 - 40,
-    height: width / 2 + 40,
-    borderRadius: 14,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 8,
+
+    borderRadius: 16,
+    marginBottom: 16,
   },
   imgWrap: {
     position: 'relative',
-    borderRadius: 10,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   thumb: {
-    width: '100%',
+    width: width / 2 - 40,
     height: width / 2 - 40,
     resizeMode: 'cover',
   },
-  priceBadge: {
-    position: 'absolute',
-    bottom: 10,
-    right: 6,
-    backgroundColor: COLORS.green,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
+
+  priceText: {
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 20,
+    letterSpacing: -0.24,
+    color: '#00020E80',
+    alignSelf: 'flex-start',
   },
-  priceText: { color: COLORS.white, fontSize: 10, fontWeight: '700' },
   iconBtn: {
     position: 'absolute',
     width: 26,
@@ -348,26 +348,29 @@ const s = StyleSheet.create({
     borderColor: COLORS.border,
   },
   textWrap: {
-    marginTop: 10,
+    marginTop: 12,
     minHeight: 32,
     paddingHorizontal: 4,
   },
   title: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.text,
-    lineHeight: 16,
+    fontWeight: '400',
+    fontSize: 12,
+    color: '#00020E',
+    fontFamily: 'Poppins',
+    lineHeight: 20,
+    letterSpacing: -0.24,
   },
   qtyPill: {
-    marginTop: 10,
+
     alignSelf: 'center',
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.pill,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#ababaa',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
     gap: 6,
   },
   pillBtn: {
@@ -376,9 +379,7 @@ const s = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+
   },
   disabled: { opacity: 0.35 },
   pillBtnText: {
@@ -396,7 +397,7 @@ const s = StyleSheet.create({
   },
   tagContainer: {
     position: 'absolute',
-    top: width / 2 - 42,
+    top: width / 2 - 50,
     left: 0,
     flexDirection: 'row',
     alignItems: 'center',

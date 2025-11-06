@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SHADOW, SPACING } from '../ui/theme';
 import ArrowUpIcon from '../assets/newicon/icon-down-arrow.svg';
 import ArrowDownIcon from '../assets/newicon/icon-down-arrow.svg';
-
+import Divider from '../assets/newicon/divider.svg';
 const COLORS = {
   bg: '#FFFFFF',
   text: '#232323',
@@ -69,56 +69,57 @@ export default function Section({
       </TouchableOpacity>
 
       {/* BODY */}
-      {open && (
-        <View style={s.body}>
-          <Text>{children}</Text>
-        </View>
-      )}
+      {open && <View style={s.body}><Divider style={{ marginBottom: 16 }} /><Text>{children}</Text></View>}
     </View>
   );
 }
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: COLORS.bg,
-    borderRadius: SPACING,
+    borderRadius: 24,
     marginHorizontal: SPACING,
     marginVertical: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border, 
     ...SHADOW,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
     paddingVertical: 14,
+    paddingHorizontal: 16,
   },
   title: {
     flex: 1,
-    fontWeight: '700',
-    fontSize: 15,
+    fontWeight: '500',
+    fontSize: 12,
     color: COLORS.text,
+    lineHeight: 20
   },
   notePill: {
-    backgroundColor: '#F3F3F3',
+    backgroundColor: '#ECECEE',
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 12,
     marginHorizontal: 8,
   },
   noteText: {
-    fontSize: 14,
-    color: COLORS.text,
+    fontSize: 12,
+    color: '#000000',
+    fontWeight: '300',
+    lineHeight: 20,
+    letterSpacing: -0.24
   },
   iconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     backgroundColor: COLORS.mint,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   body: {
     paddingHorizontal: 16,

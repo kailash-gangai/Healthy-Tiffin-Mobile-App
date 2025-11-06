@@ -755,8 +755,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                     key={key}
                     title={cat.key.toUpperCase()}
                     note={`Select from ${cat.value.length} options`}
-                    open={true} // Always open for addons
-                    setOpen={() => {}} // No-op function since we don't want to close addons
+                    open={isOpen(key)}
+                    setOpen={(v: boolean) => setOpen(key, v)}
                   >
                     <View style={styles.gridWrap}>
                       {cat.value.map(d => (
@@ -862,8 +862,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 8,
-    columnGap: 8,
+    gap: 10,
     marginTop: 8,
   },
   pad: { paddingHorizontal: SPACING, marginTop: -34 },
