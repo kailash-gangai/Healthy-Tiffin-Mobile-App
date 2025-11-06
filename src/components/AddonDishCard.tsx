@@ -231,7 +231,7 @@ export default React.memo(function AddonDishCard({
             <HeartIcon
               width={16}
               height={16}
-              fill={isFav ? '#FF4D4D' : '#CFCFCF'}
+              fill={isFav ? '#FF4D4D' : '#ffff'}
             />
           </TouchableOpacity>
         </View>
@@ -341,7 +341,7 @@ const s = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(249, 199, 17, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
