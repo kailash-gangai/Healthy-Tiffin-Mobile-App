@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import PlusIcon from '../../assets/htf-icon/icon-plus.svg';
-import RightArrowIcon from '../../assets/htf-icon/icon-right-arriw.svg';
+import PlusIcon from '../../assets/newicon/icon-plus.svg';
+import RightArrowIcon from '../../assets/newicon/icon-right-arrow.svg';
 import {
   ScrollView,
   View,

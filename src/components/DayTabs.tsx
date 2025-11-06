@@ -6,8 +6,8 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import ArrowLeftIcon from '../assets/htf-icon/icon-left.svg';
-import ArrowRightIcon from '../assets/htf-icon/icon-right.svg';
+import ArrowLeftIcon from '../assets/newicon/icon-left.svg';
+import ArrowRightIcon from '../assets/newicon/right-arrow.svg';
 import { COLORS, SHADOW, SPACING } from '../ui/theme';
 
 const ITEM_W = 60;
