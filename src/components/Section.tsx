@@ -57,15 +57,23 @@ export default function Section({
 
         <View style={s.iconBtn}>
           {open ? (
-            <ArrowUpIcon  width={16} height={16} />
+            <ArrowUpIcon width={16} height={16} />
           ) : (
-            <ArrowDownIcon style={{ transform: [{ rotate: '180deg' }] }} width={16} height={16} />
+            <ArrowDownIcon
+              style={{ transform: [{ rotate: '180deg' }] }}
+              width={16}
+              height={16}
+            />
           )}
         </View>
       </TouchableOpacity>
 
       {/* BODY */}
-      {open && <View style={s.body}><Text>{children}</Text></View>}
+      {open && (
+        <View style={s.body}>
+          <Text>{children}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -105,9 +113,9 @@ const s = StyleSheet.create({
     color: COLORS.text,
   },
   iconBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: COLORS.mint,
     alignItems: 'center',
     justifyContent: 'center',
