@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Button, ActivityIndicator } from 'react-native';
 import { getAllMetaobjects, getMetaObjectByHandle } from '../shopify/queries/getMetaObject';
+import { SPACING } from '../ui/theme';
 
 type TagListFilterProps = {
     onChange: (selectedTags: string[]) => void;
@@ -88,7 +89,8 @@ const TagListFilter: React.FC<TagListFilterProps> = ({ onChange, selectedTags })
 
 const styles = StyleSheet.create({
     container: {
-        padding: 8,
+        marginHorizontal: SPACING,
+        paddingTop: 16,
         alignItems: 'flex-start',
     },
     tagsContainer: {
@@ -97,7 +99,7 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     tag: {
-        paddingVertical: 8,
+        paddingVertical: 4,
         paddingHorizontal: 10,
         borderRadius: 22,
         borderWidth:0.5,

@@ -10,7 +10,7 @@ import ArrowLeftIcon from '../assets/newicon/left-arrow.svg';
 import ArrowRightIcon from '../assets/newicon/right-arrow.svg';
 import { COLORS, SHADOW, SPACING } from '../ui/theme';
 import LinearGradient from 'react-native-linear-gradient';
-
+import Divider from '../assets/newicon/divider.svg';
 const ITEM_W = 60;
 
 export default function DayTabs({
@@ -177,6 +177,7 @@ export default function DayTabs({
           </TouchableOpacity>
         </LinearGradient>
       </View>
+      <Divider />
 
       <FlatList
         ref={listRef}
@@ -223,7 +224,7 @@ const s = StyleSheet.create({
   },
   rangeText: { fontSize: 16, fontWeight: '400', color: '#7C7C7C', fontFamily: 'Poppins', lineHeight: 20, letterSpacing: -0.24 },
   listContainer: { justifyContent: 'center', gap: 20, width: '100%' },
-  dayItem: { alignItems: 'center' },
+  dayItem: { alignItems: 'center' , marginTop: 16},
   dayName: { fontSize: 12, fontWeight: '400', color: '#000', marginBottom: 6 },
   activeDayName: { color: '#8A8A8A' },
   dateBox: {
