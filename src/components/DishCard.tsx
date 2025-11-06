@@ -210,15 +210,6 @@ export default function DishCard({
           </Text>
           <Text style={s.price}>+ ${item.price || '0.00'}</Text>
         </View>
-
-        {/* Show indicator if category is occupied by another item */}
-        {isCategorySelected && !isItemInCart && (
-          <View style={s.occupiedIndicator}>
-            <Text style={s.occupiedText}>
-              Another item selected in this category
-            </Text>
-          </View>
-        )}
       </TouchableOpacity>
 
       <DishDetailModal

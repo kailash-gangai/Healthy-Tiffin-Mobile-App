@@ -44,6 +44,7 @@ import { setAll } from '../../store/slice/priceSlice';
 import CartSummaryModal from '../../components/CartSummaryModal';
 import Toast from 'react-native-toast-message';
 import TagListFilter from '../../components/TagListFilter';
+
 type SectionKey = string;
 
 interface CategoriesProps {
@@ -95,7 +96,6 @@ const ALL_DAYS = [
   'Friday',
   'Saturday',
   'Sunday',
-
 ] as const;
 
 const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
@@ -122,14 +122,7 @@ function rankOf(key: string, ordered: string[]) {
 }
 function getAbsoluteTodayIndex() {
   const js = new Date().getDay();
-  const week = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-  
-  ];
+  const week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
 }
 function toMoney(n: number) {
@@ -201,6 +194,41 @@ function getNumberFromThreshold(ths: any[], key: string, fallback: number) {
   return Number.isFinite(v) ? v : fallback;
 }
 
+// Helper function to filter items based on selected tags
+const filterItemsByTags = (items: any[], selectedTags: string[]) => {
+  if (!selectedTags || selectedTags.length === 0) {
+    return items; // Return all items if no tags selected
+  }
+
+  return items.filter(item => {
+    let customTags = item?.metafields?.find(
+      (mf: any) => mf && mf.key === 'dietary_tags',
+    );
+    if (customTags) {
+      try {
+        customTags = JSON.parse(customTags.value);
+      } catch (error) {
+        console.error('Error parsing dietary tags:', error);
+        customTags = []; // Default to empty array if parsing fails
+      }
+    } else {
+      customTags = []; // Default to empty array if no tags are found
+    }
+    if (!customTags || !Array.isArray(customTags)) {
+      return false; // Skip items without tags
+    }
+
+    // Convert both item tags and selected tags to lowercase for case-insensitive comparison
+    const itemTagsLower = customTags.map((tag: string) => tag.toLowerCase());
+    const selectedTagsLower = selectedTags.map(tag => tag.toLowerCase());
+
+    // Check if any of the selected tags match any of the item's tags
+    return selectedTagsLower.some(selectedTag =>
+      itemTagsLower.some((itemTag: any) => itemTag.includes(selectedTag)),
+    );
+  });
+};
+
 const HomeScreen: React.FC = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
   const { lines } = useAppSelector(state => state.cart);
@@ -260,6 +288,38 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     () => applyPriceThresholds(sortedCategories, priceThreshold),
     [sortedCategories, priceThreshold],
   );
+
+  // Filter mains based on selected tags
+  const filteredMains = useMemo(() => {
+    return updatedMains.map(category => ({
+      ...category,
+      value: filterItemsByTags(category.value, selectedTags),
+    }));
+  }, [updatedMains, selectedTags]);
+
+  // Filter addons based on selected tags
+  const sortedAddons = useMemo(
+    () =>
+      addonCategories
+        .slice()
+        .sort(
+          (a, b) =>
+            rankOf(a.key, A_LA_CARTE_RANK) - rankOf(b.key, A_LA_CARTE_RANK),
+        ),
+    [addonCategories],
+  );
+
+  const updatedAddons = useMemo(
+    () => applyPriceThresholds(sortedAddons, priceThreshold),
+    [sortedAddons, priceThreshold],
+  );
+
+  const filteredAddons = useMemo(() => {
+    return updatedAddons.map(category => ({
+      ...category,
+      value: filterItemsByTags(category.value, selectedTags),
+    }));
+  }, [updatedAddons, selectedTags]);
 
   // Get all tiffin plans for current day
   const dayTiffinPlans = useMemo(() => {
@@ -342,23 +402,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       getSelectedItemForCategory(cat, currentTiffinPlan),
     );
   }, [updatedMains, currentTiffinPlan, getSelectedItemForCategory]);
-
-  // sort addons
-  const sortedAddons = useMemo(
-    () =>
-      addonCategories
-        .slice()
-        .sort(
-          (a, b) =>
-            rankOf(a.key, A_LA_CARTE_RANK) - rankOf(b.key, A_LA_CARTE_RANK),
-        ),
-    [addonCategories],
-  );
-
-  const updatedAddons = useMemo(
-    () => applyPriceThresholds(sortedAddons, priceThreshold),
-    [sortedAddons, priceThreshold],
-  );
 
   const openAllMain = useCallback(() => {
     const next: Record<SectionKey, boolean> = {};
@@ -552,9 +595,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setCategories([]);
       setAddonCategories([]);
     }
-    console.log('selected Tags on day change', selectedTags);
-
-  }, [dispatch, fetchMetaAndData, currentDay, selectedTags]);
+  }, [dispatch, fetchMetaAndData, currentDay]);
 
   // Calculate cart total
   const cartTotal = useMemo(() => {
@@ -568,12 +609,23 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const totalTiffinCount = useMemo(() => {
     return dayTiffinPlans.length;
   }, [dayTiffinPlans]);
+
   const handleTagChange = (updatedTags: string[]) => {
-    setSelectedTags(updatedTags); // Update the selected tags
+    setSelectedTags(updatedTags);
   };
-   const handleDayChange = (index: number) => {
+
+  const handleDayChange = (index: number) => {
     setFilteredIndex(index);
   };
+
+  // Check if any category has items after filtering
+  const hasFilteredMains = filteredMains.some(
+    category => category.value.length > 0,
+  );
+  const hasFilteredAddons = filteredAddons.some(
+    category => category.value.length > 0,
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
       <ScrollView bounces={false}>
@@ -591,22 +643,13 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           <DayTabs
             days={FILTERED_DAYS as string[]}
             onChange={handleDayChange}
-            activeDay={filteredIndex} 
+            activeDay={filteredIndex}
           />
-          <TagListFilter selectedTags={selectedTags} onChange={handleTagChange} />
-
+          <TagListFilter
+            selectedTags={selectedTags}
+            onChange={handleTagChange}
+          />
         </View>
-
-        {/* Tiffin Plan Indicator */}
-        {/* {!menuDisabled && tab === 0 && (
-          <View style={styles.tiffinIndicator}>
-            <Text style={styles.tiffinText}>
-              Tiffin {currentTiffinPlan}
-              {totalTiffinCount > 0 &&
-                ` of ${Math.max(totalTiffinCount, currentTiffinPlan)}`}
-            </Text>
-          </View>
-        )} */}
 
         {menuDisabled && (
           <EmptyState
@@ -630,46 +673,65 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 message="  Please check our weekday menu. Available Monday to Friday."
               />
             )}
-            {updatedMains.map(cat => {
-              const sectionType =
-                ((cat as any)._sectionType as 'main' | 'addon') ?? 'main';
-              const key = `${sectionType}:${cat.key}`;
 
-              // Find selected item for this category and current tiffin plan
-              const selectedItem = getSelectedItemForCategory(
-                cat.key,
-                currentTiffinPlan,
-              );
+            {hasFilteredMains ? (
+              filteredMains.map(cat => {
+                if (cat.value.length === 0) return null; // Skip empty categories
 
-              return (
-                <Section
-                  key={key}
-                  title={cat.key.toUpperCase()}
-                  note={selectedItem ? selectedItem.title : 'Please Select One'}
-                  open={isOpen(key)}
-                  setOpen={(v: boolean) => setOpen(key, v)}
-                >
-                  <View style={styles.gridWrap}>
-                    {cat.value.map((d: any) => (
-                      <DishCard
-                        key={d.id}
-                        category={cat.key.toUpperCase()}
-                        day={currentDay}
-                        type="main"
-                        item={d as any}
-                        tiffinPlan={currentTiffinPlan}
-                        isLoading={isLoading}
-                        onChange={(picked: any) => {
-                          if (picked?.selected) {
-                            handleItemSelection(cat.key);
-                          }
-                        }}
-                      />
-                    ))}
-                  </View>
-                </Section>
-              );
-            })}
+                const sectionType =
+                  ((cat as any)._sectionType as 'main' | 'addon') ?? 'main';
+                const key = `${sectionType}:${cat.key}`;
+
+                // Find selected item for this category and current tiffin plan
+                const selectedItem = getSelectedItemForCategory(
+                  cat.key,
+                  currentTiffinPlan,
+                );
+
+                return (
+                  <Section
+                    key={key}
+                    title={cat.key.toUpperCase()}
+                    note={
+                      selectedItem
+                        ? selectedItem.title?.length > 30
+                          ? `${selectedItem.title.slice(0, 30)}...`
+                          : selectedItem.title
+                        : 'Please Select One'
+                    }
+                    open={isOpen(key)}
+                    setOpen={(v: boolean) => setOpen(key, v)}
+                  >
+                    <View style={styles.gridWrap}>
+                      {cat.value.map((d: any) => (
+                        <DishCard
+                          key={d.id}
+                          category={cat.key.toUpperCase()}
+                          day={currentDay}
+                          type="main"
+                          item={d as any}
+                          tiffinPlan={currentTiffinPlan}
+                          isLoading={isLoading}
+                          onChange={(picked: any) => {
+                            if (picked?.selected) {
+                              handleItemSelection(cat.key);
+                            }
+                          }}
+                        />
+                      ))}
+                    </View>
+                  </Section>
+                );
+              })
+            ) : selectedTags.length > 0 ? (
+              <EmptyState
+                key={'no-filtered-mains'}
+                currentDay={currentDay}
+                message={`No main dishes found matching: ${selectedTags.join(
+                  ', ',
+                )}`}
+              />
+            ) : null}
           </View>
         )}
 
@@ -682,35 +744,48 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 message="  Please check our A La Carte. Available Monday to Friday."
               />
             )}
-            {updatedAddons.map((cat, i) => {
-              const key = `addon:${cat.key}-${i}`;
-              return (
-                <Section
-                  key={key}
-                  title={cat.key.toUpperCase()}
-                  note={`Select from ${cat.value.length} options`}
-                  open={true} // Always open for addons
-                  setOpen={() => { }} // No-op function since we don't want to close addons
-                >
-                  <View style={styles.gridWrap}>
-                    {cat.value.map(d => (
-                      <AddonDishCard
-                        key={d.id}
-                        category={cat.key.toUpperCase()}
-                        day={currentDay}
-                        type="addon"
-                        item={d as any}
-                        tiffinPlan={currentTiffinPlan}
-                        isLoading={isLoading}
-                        onChange={picked => {
-                          // No need to close section for addons
-                        }}
-                      />
-                    ))}
-                  </View>
-                </Section>
-              );
-            })}
+
+            {hasFilteredAddons ? (
+              filteredAddons.map((cat, i) => {
+                if (cat.value.length === 0) return null; // Skip empty categories
+
+                const key = `addon:${cat.key}-${i}`;
+                return (
+                  <Section
+                    key={key}
+                    title={cat.key.toUpperCase()}
+                    note={`Select from ${cat.value.length} options`}
+                    open={true} // Always open for addons
+                    setOpen={() => {}} // No-op function since we don't want to close addons
+                  >
+                    <View style={styles.gridWrap}>
+                      {cat.value.map(d => (
+                        <AddonDishCard
+                          key={d.id}
+                          category={cat.key.toUpperCase()}
+                          day={currentDay}
+                          type="addon"
+                          item={d as any}
+                          tiffinPlan={currentTiffinPlan}
+                          isLoading={isLoading}
+                          onChange={picked => {
+                            // No need to close section for addons
+                          }}
+                        />
+                      ))}
+                    </View>
+                  </Section>
+                );
+              })
+            ) : selectedTags.length > 0 ? (
+              <EmptyState
+                key={'no-filtered-addons'}
+                currentDay={currentDay}
+                message={`No add-ons found matching: ${selectedTags.join(
+                  ', ',
+                )}`}
+              />
+            ) : null}
           </>
         )}
 
@@ -908,6 +983,33 @@ const styles = StyleSheet.create({
   clearDayText: {
     color: '#D32F2F',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  filterIndicator: {
+    backgroundColor: '#E8F5E8',
+    padding: 12,
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  filterText: {
+    color: '#0B5733',
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+  },
+  clearFilterButton: {
+    backgroundColor: '#0B5733',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  clearFilterText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '600',
   },
 });
