@@ -573,7 +573,7 @@ export default function CartSummaryModal({
             >
               <Text style={s.orderText}>
                 {canProceed
-                  ? `Place an Order ($${(total + 10.85 - 9).toFixed(2)})`
+                  ? `Place an Order ($${total.toFixed(2)})`
                   : 'Complete Your Order'}
               </Text>
             </TouchableOpacity>
