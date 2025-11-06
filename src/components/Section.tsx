@@ -69,7 +69,12 @@ export default function Section({
       </TouchableOpacity>
 
       {/* BODY */}
-      {open && <View style={s.body}><Divider style={{ marginBottom: 16 }} /><Text>{children}</Text></View>}
+      {open && (
+        <View style={s.body}>
+          <Divider style={{ marginBottom: 16 }} />
+          <Text>{children}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -80,7 +85,7 @@ const s = StyleSheet.create({
     marginHorizontal: SPACING,
     marginVertical: 10,
     borderWidth: 1,
-    borderColor: COLORS.border, 
+    borderColor: COLORS.border,
     ...SHADOW,
   },
   header: {
@@ -95,7 +100,7 @@ const s = StyleSheet.create({
     fontWeight: '500',
     fontSize: 12,
     color: COLORS.text,
-    lineHeight: 20
+    lineHeight: 20,
   },
   notePill: {
     backgroundColor: '#ECECEE',
@@ -109,7 +114,7 @@ const s = StyleSheet.create({
     color: '#000000',
     fontWeight: '300',
     lineHeight: 20,
-    letterSpacing: -0.24
+    letterSpacing: -0.24,
   },
   iconBtn: {
     width: 30,
