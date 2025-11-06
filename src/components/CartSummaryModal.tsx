@@ -647,7 +647,6 @@ const s = StyleSheet.create({
 
   // Day Card Styles
   dayCard: {
-    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -874,7 +873,6 @@ const s = StyleSheet.create({
   },
   noticeText: { fontSize: 14, color: '#000000', textAlign: 'center' },
   summaryCard: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     marginTop: 12,

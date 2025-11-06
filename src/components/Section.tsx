@@ -80,7 +80,6 @@ export default function Section({
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: COLORS.bg,
     borderRadius: SPACING,
     marginHorizontal: SPACING,
     marginVertical: 10,
