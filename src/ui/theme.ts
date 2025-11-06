@@ -33,11 +33,13 @@ export const SPACING = 16;
 export const RADIUS = 22;
 export const SHADOW = {
   shadowColor: '#000',
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 3,
+  shadowOffset: { width: 10, height: 10 },
+  shadowOpacity: 0.07,
+  shadowRadius: 40,
+  elevation: 8,
+  backgroundColor: '#fff',
 };
+
 export const SHADOW2 = {
   // Shadow for iOS
   shadowColor: '#000',

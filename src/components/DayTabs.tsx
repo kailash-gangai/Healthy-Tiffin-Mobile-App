@@ -9,6 +9,7 @@ import {
 import ArrowLeftIcon from '../assets/newicon/left-arrow.svg';
 import ArrowRightIcon from '../assets/newicon/right-arrow.svg';
 import { COLORS, SHADOW, SPACING } from '../ui/theme';
+import LinearGradient from 'react-native-linear-gradient';
 
 const ITEM_W = 60;
 
@@ -108,12 +109,23 @@ export default function DayTabs({
         <Text style={[s.dayName, isActive && s.activeDayName]}>
           {item.slice(0, 3).toUpperCase()}
         </Text>
-        <View
-          style={[s.dateBox, isActive ? s.dateBoxActive : s.dateBoxInactive]}
-        >
-          <Text style={[s.dateText, isActive && s.dateTextActive]}>{day}</Text>
-          <View style={s.dot} />
-        </View>
+
+        {isActive ? (
+          <LinearGradient
+            colors={['#F9C711', '#DFB318']}
+            start={{ x: 0.2, y: 0 }}
+            end={{ x: 0.8, y: 1 }}
+            style={[s.dateBox, s.dateBoxActive]}
+          >
+            <Text style={[s.dateText, s.dateTextActive]}>{day}</Text>
+            <View style={s.dot} />
+          </LinearGradient>
+        ) : (
+          <View style={[s.dateBox, s.dateBoxInactive]}>
+            <Text style={s.dateText}>{day}</Text>
+            <View style={s.dot} />
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -121,30 +133,49 @@ export default function DayTabs({
   return (
     <View style={s.wrapper}>
       <View style={s.header}>
-        <TouchableOpacity
-          onPress={() => select(active - 1)}
-          disabled={active === 0}
+        <LinearGradient
+          colors={[
+            'rgba(66, 210, 150, 0.2)', // start color
+            'rgba(42, 180, 123, 0.2)', // end color
+          ]}
+          start={{ x: 0.3, y: 0 }}  // roughly matches 189.66° angle
+          end={{ x: 1, y: 1 }}
+          style={{ borderRadius: 8 }}
         >
-          <View style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}>
-            <ArrowLeftIcon width={16} height={16} />
-          </View>
-        </TouchableOpacity>
-
-        <Text style={s.rangeText}>{weekRangeLabel}</Text>
-
-        <TouchableOpacity
-          onPress={() => select(active + 1)}
-          disabled={active === filteredDays.length - 1}
-        >
-          <View
-            style={[
-              s.iconWrap,
-              active === filteredDays.length - 1 && { opacity: 0.3 },
-            ]}
+          <TouchableOpacity
+            onPress={() => select(active - 1)}
+            disabled={active === 0}
+            style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}
           >
-            <ArrowRightIcon width={16} height={16} />
-          </View>
-        </TouchableOpacity>
+            <View >
+              <ArrowLeftIcon width={16} height={16} />
+            </View>
+          </TouchableOpacity>
+        </LinearGradient>
+        <Text style={s.rangeText}>{weekRangeLabel}</Text>
+        <LinearGradient
+          colors={[
+            'rgba(66, 210, 150, 0.2)', // start color
+            'rgba(42, 180, 123, 0.2)', // end color
+          ]}
+          start={{ x: 0.3, y: 0 }}  // roughly matches 189.66° angle
+          end={{ x: 1, y: 1 }}
+          style={{ borderRadius: 8 }}
+        >
+          <TouchableOpacity
+            onPress={() => select(active + 1)}
+            disabled={active === filteredDays.length - 1}
+          >
+            <View
+              style={[
+                s.iconWrap,
+                active === filteredDays.length - 1 && { opacity: 0.3 },
+              ]}
+            >
+              <ArrowRightIcon width={16} height={16} fill="#127E51" />
+            </View>
+          </TouchableOpacity>
+        </LinearGradient>
       </View>
 
       <FlatList
@@ -168,7 +199,6 @@ export default function DayTabs({
 const s = StyleSheet.create({
   wrapper: {
     marginHorizontal: SPACING,
-    backgroundColor: '#fff',
     borderRadius: 22,
     paddingVertical: 14,
     paddingHorizontal: 14,
@@ -183,17 +213,18 @@ const s = StyleSheet.create({
     marginBottom: 14,
   },
   iconWrap: {
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 30,
     borderRadius: 8,
-    backgroundColor: '#d7f3e7',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  rangeText: { fontSize: 14, fontWeight: '500', color: '#333' },
+  rangeText: { fontSize: 16, fontWeight: '400', color: '#7C7C7C', fontFamily: 'Poppins', lineHeight: 20, letterSpacing: -0.24 },
   listContainer: { justifyContent: 'center', gap: 20, width: '100%' },
   dayItem: { alignItems: 'center' },
-  dayName: { fontSize: 11, fontWeight: '600', color: '#000', marginBottom: 6 },
+  dayName: { fontSize: 12, fontWeight: '400', color: '#000', marginBottom: 6 },
   activeDayName: { color: '#8A8A8A' },
   dateBox: {
     width: 42,
