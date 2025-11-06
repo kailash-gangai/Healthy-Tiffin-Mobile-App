@@ -379,6 +379,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
       setPreviousTiffinPlan(currentTiffinPlan);
     }
+    if (lines.length === 0) {
+      openAllMain();
+    }
   }, [currentTiffinPlan, previousTiffinPlan, currentDay, tab]);
 
   // Get selected item for each category in current tiffin plan
@@ -604,6 +607,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       0,
     );
   }, [lines]);
+  console.log(cartTotal, 'carttotal');
 
   // Get total tiffin count for current day (complete and incomplete)
   const totalTiffinCount = useMemo(() => {
@@ -625,6 +629,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const hasFilteredAddons = filteredAddons.some(
     category => category.value.length > 0,
   );
+  const hasAnyMain = lines.some(item => item.type === 'main');
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
@@ -806,18 +811,20 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity
-            onPress={handleGoToNextDay}
-            activeOpacity={0.8}
-            style={[
-              styles.buttonBase,
-              styles.goToNextDay,
-              menuDisabled ? styles.fullButton : styles.halfButton,
-            ]}
-          >
-            <Text style={styles.goToNextText}>Go to next day</Text>
-            <RightArrowIcon width={16} height={16} fill="#FFFFFF" />
-          </TouchableOpacity>
+          {currentDay !== 'Friday' && (
+            <TouchableOpacity
+              onPress={handleGoToNextDay}
+              activeOpacity={0.8}
+              style={[
+                styles.buttonBase,
+                styles.goToNextDay,
+                menuDisabled ? styles.fullButton : styles.halfButton,
+              ]}
+            >
+              <Text style={styles.goToNextText}>Go to next day</Text>
+              <RightArrowIcon width={16} height={16} fill="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Clear Day Button */}
@@ -842,7 +849,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         <View style={styles.cartNotch} />
         <View style={styles.cartBarContent}>
           <Text style={styles.cartLabel}>Cart Summary</Text>
-          <Text style={styles.cartTotal}>Total ${cartTotal.toFixed(2)}</Text>
+          <Text style={styles.cartTotal}>
+            Total ${hasAnyMain ? 29 : 0 + +cartTotal.toFixed(2)}
+          </Text>
         </View>
       </TouchableOpacity>
 
