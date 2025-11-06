@@ -18,13 +18,15 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import ShearIcon from '../assets/htf-icon/icon-shre.svg';
 
-import CaloriesIcon from '../assets/htf-icon/icon-calories.svg'
-import ProteinIcon from '../assets/htf-icon/icon-protein.svg'
-import CarbsIcon from '../assets/htf-icon/icon-carbs.svg'
-import SugarIcon from '../assets/htf-icon/icon-sugar.svg'
-import CholesterolIcon from '../assets/htf-icon/icon-cholesterol.svg'
-import PotassiumIcon from '../assets/htf-icon/icon-potassium.svg'
+import CaloriesIcon from '../assets/htf-icon/icon-calories.svg';
+import ProteinIcon from '../assets/htf-icon/icon-protein.svg';
+import CarbsIcon from '../assets/htf-icon/icon-carbs.svg';
+import SugarIcon from '../assets/htf-icon/icon-sugar.svg';
+import CholesterolIcon from '../assets/htf-icon/icon-cholesterol.svg';
+import PotassiumIcon from '../assets/htf-icon/icon-potassium.svg';
 import LinearGradient from 'react-native-linear-gradient';
+import { useAppDispatch } from '../store/hooks';
+import { addItem, addItems } from '../store/slice/cartSlice';
 const { height } = Dimensions.get('window');
 const width = Dimensions.get('window').width;
 
@@ -48,9 +50,6 @@ type Dish = {
   liked?: boolean;
 };
 
-
-
-
 export default function DishDetailModal({
   visible,
   onClose,
@@ -67,23 +66,47 @@ export default function DishDetailModal({
   const translateY = useRef(new Animated.Value(height)).current; // start off-screen
 
   const nutritionInfo = [
-    { label: 'Calories', value: '', icon: <CaloriesIcon height={20} width={20} /> },
-    { label: 'Protein', value: '', icon: <ProteinIcon height={20} width={20} /> },
-    { label: 'Total Carbs', value: '', icon: <CarbsIcon height={20} width={20} /> },
+    {
+      label: 'Calories',
+      value: '',
+      icon: <CaloriesIcon height={20} width={20} />,
+    },
+    {
+      label: 'Protein',
+      value: '',
+      icon: <ProteinIcon height={20} width={20} />,
+    },
+    {
+      label: 'Total Carbs',
+      value: '',
+      icon: <CarbsIcon height={20} width={20} />,
+    },
     { label: 'Sugar', value: '', icon: <SugarIcon height={20} width={20} /> },
-    { label: 'Cholesterol', value: '', icon: <CholesterolIcon height={20} width={20} /> },
-    { label: 'Potassium', value: '', icon: <PotassiumIcon height={20} width={20} /> },
+    {
+      label: 'Cholesterol',
+      value: '',
+      icon: <CholesterolIcon height={20} width={20} />,
+    },
+    {
+      label: 'Potassium',
+      value: '',
+      icon: <PotassiumIcon height={20} width={20} />,
+    },
   ];
 
-  const metaobject = dish?.metafields?.find((mf: any) => mf && mf.key === 'nutrients_information');
+  const metaobject = dish?.metafields?.find(
+    (mf: any) => mf && mf.key === 'nutrients_information',
+  );
 
   if (metaobject) {
     const nutrientsInformation = JSON.parse(metaobject.value);
     const updatedNutritionInfo = nutritionInfo.map((nutrient, i) => {
-      const nutrientData = nutrientsInformation.find(n => n.toLowerCase().includes(nutrient.label.toLowerCase()));
+      const nutrientData = nutrientsInformation.find(n =>
+        n.toLowerCase().includes(nutrient.label.toLowerCase()),
+      );
 
       if (nutrientData) {
-        const [label, value] = nutrientData.split(" || ");
+        const [label, value] = nutrientData.split(' || ');
         return {
           ...nutrient,
           value: value || '',
@@ -95,7 +118,6 @@ export default function DishDetailModal({
 
     nutritionInfo.splice(0, nutritionInfo.length, ...updatedNutritionInfo);
   }
-
 
   const handleShare = async () => {
     try {
@@ -112,9 +134,10 @@ export default function DishDetailModal({
     Clipboard.setString(dish.image || '');
     Alert.alert('Copied', 'Link copied to clipboard.');
   };
-
+  const dispatch = useAppDispatch();
   const handleAddToCart = () => {
-    onClose(); // close modal after adding
+    dispatch(addItems([dish as any]));
+    onClose();
   };
   useEffect(() => {
     if (visible) {
@@ -133,15 +156,15 @@ export default function DishDetailModal({
     }
   }, [visible]);
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      onRequestClose={onClose}
+    >
       <Pressable style={s.backdrop} onPress={onClose} />
-      <Animated.View
-        style={[s.sheet, { transform: [{ translateY }] }]}
-
-      >
+      <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
         <View style={s.handle} />
-
-
 
         {/* Scrollable content */}
         <ScrollView
@@ -161,7 +184,11 @@ export default function DishDetailModal({
                 <Text style={s.copy}>⧉</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={onToggleLike}>
-                <HeartIcon width={26} height={26} fill={liked ? '#FF0000' : '#C7C7C7'} />
+                <HeartIcon
+                  width={26}
+                  height={26}
+                  fill={liked ? '#FF0000' : '#C7C7C7'}
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -181,41 +208,39 @@ export default function DishDetailModal({
           </View>
 
           {/* Description */}
-          <Text style={s.desc}>
-            {dish.description ||
-              ' '}
-          </Text>
+          <Text style={s.desc}>{dish.description || ' '}</Text>
 
           <View style={s.nutritionWrap}>
-            {nutritionInfo.map((n, i) => (
-              n.value !== '' && (
-                <View key={i} style={s.nutriBox}>
-                  <View>
-                    <Text style={s.nutriIcon}>{n.icon}</Text>
+            {nutritionInfo.map(
+              (n, i) =>
+                n.value !== '' && (
+                  <View key={i} style={s.nutriBox}>
+                    <View>
+                      <Text style={s.nutriIcon}>{n.icon}</Text>
+                    </View>
+                    <View>
+                      <Text style={s.nutriLabel}>{n.label}</Text>
+                      <Text style={s.nutriValue}>{n.value}</Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={s.nutriLabel}>{n.label}</Text>
-                    <Text style={s.nutriValue}>{n.value}</Text>
-                  </View>
-                </View>
-              )
-            ))}
-
+                ),
+            )}
           </View>
         </ScrollView>
 
         {/* FIXED BUTTON (non-scrollable) */}
         <View style={s.footer}>
-
           <LinearGradient
-            colors={
-              ['#42D296', '#2AB47B']
-            } // Active gradient or inactive gradient
+            colors={['#42D296', '#2AB47B']} // Active gradient or inactive gradient
             start={{ x: 0, y: 0 }} // Start gradient from top
             end={{ x: 0, y: 1 }} // End gradient at the bottom
             style={[s.addBtn]} // Apply gradient to active button
           >
-            <TouchableOpacity style={s.toggleBtnContent} onPress={handleAddToCart} activeOpacity={0.9}>
+            <TouchableOpacity
+              style={s.toggleBtnContent}
+              onPress={handleAddToCart}
+              activeOpacity={0.9}
+            >
               <Text style={s.addText}>Add to Cart</Text>
             </TouchableOpacity>
           </LinearGradient>
@@ -241,7 +266,6 @@ function getTagColor(tag: string) {
 }
 
 const s = StyleSheet.create({
-
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: COLORS.backdrop,
@@ -330,16 +354,19 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 25,
     paddingTop: 10,
-
   },
   addBtn: {
-
     borderRadius: 8,
 
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addText: { color: COLORS.white, fontWeight: '500', lineHeight: 24, fontSize: 16 },
+  addText: {
+    color: COLORS.white,
+    fontWeight: '500',
+    lineHeight: 24,
+    fontSize: 16,
+  },
   toggleBtnContent: {
     flexDirection: 'row',
     alignItems: 'center',

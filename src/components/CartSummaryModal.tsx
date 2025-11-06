@@ -465,7 +465,7 @@ export default function CartSummaryModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-        <View style={s.handle} />
+        <TouchableOpacity style={s.handle} onPress={onClose} />
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 120 }}
@@ -624,7 +624,7 @@ const s = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.black,
     marginBottom: 16,
-    textAlign: 'center',
+    // textAlign: 'center',
   },
   label: {
     fontSize: 14,

@@ -94,8 +94,6 @@ const ALL_DAYS = [
   'Wednesday',
   'Thursday',
   'Friday',
-  'Saturday',
-  'Sunday',
 ] as const;
 
 const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
@@ -309,17 +307,12 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [addonCategories],
   );
 
-  const updatedAddons = useMemo(
-    () => applyPriceThresholds(sortedAddons, priceThreshold),
-    [sortedAddons, priceThreshold],
-  );
-
   const filteredAddons = useMemo(() => {
-    return updatedAddons.map(category => ({
+    return sortedAddons.map(category => ({
       ...category,
       value: filterItemsByTags(category.value, selectedTags),
     }));
-  }, [updatedAddons, selectedTags]);
+  }, [sortedAddons, selectedTags]);
 
   // Get all tiffin plans for current day
   const dayTiffinPlans = useMemo(() => {
@@ -428,15 +421,15 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
   // Initialize addon sections to always be open
   useEffect(() => {
-    if (tab === 1 && updatedAddons.length > 0) {
+    if (tab === 1 && sortedAddons.length > 0) {
       const next: Record<SectionKey, boolean> = {};
-      updatedAddons.forEach((cat, i) => {
+      sortedAddons.forEach((cat, i) => {
         const key = `addon:${cat.key}-${i}`;
         next[key] = true; // Always keep addon sections open
       });
       setOpenByKey(s => ({ ...s, ...next }));
     }
-  }, [tab, updatedAddons]);
+  }, [tab, sortedAddons]);
 
   const handleAddNewTiffin = useCallback(() => {
     // When adding new tiffin, we need to calculate the next available tiffin number
@@ -607,7 +600,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       0,
     );
   }, [lines]);
-  console.log(cartTotal, 'carttotal');
 
   // Get total tiffin count for current day (complete and incomplete)
   const totalTiffinCount = useMemo(() => {

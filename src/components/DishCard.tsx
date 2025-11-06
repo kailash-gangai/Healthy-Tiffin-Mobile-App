@@ -87,9 +87,8 @@ export default function DishCard({
   } else {
     customTags = []; // Default to empty array if no tags are found
   }
-
+  const date = new Intl.DateTimeFormat('en-US').format(new Date());
   const toggleSelection = () => {
-    const date = new Intl.DateTimeFormat('en-US').format(new Date());
     const itemWithMeta = {
       ...item,
       type,
@@ -119,7 +118,6 @@ export default function DishCard({
   };
 
   const onHeartPress = () => {
-    const date = new Intl.DateTimeFormat('en-US').format(new Date());
     dispatch(
       toggleWishlist({
         id: item.id,
@@ -136,6 +134,16 @@ export default function DishCard({
       }),
     );
     onChange?.({ ...item, selected: isItemInCart, liked: !isFav });
+  };
+
+  const dishItem = {
+    ...item,
+    type,
+    category,
+    day,
+    date,
+    tiffinPlan,
+    qty: 1,
   };
 
   if (isLoading) return <SkeletonLoading />;
@@ -203,7 +211,9 @@ export default function DishCard({
           <Text style={s.title} numberOfLines={2}>
             {item.title || 'Product Name'}
           </Text>
-          <Text style={s.price}>+ ${item.price || '0.00'}</Text>
+          {item.price !== 0 && (
+            <Text style={s.price}>+ ${item.price || '0.00'}</Text>
+          )}
         </View>
       </TouchableOpacity>
 
@@ -212,7 +222,7 @@ export default function DishCard({
         onClose={() => setOpen(false)}
         onToggleLike={onHeartPress}
         liked={isFav}
-        dish={item as any}
+        dish={dishItem as any}
       />
     </>
   );
