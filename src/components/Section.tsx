@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SHADOW, SPACING } from '../ui/theme';
-import ArrowUpIcon from '../assets/htf-icon/icon-up.svg';
-import ArrowDownIcon from '../assets/htf-icon/icon-down.svg';
+import ArrowUpIcon from '../assets/newicon/icon-down-arrow.svg';
+import ArrowDownIcon from '../assets/newicon/icon-down-arrow.svg';
 
 const COLORS = {
   bg: '#FFFFFF',
@@ -57,9 +57,9 @@ export default function Section({
 
         <View style={s.iconBtn}>
           {open ? (
-            <ArrowUpIcon width={14} height={14} />
+            <ArrowUpIcon  width={16} height={16} />
           ) : (
-            <ArrowDownIcon width={14} height={14} />
+            <ArrowDownIcon style={{ transform: [{ rotate: '180deg' }] }} width={16} height={16} />
           )}
         </View>
       </TouchableOpacity>

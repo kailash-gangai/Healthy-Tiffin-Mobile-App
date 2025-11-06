@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient'; // gradient background
 import { COLORS, SPACING } from '../ui/theme';
-
+import PlusIcon from '../assets/newicon/icon-plus.svg';
 type Props = { index?: 0 | 1; onChange?: (i: 0 | 1) => void };
 
 export default function OrderToggle({ index = 0, onChange }: Props) {
@@ -35,11 +35,11 @@ export default function OrderToggle({ index = 0, onChange }: Props) {
             end={{ x: 0, y: 1 }}
             style={[s.gradient, { borderRadius: 8 }]}
           >
-            <Text style={[s.text, s.textOn]}>Tiffin $29+</Text>
+            <Text style={[s.text, s.textOn]}>Tiffin $29 +</Text>
           </LinearGradient>
         ) : (
           <View style={[s.inactive, { borderRadius: 8 }]}>
-            <Text style={[s.text, s.textOff]}>Tiffin $29+</Text>
+            <Text style={[s.text, s.textOff]}>Tiffin $29 +</Text>
           </View>
         )}
       </Pressable>
