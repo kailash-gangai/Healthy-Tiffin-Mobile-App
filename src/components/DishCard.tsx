@@ -199,12 +199,7 @@ export default function DishCard({
         </View>
 
         {/* Product Info */}
-        <View
-          style={[
-            s.textWrap,
-            { flexDirection: 'row', justifyContent: 'space-between' },
-          ]}
-        >
+        <View style={s.textWrap}>
           <Text style={s.title} numberOfLines={2}>
             {item.title || 'Product Name'}
           </Text>
@@ -226,7 +221,6 @@ export default function DishCard({
 const s = StyleSheet.create({
   card: {
     width: width / 2 - 40,
-    height: width / 2 + 60, // Increased height for indicator
     borderRadius: 14,
   },
   imageWrap: {
@@ -317,16 +311,19 @@ const s = StyleSheet.create({
     marginTop: 6,
   },
   title: {
-    flex: 1,
-    fontWeight: '700',
-    fontSize: 14,
-    color: '#232323',
-    marginRight: 6,
+    fontWeight: '400',
+    fontSize: 12,
+    color: '#00020E',
+    fontFamily:'Poppins',
+    lineHeight: 20,
+    letterSpacing: -0.24,
   },
   price: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#9E9E9E',
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 20,
+    letterSpacing: -0.24,
+    color: '#00020E80',
     alignSelf: 'flex-start',
   },
   occupiedIndicator: {

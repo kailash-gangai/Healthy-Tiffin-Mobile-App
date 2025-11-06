@@ -18,6 +18,7 @@ import ArrowUp from '../assets/htf-icon/icon-up.svg';
 import ArrowDown from '../assets/htf-icon/icon-down.svg';
 import TrashIcon from '../assets/htf-icon/icon-trans.svg';
 import Divider from '../assets/newicon/divider.svg';
+import WaveImageOrder from '../assets/newicon/img-order.svg';
 import { SHADOW } from '../ui/theme';
 import LinearGradient from 'react-native-linear-gradient';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -30,6 +31,7 @@ import {
   removeDayMains,
   removeDayAddons,
 } from '../store/slice/cartSlice';
+import { SvgUri } from 'react-native-svg';
 
 const { height } = Dimensions.get('window');
 const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -63,6 +65,7 @@ const COLORS = {
   border: '#EDEDED',
   red: '#FF6B6B',
 };
+const width = Dimensions.get('window').width;
 
 const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 const rotateFromToday = (arr: string[]) => {
@@ -289,7 +292,7 @@ export default function CartSummaryModal({
                   <View key={`tiffin-${plan.plan}`} style={s.planSection}>
                     <View
                       style={s.planHeader}
-                      // onPress={() => togglePlanExpand(day, plan.plan)}
+                    // onPress={() => togglePlanExpand(day, plan.plan)}
                     >
                       <Text style={s.planTitle}>Tiffin {plan.plan}</Text>
 
@@ -537,36 +540,25 @@ export default function CartSummaryModal({
               </Text>
             </View>
 
-            <View style={s.summaryRow}>
-              <Text style={s.label}>Meal Box Price</Text>
-              <Text style={s.value}>
-                ${(mealCost + tiffinPrice).toFixed(2)}
-              </Text>
+            <View>
+              <View style={s.summaryRow}>
+                <Text style={s.label}>Subtotal</Text>
+                <Text style={s.value}>
+                  ${(mealCost + tiffinPrice).toFixed(2)}
+                </Text>
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Divider />
+              </View>
+
+              <View style={s.summaryRow}>
+                <Text style={s.totalLabel}>Total Payable</Text>
+                <Text style={s.totalValue}>
+                  ${(total + 10.85 - 9).toFixed(2)}
+                </Text>
+              </View>
             </View>
 
-            <View style={s.summaryRow}>
-              <Text style={s.label}>Add-ons</Text>
-              <Text style={s.value}>${addons.toFixed(2)}</Text>
-            </View>
-
-            <View style={s.summaryRow}>
-              <Text style={s.label}>Shipping Cost (+)</Text>
-              <Text style={s.value}>$10.85</Text>
-            </View>
-
-            <View style={s.summaryRow}>
-              <Text style={s.label}>Discount (−)</Text>
-              <Text style={s.value}>$9.00</Text>
-            </View>
-
-            <View style={s.divider} />
-
-            <View style={s.summaryRow}>
-              <Text style={s.totalLabel}>Total Payable</Text>
-              <Text style={s.totalValue}>
-                ${(total + 10.85 - 9).toFixed(2)}
-              </Text>
-            </View>
           </View>
 
           <LinearGradient
@@ -657,7 +649,6 @@ const s = StyleSheet.create({
 
   // Day Card Styles
   dayCard: {
-    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -884,8 +875,8 @@ const s = StyleSheet.create({
   },
   noticeText: { fontSize: 14, color: '#000000', textAlign: 'center' },
   summaryCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    borderTopEndRadius: 16,
+    borderTopStartRadius: 16,
     padding: 16,
     marginTop: 12,
     ...SHADOW,
