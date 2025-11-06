@@ -33,6 +33,7 @@ type Dish = {
   selected?: boolean;
   variantId: string;
   tags?: string[];
+  metafields?: any[];
   liked?: boolean;
 };
 
@@ -72,6 +73,20 @@ export default React.memo(function AddonDishCard({
   const dispatch = useAppDispatch();
   const { lines } = useAppSelector(state => state.cart);
   const [open, setOpen] = useState(false);
+
+  let customTags = item?.metafields?.find(
+    (mf: any) => mf && mf.key === 'dietary_tags',
+  );
+  if (customTags) {
+    try {
+      customTags = JSON.parse(customTags.value); // Safely parse the JSON string
+    } catch (error) {
+      console.error('Error parsing dietary tags:', error);
+      customTags = []; // Default to empty array if parsing fails
+    }
+  } else {
+    customTags = []; // Default to empty array if no tags are found
+  }
 
   // Find this item in cart
   const cartItem = useMemo(
@@ -223,6 +238,25 @@ export default React.memo(function AddonDishCard({
           </TouchableOpacity>
         </View>
 
+        <View style={s.tagContainer}>
+          {customTags &&
+            customTags.length > 0 &&
+            customTags.map((tag: any, idx: any) => (
+              <View
+                key={idx}
+                style={[
+                  s.tag,
+                  tag.toLowerCase() === 'veg' && s.tagVeg,
+                  tag.toLowerCase() === 'nv' && s.tagNV,
+                  tag.toLowerCase() === 'fodmap' && s.tagFODMAP,
+                  tag.toLowerCase() === 'vgn' && s.tagVGN,
+                ]}
+              >
+                <Text style={s.tagText}>{tag.toUpperCase()}</Text>
+              </View>
+            ))}
+        </View>
+
         {/* Title */}
         <View style={s.textWrap}>
           <Text style={s.title} numberOfLines={2}>
@@ -294,7 +328,7 @@ const s = StyleSheet.create({
   },
   priceBadge: {
     position: 'absolute',
-    bottom: 6,
+    bottom: 10,
     right: 6,
     backgroundColor: COLORS.green,
     paddingHorizontal: 6,
@@ -359,5 +393,34 @@ const s = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: COLORS.text,
+  },
+  tagContainer: {
+    position: 'absolute',
+    top: width / 2 - 42,
+    left: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    zIndex: 10,
+  },
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginHorizontal: 4,
+    backgroundColor: '#f7c612',
+    borderWidth: 2,
+    borderColor: '#fff',
+    marginBottom: 4,
+  },
+  tagVeg: { backgroundColor: '#A6CE39' },
+  tagNV: { backgroundColor: '#6A3A1D' },
+  tagFODMAP: { backgroundColor: '#A5B6A5' },
+  tagVGN: { backgroundColor: '#e58d2a' },
+  tagText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
   },
 });
