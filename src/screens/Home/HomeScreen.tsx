@@ -94,6 +94,8 @@ const ALL_DAYS = [
   'Wednesday',
   'Thursday',
   'Friday',
+  'Saturday',
+  'Sunday',
 ] as const;
 
 const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
@@ -121,7 +123,8 @@ function rankOf(key: string, ordered: string[]) {
 function getAbsoluteTodayIndex() {
   const js = new Date().getDay();
   const week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
+
+  return ALL_DAYS.indexOf(week[js - 1] as (typeof ALL_DAYS)[number]);
 }
 function toMoney(n: number) {
   return `$${Number.isFinite(n) ? n : 0}`;
@@ -259,18 +262,17 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [absoluteTodayIndex, filteredIndex],
   );
   const currentDay = ALL_DAYS[absoluteDayIndex];
-  const lowerDay = currentDay.toLowerCase();
-
+  const lowerDay = currentDay?.toLowerCase();
   const currentDayMetaObjectId = useMemo(
     () =>
-      daysMeta.find(d => d.handle.toLowerCase() === currentDay.toLowerCase())
+      daysMeta.find(d => d.handle?.toLowerCase() === currentDay?.toLowerCase())
         ?.id,
     [daysMeta, currentDay],
   );
   const addonsMetaObjectId = useMemo(
     () =>
       addonsMeta.find(
-        (d: any) => d.handle.toLowerCase() === currentDay.toLowerCase(),
+        (d: any) => d.handle?.toLowerCase() === currentDay?.toLowerCase(),
       )?.id,
     [addonsMeta, currentDay],
   );
@@ -875,7 +877,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginTop: 20,
-    marginBottom: 20,
+    marginBottom: 70,
     width: '100%',
     paddingHorizontal: 20,
   },
