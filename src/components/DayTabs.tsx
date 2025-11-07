@@ -138,7 +138,7 @@ export default function DayTabs({
             'rgba(66, 210, 150, 0.2)', // start color
             'rgba(42, 180, 123, 0.2)', // end color
           ]}
-          start={{ x: 0.3, y: 0 }}  // roughly matches 189.66° angle
+          start={{ x: 0.3, y: 0 }} // roughly matches 189.66° angle
           end={{ x: 1, y: 1 }}
           style={{ borderRadius: 8 }}
         >
@@ -147,7 +147,7 @@ export default function DayTabs({
             disabled={active === 0}
             style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}
           >
-            <View >
+            <View>
               <ArrowLeftIcon width={16} height={16} />
             </View>
           </TouchableOpacity>
@@ -158,7 +158,7 @@ export default function DayTabs({
             'rgba(66, 210, 150, 0.2)', // start color
             'rgba(42, 180, 123, 0.2)', // end color
           ]}
-          start={{ x: 0.3, y: 0 }}  // roughly matches 189.66° angle
+          start={{ x: 0.3, y: 0 }} // roughly matches 189.66° angle
           end={{ x: 1, y: 1 }}
           style={{ borderRadius: 8 }}
         >
@@ -172,7 +172,7 @@ export default function DayTabs({
                 active === filteredDays.length - 1 && { opacity: 0.3 },
               ]}
             >
-              <ArrowRightIcon width={16} height={16} fill="#127E51" />
+              <ArrowRightIcon width={16} height={16} />
             </View>
           </TouchableOpacity>
         </LinearGradient>
@@ -222,9 +222,16 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  rangeText: { fontSize: 16, fontWeight: '400', color: '#7C7C7C', fontFamily: 'Poppins', lineHeight: 20, letterSpacing: -0.24 },
+  rangeText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#7C7C7C',
+    fontFamily: 'Poppins',
+    lineHeight: 20,
+    letterSpacing: -0.24,
+  },
   listContainer: { justifyContent: 'center', gap: 20, width: '100%' },
-  dayItem: { alignItems: 'center' , marginTop: 16},
+  dayItem: { alignItems: 'center', marginTop: 16 },
   dayName: { fontSize: 12, fontWeight: '400', color: '#000', marginBottom: 6 },
   activeDayName: { color: '#8A8A8A' },
   dateBox: {

@@ -367,8 +367,8 @@ export default function CartSummaryModal({
                 ))}
               </View>
             )}
-
             {/* Add-ons Section */}
+            // Add-ons Section - Changed to same design as Tiffin
             {addons.length > 0 && (
               <View style={s.section}>
                 <View style={s.sectionHeader}>
@@ -382,27 +382,68 @@ export default function CartSummaryModal({
                 </View>
 
                 {addons.map((item: any) => (
-                  <View
-                    key={`${item.id}-${item.variantId}`}
-                    style={[s.itemRow, s.addonItem]}
-                  >
-                    <View style={s.thumb}>
-                      <Image source={{ uri: item.image }} style={s.imgMini} />
-                      <View style={[s.priceBadge, s.addonPriceBadge]}>
-                        <Text style={s.priceBadgeText}>${item.price}</Text>
-                      </View>
-                    </View>
+                  <View key={`${item.id}-${item.variantId}`} style={s.itemRow}>
                     <View style={s.itemContent}>
-                      <Text style={[s.itemCategory, s.addonCategory]}>
-                        {item.category}
-                      </Text>
-                      <Text style={s.itemName}>{item.title}</Text>
-                      <View style={s.qtyControls}>
+                      <View style={s.itemContent2}>
+                        <View style={s.thumb}>
+                          <Image
+                            source={{ uri: item.image }}
+                            style={s.imgMini}
+                          />
+                        </View>
+                        <View style={s.content}>
+                          <Text style={[s.itemCategory, s.addonCategory]}>
+                            {item.category}
+                          </Text>
+                          <Text style={s.itemName}>{item.title}</Text>
+                          <Text style={s.itemQty}>
+                            <View style={s.priceBadge}>
+                              <Text style={s.priceBadgeText}>
+                                ${item.price}
+                              </Text>
+                            </View>
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={s.bControls}>
+                        <View style={s.qtyControls}>
+                          <TouchableOpacity
+                            style={s.qtyBtn}
+                            onPress={() =>
+                              dispatch(
+                                decreaseItem({
+                                  id: item.id,
+                                  variantId: item.variantId,
+                                  tiffinPlan: item.tiffinPlan,
+                                  type: item.type,
+                                }),
+                              )
+                            }
+                          >
+                            <Text style={s.qtyBtnText}>−</Text>
+                          </TouchableOpacity>
+                          <Text style={s.qtyText}>{item.qty}</Text>
+                          <TouchableOpacity
+                            style={s.qtyBtn}
+                            onPress={() =>
+                              dispatch(
+                                increaseItem({
+                                  id: item.id,
+                                  variantId: item.variantId,
+                                  tiffinPlan: item.tiffinPlan,
+                                  type: item.type,
+                                }),
+                              )
+                            }
+                          >
+                            <Text style={s.qtyBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
                         <TouchableOpacity
-                          style={s.qtyBtn}
+                          style={s.deleteBtn}
                           onPress={() =>
                             dispatch(
-                              decreaseItem({
+                              removeItem({
                                 id: item.id,
                                 variantId: item.variantId,
                                 tiffinPlan: item.tiffinPlan,
@@ -411,41 +452,10 @@ export default function CartSummaryModal({
                             )
                           }
                         >
-                          <Text style={s.qtyBtnText}>−</Text>
-                        </TouchableOpacity>
-                        <Text style={s.qtyText}>{item.qty}</Text>
-                        <TouchableOpacity
-                          style={s.qtyBtn}
-                          onPress={() =>
-                            dispatch(
-                              increaseItem({
-                                id: item.id,
-                                variantId: item.variantId,
-                                tiffinPlan: item.tiffinPlan,
-                                type: item.type,
-                              }),
-                            )
-                          }
-                        >
-                          <Text style={s.qtyBtnText}>+</Text>
+                          <TrashIcon height={16} width={16} />
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <TouchableOpacity
-                      style={s.deleteBtn}
-                      onPress={() =>
-                        dispatch(
-                          removeItem({
-                            id: item.id,
-                            variantId: item.variantId,
-                            tiffinPlan: item.tiffinPlan,
-                            type: item.type,
-                          }),
-                        )
-                      }
-                    >
-                      <TrashIcon height={16} width={16} />
-                    </TouchableOpacity>
                   </View>
                 ))}
               </View>
@@ -465,7 +475,9 @@ export default function CartSummaryModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-        <TouchableOpacity style={s.handle} onPress={onClose} />
+        <TouchableOpacity style={s.handleWrapper} onPress={onClose}>
+          <View style={s.handle}></View>
+        </TouchableOpacity>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 120 }}
@@ -605,11 +617,17 @@ const s = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
+    paddingTop: 0,
     maxHeight: height * 0.9,
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 10,
+  },
+  handleWrapper: {
+    width: '100%',
+    height: 5,
+    paddingVertical: 16,
   },
   handle: {
     width: 50,
@@ -617,7 +635,7 @@ const s = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#E0E0E0',
     alignSelf: 'center',
-    marginBottom: 12,
+    // marginBottom: 12,
   },
   title: {
     fontSize: 20,
@@ -766,6 +784,7 @@ const s = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 20,
   },
+  // In the styles section, update these:
   itemContent: {
     display: 'flex',
     flexDirection: 'row',
@@ -776,16 +795,13 @@ const s = StyleSheet.create({
   itemContent2: {
     display: 'flex',
     justifyContent: 'center',
-    // paddingHorizontal: 8,
     flexDirection: 'row',
-    // alignItems:"center",
-    // flex:1
   },
   content: {
     display: 'flex',
     paddingHorizontal: 8,
     justifyContent: 'center',
-    width: 200,
+    width: 150,
   },
   itemCategory: {
     fontSize: 11,
@@ -808,10 +824,15 @@ const s = StyleSheet.create({
     color: COLORS.gray,
     fontWeight: '600',
   },
+  bControls: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   qtyControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 1,
   },
   qtyBtn: {
     width: 24,
@@ -883,8 +904,8 @@ const s = StyleSheet.create({
   summaryCard: {
     borderTopEndRadius: 16,
     borderTopStartRadius: 16,
-    padding: 16,
-    marginTop: 12,
+    // padding: 16,
+    // marginTop: 12,
     ...SHADOW,
   },
   summaryRow: {

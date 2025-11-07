@@ -374,7 +374,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
       setPreviousTiffinPlan(currentTiffinPlan);
     }
-    if (lines.length === 0) {
+    const hasMainItems = lines.some(
+      item => item.type === 'main' && item.day === currentDay,
+    );
+    if (!hasMainItems) {
       openAllMain();
     }
   }, [currentTiffinPlan, previousTiffinPlan, currentDay, tab]);
@@ -596,17 +599,30 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   }, [dispatch, fetchMetaAndData, currentDay]);
 
   // Calculate cart total
+  // Calculate cart total - FIXED VERSION
+  // Calculate cart total - UPDATED VERSION
+  // Alternative: Always charge $29 per tiffin plan + individual prices
   const cartTotal = useMemo(() => {
-    return lines.reduce(
-      (total, item) => total + Number(item.price) * (item.qty || 1),
-      0,
-    );
-  }, [lines]);
+    let total = 0;
 
-  // Get total tiffin count for current day (complete and incomplete)
-  const totalTiffinCount = useMemo(() => {
-    return dayTiffinPlans.length;
-  }, [dayTiffinPlans]);
+    // Count unique tiffin plans with main items
+    const tiffinPlans = new Set();
+    lines.forEach(item => {
+      if (item.type === 'main') {
+        tiffinPlans.add(`${item.day}-${item.tiffinPlan || 1}`);
+      }
+    });
+
+    // Add $29 for each tiffin plan that has at least one main item
+    total += tiffinPlans.size * 29;
+
+    // Add individual prices for all items (both main and addon)
+    lines.forEach(item => {
+      total += Number(item.price) * (item.qty || 1);
+    });
+
+    return total;
+  }, [lines]);
 
   const handleTagChange = (updatedTags: string[]) => {
     setSelectedTags(updatedTags);
@@ -614,6 +630,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
   const handleDayChange = (index: number) => {
     setFilteredIndex(index);
+    openAllMain();
   };
 
   // Check if any category has items after filtering
@@ -669,7 +686,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               <EmptyState
                 key={'addon-menu'}
                 currentDay={currentDay}
-                message="  Please check our weekday menu. Available Monday to Friday."
+                message="Weekend menu coming soon!"
               />
             )}
 
@@ -726,11 +743,15 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               <EmptyState
                 key={'no-filtered-mains'}
                 currentDay={currentDay}
-                message={`No main dishes found matching: ${selectedTags.join(
-                  ', ',
-                )}`}
+                message={`No dishes found for ${selectedTags.join(', ')}`}
               />
-            ) : null}
+            ) : (
+              <EmptyState
+                key={'no-mains'}
+                currentDay={currentDay}
+                message="No dishes available today"
+              />
+            )}
           </View>
         )}
 
@@ -740,7 +761,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               <EmptyState
                 key="a-la-carte"
                 currentDay={currentDay}
-                message="  Please check our A La Carte. Available Monday to Friday."
+                message="A La Carte available weekdays only"
               />
             )}
 
@@ -780,11 +801,15 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               <EmptyState
                 key={'no-filtered-addons'}
                 currentDay={currentDay}
-                message={`No add-ons found matching: ${selectedTags.join(
-                  ', ',
-                )}`}
+                message={`No add-ons found for ${selectedTags.join(', ')}`}
               />
-            ) : null}
+            ) : (
+              <EmptyState
+                key={'no-addons'}
+                currentDay={currentDay}
+                message="No add-ons available today"
+              />
+            )}
           </>
         )}
 
@@ -822,7 +847,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         </View>
 
         {/* Clear Day Button */}
-        {!menuDisabled && totalTiffinCount > 0 && (
+        {/* {!menuDisabled && totalTiffinCount > 0 && (
           <TouchableOpacity
             onPress={() => dispatch(removeDayMains({ day: currentDay }))}
             style={styles.clearDayButton}
@@ -831,7 +856,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               Clear all tiffins for {currentDay}
             </Text>
           </TouchableOpacity>
-        )}
+        )} */}
       </ScrollView>
 
       {/* Cart Summary Bar */}
@@ -843,9 +868,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         <View style={styles.cartNotch} />
         <View style={styles.cartBarContent}>
           <Text style={styles.cartLabel}>Cart Summary</Text>
-          <Text style={styles.cartTotal}>
-            Total ${hasAnyMain ? 29 : 0 + +cartTotal.toFixed(2)}
-          </Text>
+          <Text style={styles.cartTotal}>Total ${cartTotal.toFixed(2)}</Text>
         </View>
       </TouchableOpacity>
 

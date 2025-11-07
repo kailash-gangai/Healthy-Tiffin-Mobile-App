@@ -13,74 +13,51 @@ const EmptyState = ({
       style={{
         marginHorizontal: 16,
         marginTop: 12,
-        padding: 16,
-        borderRadius: 16,
-        backgroundColor: '#F4FBF6',
+        padding: 20,
+        borderRadius: 12,
+        backgroundColor: '#FFF9F5',
         borderWidth: 1,
-        borderColor: '#D8F0DF',
+        borderColor: '#FFE8D6',
         shadowColor: '#000',
-        shadowOpacity: 0.08,
-        shadowOffset: { width: 0, height: 4 },
-        shadowRadius: 12,
-        elevation: 3,
+        shadowOpacity: 0.05,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 8,
+        elevation: 2,
       }}
     >
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          marginBottom: 8,
+          marginBottom: 12,
         }}
       >
-        <FontAwesome5 name="calendar-times" size={20} color="#2E7D32" />
+        <FontAwesome5 name="calendar-times" size={22} color="#E67C24" />
         <Text
           style={{
-            marginLeft: 8,
-            fontSize: 16,
-            fontWeight: '700',
-            color: '#1B5E20',
+            marginLeft: 10,
+            fontSize: 17,
+            fontWeight: '800',
+            color: '#8A4A0F',
+            letterSpacing: -0.3,
           }}
         >
-          No menu for {currentDay}
+          {currentDay} Menu
         </Text>
       </View>
-      <Text style={{ fontSize: 13, color: '#2E7D32', lineHeight: 18 }}>
-        {message}
-      </Text>
-      <View
+      <Text
         style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          marginTop: 10,
+          fontSize: 14,
+          color: '#D35400',
+          lineHeight: 20,
+          fontWeight: '500',
+          letterSpacing: -0.2,
         }}
       >
-        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(d => (
-          <View
-            key={d}
-            style={{
-              paddingVertical: 6,
-              paddingHorizontal: 10,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#B7E1C0',
-              backgroundColor: '#FFFFFF',
-              marginRight: 8,
-              marginBottom: 8,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '700',
-                color: '#2E7D32',
-              }}
-            >
-              {d}
-            </Text>
-          </View>
-        ))}
-      </View>
+        {message}
+      </Text>
     </View>
   );
 };
+
 export default EmptyState;

@@ -136,6 +136,7 @@ export default function DishDetailModal({
   };
   const dispatch = useAppDispatch();
   const handleAddToCart = () => {
+    console.log('Load', new Date());
     dispatch(addItems([dish as any]));
     onClose();
   };
@@ -164,7 +165,9 @@ export default function DishDetailModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-        <View style={s.handle} />
+        <TouchableOpacity onPress={onClose} style={s.handleWrapper}>
+          <View style={s.handle}></View>
+        </TouchableOpacity>
 
         {/* Scrollable content */}
         <ScrollView
@@ -229,21 +232,20 @@ export default function DishDetailModal({
         </ScrollView>
 
         {/* FIXED BUTTON (non-scrollable) */}
+        {/* FIXED BUTTON (non-scrollable) */}
         <View style={s.footer}>
-          <LinearGradient
-            colors={['#42D296', '#2AB47B']} // Active gradient or inactive gradient
-            start={{ x: 0, y: 0 }} // Start gradient from top
-            end={{ x: 0, y: 1 }} // End gradient at the bottom
-            style={[s.addBtn]} // Apply gradient to active button
-          >
-            <TouchableOpacity
-              style={s.toggleBtnContent}
-              onPress={handleAddToCart}
-              activeOpacity={0.9}
+          <TouchableOpacity onPress={handleAddToCart} activeOpacity={0.9}>
+            <LinearGradient
+              colors={['#42D296', '#2AB47B']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={[s.addBtn]}
             >
-              <Text style={s.addText}>Add to Cart</Text>
-            </TouchableOpacity>
-          </LinearGradient>
+              <View style={s.toggleBtnContent}>
+                <Text style={s.addText}>Add to Cart</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </Animated.View>
     </Modal>
@@ -281,6 +283,15 @@ const s = StyleSheet.create({
     paddingTop: 8,
     paddingHorizontal: 20,
   },
+  handleWrapper: {
+    width: '100%',
+    height: 5,
+    paddingVertical: 13,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   handle: {
     width: 50,
     height: 5,
