@@ -125,31 +125,56 @@ export default function EditProfile({ navigation }: Props) {
 
   const onSubmit = async () => {
     setLoading(true);
+
     let [firstName, lastName] = name?.split(' ') ?? [];
     let userData = { firstName, lastName, email, phone };
+    let imageUploadSuccess = false;
 
+    // Upload new image if selected
     const a = file?.assets?.[0] ?? null;
-    if (avatar && a) {
-      const { fileId } = await uploadImageDirectFromRN(
-        {
-          uri: a.uri,
-          name: a.fileName ?? 'upload.jpg',
-          type: a.type ?? 'image/jpeg',
-        },
-        user.avatar ?? '',
-      );
-      await customerMetafieldUpdate(
-        [{ key: 'image', value: fileId, type: 'file_reference' }],
-        user?.id ?? '',
-      );
+    if (a && a.uri) {
+      try {
+        const { fileId } = await uploadImageDirectFromRN(
+          {
+            uri: a.uri,
+            name: a.fileName ?? 'upload.jpg',
+            type: a.type ?? 'image/jpeg',
+          },
+          user.avatar ?? '',
+        );
+
+        // Update metafield with new file ID
+        await customerMetafieldUpdate(
+          [{ key: 'image', value: fileId, type: 'file_reference' }],
+          user?.id ?? '',
+        );
+
+        // Update local state immediately with the new image
+        setAvatar(a.uri);
+        imageUploadSuccess = true;
+      } catch (error) {
+        console.error('Image upload failed:', error);
+        showToastError(
+          'Image upload failed. Profile info saved without new image.',
+        );
+      }
     }
 
     try {
       const res = await customerUpsert(userData, user?.customerToken || '');
       if (res?.customerUpdate?.customer?.id) {
         const details = await checkCustomerTokens();
-        if (details) dispatch(setUser(details));
+        if (details) {
+          dispatch(setUser(details));
+
+          // Only refresh media if we didn't already set the local avatar
+          if (!imageUploadSuccess) {
+            media(details);
+          }
+        }
         showToastSuccess('Profile updated successfully.');
+
+        // Navigate back with updated data
       }
     } catch (error) {
       showToastError(
@@ -159,7 +184,6 @@ export default function EditProfile({ navigation }: Props) {
       setLoading(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.safe}>
       <AppHeader title="Edit Profile" onBack={() => navigation.goBack()} />

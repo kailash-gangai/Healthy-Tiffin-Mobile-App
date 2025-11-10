@@ -122,9 +122,17 @@ function rankOf(key: string, ordered: string[]) {
 }
 function getAbsoluteTodayIndex() {
   const js = new Date().getDay();
-  const week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const week = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
 
-  return ALL_DAYS.indexOf(week[js - 1] as (typeof ALL_DAYS)[number]);
+  return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
 }
 function toMoney(n: number) {
   return `$${Number.isFinite(n) ? n : 0}`;
