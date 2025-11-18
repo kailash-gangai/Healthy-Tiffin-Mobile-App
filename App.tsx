@@ -37,7 +37,7 @@ export default function App() {
         <ShopifyCheckoutSheetProvider>
           <NavigationContainer>
             <StatusBar
-              barStyle={isDarkMode == false ? 'dark-content' : 'light-content'}
+              barStyle={'light-content'}
               backgroundColor={
                 Platform.OS === 'android' ? 'transparent' : undefined
               }

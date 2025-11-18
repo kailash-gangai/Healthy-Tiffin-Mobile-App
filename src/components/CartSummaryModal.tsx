@@ -493,7 +493,7 @@ export default function CartSummaryModal({
                 <LinearGradient
                   key={opt}
                   colors={
-                    isActive ? ['#f2c113', '#e2b517'] : ['#f3f3f3', '#f3f3f3']
+                    isActive ? ['#f2c113', '#e2b517'] : ['#ffff', '#ffff']
                   }
                   style={s.toggleBtn}
                 >
@@ -655,7 +655,7 @@ const s = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
     marginBottom: 20,
-    backgroundColor: '#f3f3f3',
+    backgroundColor: '#ffff',
     padding: 2,
   },
   toggleBtn: {
@@ -904,8 +904,8 @@ const s = StyleSheet.create({
   summaryCard: {
     borderTopEndRadius: 16,
     borderTopStartRadius: 16,
-    // padding: 16,
-    // marginTop: 12,
+    padding: 16,
+    marginTop: 12,
     ...SHADOW,
   },
   summaryRow: {
