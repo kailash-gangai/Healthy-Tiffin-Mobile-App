@@ -78,7 +78,7 @@ const s = StyleSheet.create({
     height: 38,
     padding: 2,
     overflow: 'hidden',
-
+    borderRadius: 10,
   },
   option: {
     flex: 1,
