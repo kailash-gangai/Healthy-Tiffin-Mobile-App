@@ -705,8 +705,8 @@ const s = StyleSheet.create({
 
   // Section Styles
   section: {
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: 6,
+    paddingTop: 6,
     // borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
@@ -905,7 +905,7 @@ const s = StyleSheet.create({
     borderTopEndRadius: 16,
     borderTopStartRadius: 16,
     padding: 16,
-    marginTop: 12,
+    marginTop: 6,
     ...SHADOW,
   },
   summaryRow: {
