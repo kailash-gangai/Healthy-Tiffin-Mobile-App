@@ -108,7 +108,18 @@ export default React.memo(function AddonDishCard({
   const isFav = useAppSelector(
     selectIsWishlisted(item.id, item.variantId, category, day),
   );
-
+  const isItemInCart = React.useMemo(
+    () =>
+      lines.some(
+        (it: any) =>
+          it.id === item.id &&
+          it.variantId === item.variantId &&
+          it.day === day &&
+          it.category === category &&
+          it.tiffinPlan === tiffinPlan,
+      ),
+    [lines, item.id, item.variantId, day, category, tiffinPlan],
+  );
   const addToCart = useCallback(() => {
     const itemWithMeta = {
       ...item,
@@ -216,17 +227,19 @@ export default React.memo(function AddonDishCard({
               e.stopPropagation();
               setOpen(true);
             }}
-            style={[s.iconBtn, { left: 8, top: 8, position: 'absolute' }]}
+            style={[s.iconBtn, { right: 8, bottom: 8, position: 'absolute' }]}
           >
             <EyeShow width={16} height={16} />
           </TouchableOpacity>
-
+          <Text style={[s.radio, isItemInCart && s.radioOn]}>
+            {isItemInCart && <Text style={s.radioDot} />}
+          </Text>
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
               onHeartPress();
             }}
-            style={[{ right: 8, top: 8, position: 'absolute' }]}
+            style={[{ left: 8, top: 8, position: 'absolute' }]}
           >
             <HeartIcon
               width={20}
@@ -316,7 +329,7 @@ const s = StyleSheet.create({
     width: width / 2 - 40,
 
     borderRadius: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   imgWrap: {
     position: 'relative',
@@ -336,6 +349,29 @@ const s = StyleSheet.create({
     letterSpacing: -0.24,
     color: '#00020E80',
     alignSelf: 'flex-start',
+  },
+  radio: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.6,
+    borderColor: '#DFB318',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOn: {
+    borderColor: '#FFFFFF',
+    backgroundColor: '#0B5733',
+  },
+  radioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.green,
   },
   iconBtn: {
     position: 'absolute',

@@ -36,12 +36,6 @@ export default function App() {
       <PersistGate persistor={persistor} loading={<SkeletonLoading />}>
         <ShopifyCheckoutSheetProvider>
           <NavigationContainer>
-            <StatusBar
-              barStyle={'light-content'}
-              backgroundColor={
-                Platform.OS === 'android' ? 'transparent' : undefined
-              }
-            />
             <Root />
           </NavigationContainer>
           <Toast />

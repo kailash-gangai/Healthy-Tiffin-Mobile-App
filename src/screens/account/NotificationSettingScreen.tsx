@@ -1,6 +1,6 @@
 // screens/NotificationSettings.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS as C, RADIUS } from '../../ui/theme';
 import AppHeader from '../../components/AppHeader';
@@ -42,6 +42,8 @@ export default function NotificationSettings({ navigation }: Props) {
 
       return (
             <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
+                 
+
                   <AppHeader title="Notification Settings" onBack={() => navigation.goBack()} />
                   <ScrollView contentContainerStyle={s.wrap} showsVerticalScrollIndicator={false}>
                         {items.map(it => (

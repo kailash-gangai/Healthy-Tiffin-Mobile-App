@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  StatusBar,
 } from 'react-native';
 
 import AppHeader from '../../components/AppHeader';
@@ -196,6 +197,7 @@ export default function CartScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.white }}>
+      <StatusBar barStyle="dark-content" />
       <AppHeader title="My Cart" onBack={() => navigation.goBack()} />
 
       <ScrollView
