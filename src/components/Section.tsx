@@ -57,13 +57,14 @@ export default function Section({
 
         <View style={s.iconBtn}>
           {open ? (
-            <ArrowUpIcon width={16} height={16} />
-          ) : (
             <ArrowDownIcon
               style={{ transform: [{ rotate: '180deg' }] }}
               width={16}
               height={16}
             />
+
+          ) : (
+            <ArrowUpIcon width={16} height={16} />
           )}
         </View>
       </TouchableOpacity>
@@ -110,9 +111,9 @@ const s = StyleSheet.create({
     marginHorizontal: 8,
   },
   noteText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#000000',
-    fontWeight: '300',
+    fontWeight: '400',
     lineHeight: 20,
     letterSpacing: -0.24,
   },

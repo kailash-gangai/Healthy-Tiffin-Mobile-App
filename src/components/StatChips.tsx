@@ -180,15 +180,14 @@ const s = StyleSheet.create({
   cardWrap: {
     backgroundColor: '#f6f6f8',
     alignItems: 'center',
-    marginTop: -20,
+    marginTop: -10,
     borderTopLeftRadius: RADIUS,
     borderTopRightRadius: RADIUS,
   },
   card: {
-    marginVertical: 26,
-    backgroundColor: COLORS.white,
+    marginVertical: 8,
     borderRadius: 20,
-    paddingVertical: 12,
+    paddingVertical: 6,
     paddingHorizontal: 8,
     ...SHADOW,
   },

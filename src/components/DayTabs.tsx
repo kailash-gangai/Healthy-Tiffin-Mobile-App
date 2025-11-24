@@ -230,7 +230,7 @@ const s = StyleSheet.create({
     lineHeight: 20,
     letterSpacing: -0.24,
   },
-  listContainer: { justifyContent: 'center', gap: 20, width: '100%' },
+  listContainer: { justifyContent: 'center', gap: 8, width: '100%' },
   dayItem: { alignItems: 'center', marginTop: 16 },
   dayName: { fontSize: 12, fontWeight: '400', color: '#000', marginBottom: 6 },
   activeDayName: { color: '#8A8A8A' },

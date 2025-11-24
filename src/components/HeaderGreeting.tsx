@@ -10,6 +10,7 @@ import { RootState } from '../store';
 import { previewImage } from '../shopify/mutation/FileUpload';
 import AddToCartIcon from '../assets/htf-icon/icon-cart.svg';
 import NotificationIcon from '../assets/htf-icon/icon-notification.svg';
+import HeaderImage from '../assets/newicon/header-image.svg';
 
 export default function HeaderGreeting({ name }: { name: string }) {
   const navigation =
@@ -29,6 +30,7 @@ export default function HeaderGreeting({ name }: { name: string }) {
   return (
     <View>
       <View style={s.orange}>
+      <HeaderImage style={s.headerImage} />
         <View style={s.row}>
           <View style={s.left}>
             <Image
@@ -68,13 +70,18 @@ export default function HeaderGreeting({ name }: { name: string }) {
 const s = StyleSheet.create({
   orange: {
     backgroundColor: '#222222',
-    height: 125,
+    height: 113,
     paddingHorizontal: 16,
     justifyContent: 'flex-end',
     paddingBottom: SPACING,
     marginBottom: SPACING,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+  },
+  headerImage: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
   },
   row: {
     flexDirection: 'row',
@@ -112,7 +119,6 @@ const s = StyleSheet.create({
   },
   card: {
     marginHorizontal: 16,
-    backgroundColor: COLORS.white,
     borderRadius: 20,
     paddingVertical: 14,
     ...SHADOW,

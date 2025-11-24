@@ -271,9 +271,9 @@ export default function CartSummaryModal({
           </View>
           <View style={s.arrowBox}>
             {isDayOpen(day) ? (
-              <ArrowDown height={20} width={20} />
-            ) : (
               <ArrowUp height={20} width={20} />
+            ) : (
+              <ArrowDown height={20} width={20} />
             )}
           </View>
         </TouchableOpacity>
@@ -292,7 +292,7 @@ export default function CartSummaryModal({
                   <View key={`tiffin-${plan.plan}`} style={s.planSection}>
                     <View
                       style={s.planHeader}
-                      // onPress={() => togglePlanExpand(day, plan.plan)}
+                    // onPress={() => togglePlanExpand(day, plan.plan)}
                     >
                       <Text style={s.planTitle}>Tiffin {plan.plan}</Text>
 
@@ -578,6 +578,7 @@ export default function CartSummaryModal({
               </View>
             </View>
           </View>
+          <WaveImageOrder style={s.wave} />
 
           <LinearGradient
             colors={
@@ -668,7 +669,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
   },
-  toggleText: { fontSize: 14, fontWeight: '600', color: '#333' },
+  toggleText: { fontSize: 16, fontWeight: '600', color: '#333' },
   toggleTextActive: { color: '#fff' },
 
   // Day Card Styles
@@ -904,9 +905,14 @@ const s = StyleSheet.create({
   summaryCard: {
     borderTopEndRadius: 16,
     borderTopStartRadius: 16,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     marginTop: 6,
     ...SHADOW,
+  },
+  wave:{
+   marginTop: -4,
+
   },
   summaryRow: {
     flexDirection: 'row',
@@ -929,10 +935,5 @@ const s = StyleSheet.create({
     paddingVertical: 16,
   },
   orderText: { color: COLORS.white, fontWeight: '700', fontSize: 16 },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    marginVertical: 12,
-    borderRadius: 1,
-  },
+
 });

@@ -13,8 +13,8 @@ import {
   selectIsWishlisted,
   toggleWishlist,
 } from '../store/slice/favoriteSlice';
-import HeartIcon from '../assets/htf-icon/icon-heart.svg';
-import EyeShow from '../assets/htf-icon/icon-eye.svg';
+import HeartIcon from '../assets/newicon/heart.svg';
+import EyeShow from '../assets/htf-icon/icon-eye-white.svg';
 import DeleteIcon from '../assets/htf-icon/icon-trans.svg';
 import SkeletonLoading from './SkeletonLoading';
 import { addItem, decreaseItem, removeItem } from '../store/slice/cartSlice';
@@ -216,7 +216,7 @@ export default React.memo(function AddonDishCard({
               e.stopPropagation();
               setOpen(true);
             }}
-            style={[s.iconBtn, { left: 8, top: 8 }]}
+            style={[s.iconBtn, { left: 8, top: 8, position: 'absolute' }]}
           >
             <EyeShow width={16} height={16} />
           </TouchableOpacity>
@@ -226,12 +226,13 @@ export default React.memo(function AddonDishCard({
               e.stopPropagation();
               onHeartPress();
             }}
-            style={[s.iconBtn, { right: 8, top: 8 }]}
+            style={[{ right: 8, top: 8, position: 'absolute' }]}
           >
             <HeartIcon
-              width={16}
-              height={16}
-              fill={isFav ? '#FF4D4D' : '#ffff'}
+              width={20}
+              height={20}
+              stroke={isFav ? '#F9C711' : '#878787'}
+
             />
           </TouchableOpacity>
         </View>
@@ -338,14 +339,12 @@ const s = StyleSheet.create({
   },
   iconBtn: {
     position: 'absolute',
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'rgba(249, 199, 17, 0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderWidth: 1.2,
+    borderColor: '#878787',
+    borderStyle: 'solid',
+    backgroundColor: '#878787',
+    borderRadius: 14,
+    padding: 2,
   },
   textWrap: {
     marginTop: 12,

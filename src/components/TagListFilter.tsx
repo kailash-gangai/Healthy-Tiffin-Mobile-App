@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Button, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Button, ActivityIndicator, ScrollView } from 'react-native';
 import { getAllMetaobjects, getMetaObjectByHandle } from '../shopify/queries/getMetaObject';
 import { SPACING } from '../ui/theme';
 
@@ -62,7 +62,7 @@ const TagListFilter: React.FC<TagListFilterProps> = ({ onChange, selectedTags })
     return (
         <View style={styles.container}>
 
-            <View style={styles.tagsContainer}>
+            <ScrollView horizontal contentContainerStyle={styles.tagsContainer}>
                 {tags.map(tag => {
                     const isSelected = selectedTags.includes(tag);
 
@@ -80,7 +80,7 @@ const TagListFilter: React.FC<TagListFilterProps> = ({ onChange, selectedTags })
                 {/* {selectedTags.length > 0 && (
                     <Button title="Clear" onPress={handleClearTags} color="#FF4D4D" />
                 )} */}
-            </View>
+            </ScrollView>
 
 
         </View>
@@ -89,22 +89,18 @@ const TagListFilter: React.FC<TagListFilterProps> = ({ onChange, selectedTags })
 
 const styles = StyleSheet.create({
     container: {
-        marginHorizontal: SPACING,
         paddingTop: 16,
         alignItems: 'flex-start',
     },
     tagsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 10,
+        marginHorizontal: SPACING,
+        gap: 8,
     },
     tag: {
-        paddingVertical: 4,
-        paddingHorizontal: 10,
         borderRadius: 22,
-        borderWidth:0.5,
-        borderColor: '#E9E8E9',    
-    },
+        borderWidth: 0.5,
+        borderColor: '#E9E8E9',
+           },
     vegTag: {
         backgroundColor: '#A6CE39', // Green color for VEG
     },
@@ -125,10 +121,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#d6f2e6', // Change background to black when selected
     },
     tagText: {
-        fontSize: 12,
+        paddingVertical: 4,
+        paddingHorizontal: 12,
+        display: 'flex',
+        color: '#fff',
         fontWeight: '300',
-        letterSpacing:-0.24,
-        color: '#ffffff', // Default text color
+        fontSize: 12,
+        lineHeight: 20,
+        letterSpacing: -0.24,
+        textAlign: 'center'
     },
     selectedText: {
         color: '#127e51', // White text when selected

@@ -36,13 +36,12 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView
+    <View
       style={styles.safe}
-      edges={['top', 'left', 'right', 'bottom']}
     >
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 1 }}
         showsVerticalScrollIndicator={false}
       >
         {/* 1. Header Image */}
@@ -117,7 +116,7 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.buttonText}>TRY IT TODAY</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -159,7 +158,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  featuresContainer: {
+  featuresContainer: {  
     padding: 20,
   },
   featureRow: {

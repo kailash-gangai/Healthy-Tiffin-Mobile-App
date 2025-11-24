@@ -721,7 +721,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                         ? selectedItem.title?.length > 30
                           ? `${selectedItem.title.slice(0, 30)}...`
                           : selectedItem.title
-                        : 'Please Select One'
+                        : 'Choose your ' + cat.key + ' to continue.'
                     }
                     open={isOpen(key)}
                     setOpen={(v: boolean) => setOpen(key, v)}
@@ -760,6 +760,33 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 message="No dishes available today"
               />
             )}
+
+            {filteredAddons.length > 0 && (
+              <Section
+                key="main-addons-section"
+                title="Select Add ons"
+                note=""
+                open={isOpen('main:addons')}
+                setOpen={(v: boolean) => setOpen('main:addons', v)}
+              >
+                <View style={styles.gridWrap}>
+                  {filteredAddons.map((cat, i) =>
+                    cat.value.map(d => (
+                      <AddonDishCard
+                        key={d.id}
+                        category={cat.key.toUpperCase()}
+                        day={currentDay}
+                        type="addon"
+                        item={d as any}
+                        tiffinPlan={currentTiffinPlan}
+                        isLoading={isLoading}
+                      />
+                    )),
+                  )}
+                </View>
+              </Section>
+            )}
+
           </View>
         )}
 

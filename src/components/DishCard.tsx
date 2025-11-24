@@ -13,8 +13,8 @@ import {
   selectIsWishlisted,
   toggleWishlist,
 } from '../store/slice/favoriteSlice';
-import EyeShow from '../assets/htf-icon/icon-eye.svg';
-import HeartIcon from '../assets/htf-icon/icon-heart.svg';
+import EyeShow from '../assets/htf-icon/icon-eye-white.svg';
+import HeartIcon from '../assets/newicon/heart.svg';
 import { EMPTY_STATE_URL } from '../constants';
 import SkeletonLoading from './SkeletonLoading';
 import { addItems, removeItem } from '../store/slice/cartSlice';
@@ -167,7 +167,7 @@ export default function DishCard({
             <HeartIcon
               width={20}
               height={20}
-              fill={isFav ? '#FF4D4D' : 'rgba(255,255,255,0.8)'}
+              stroke={isFav ? '#F9C711' : '#878787'}
             />
           </TouchableOpacity>
 
@@ -231,11 +231,11 @@ export default function DishCard({
 const s = StyleSheet.create({
   card: {
     width: width / 2 - 40,
-    borderRadius: 14,
+    borderRadius: 16,
   },
   imageWrap: {
     position: 'relative',
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   image: {
@@ -247,17 +247,17 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: 'rgba(249, 199, 17, 0.6)',
-    borderRadius: 14,
-    padding: 6,
   },
   eyeBtn: {
     position: 'absolute',
-    top: 8,
-    left: 48,
-    backgroundColor: 'rgba(249, 199, 17, 0.6)',
+    bottom: 12,
+    right: 4,
+    borderWidth: 1.2,
+    borderColor: '#878787',
+    borderStyle: 'solid',
+    backgroundColor: '#878787',
     borderRadius: 14,
-    padding: 6,
+    padding: 2,
   },
   radio: {
     position: 'absolute',
