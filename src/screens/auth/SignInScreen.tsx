@@ -35,7 +35,6 @@ import PasswoedIcon from '../../assets/htf-icon/icon-passwoed.svg';
 import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
 import UserIcon from '../../assets/htf-icon/icon-user.svg';
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
-
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
@@ -46,6 +45,12 @@ type Props = {
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
+GoogleSignin.configure({
+  webClientId: "176148506772-qg5spoepvr0cm5tdf965peihdq5bla54.apps.googleusercontent.com",
+  iosClientId: "176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com",
+  scopes: ['email', 'profile'],
+  offlineAccess: true,
+});
 const SignInScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState<string>('');
@@ -124,9 +129,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleGoogleLogin = async () => {
     try {
-      const a = await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
+      const a = await GoogleSignin.hasPlayServices();
       console.log(a, "aa")
       const so = await GoogleSignin.signOut();
       console.log(so, "singout")

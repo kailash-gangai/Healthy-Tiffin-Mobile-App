@@ -22,6 +22,9 @@ import FormInput from '../../components/FormInput';
 import LinearGradient from 'react-native-linear-gradient';
 import CameraIcon from '../../assets/htf-icon/icon-camera.svg';
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
+import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
+import UserIcon from '../../assets/htf-icon/icon-user.svg';
+import PhoneIcon from '../../assets/htf-icon/phone.svg';
 import {
   launchImageLibrary,
   launchCamera,
@@ -130,7 +133,7 @@ export default function EditProfile({ navigation }: Props) {
     let userData = { firstName, lastName, email, phone };
     let imageUploadSuccess = false;
 
-    // Upload new image if selected
+
     const a = file?.assets?.[0] ?? null;
     if (a && a.uri) {
       try {
@@ -219,7 +222,7 @@ export default function EditProfile({ navigation }: Props) {
 
           <FormInput
             label="Name"
-            icon="person"
+            icon={<UserIcon width={24} height={24} />}
             placeholder="Enter name"
             value={name}
             onChangeText={setName}
@@ -228,7 +231,7 @@ export default function EditProfile({ navigation }: Props) {
 
           <FormInput
             label="Email Address"
-            icon="email"
+            icon={<EmailIcon width={24} height={24} />}
             placeholder="Enter email address"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -239,7 +242,7 @@ export default function EditProfile({ navigation }: Props) {
 
           <FormInput
             label="Phone Number"
-            icon="phone"
+            icon={<PhoneIcon width={24} height={24} />}
             placeholder="Enter phone number"
             keyboardType="phone-pad"
             autoCapitalize="none"
