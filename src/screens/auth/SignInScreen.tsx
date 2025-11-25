@@ -38,6 +38,8 @@ import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
+import appleAuth from '@invertase/react-native-apple-authentication';
+import { AppleAuthProvider } from '@react-native-firebase/auth';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
   navigation: NavigationProp;
@@ -166,6 +168,59 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
       console.log('error: ', JSON.stringify(error));
     }
   };
+
+  const handleAppleLogin = async () => {
+    try {
+      const response = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+      });
+      const { user, email, fullName, identityToken, nonce } = response;
+
+      if (!identityToken) {
+        throw new Error('No identity token returned');
+      }
+
+      // Extract name fields
+      const givenName = fullName?.givenName;
+      const familyName = fullName?.familyName;
+
+      const payload = {
+        email: email,
+        first_name: givenName,
+        last_name: familyName,
+      };
+      const baseURL = 'https://healthytiffin.app/api/shopify/multipass-token';
+
+      const { data } = await axios.post(baseURL, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const customerToken = data?.customerAccessToken;
+      const tokenExpire = data?.expiresAt;
+      saveCustomerTokens({ customerToken, tokenExpire });
+      let customerdetails = checkCustomerTokens();
+      customerdetails.then(async result => {
+        if (result) {
+          dispatch(setUser(result));
+          navigation.navigate('Home');
+        }
+      });
+
+      // Firebase credential (2 params only)
+      // const appleCredential = AppleAuthProvider.credential(
+      //   identityToken,
+      //   nonce
+      // );
+
+      // console.log('Firebase Credential:', appleCredential);
+
+    } catch (error) {
+      console.log('Apple Login Error:', error);
+    }
+  };
+
   return (
     <ScrollView bounces={false} contentContainerStyle={{ flexGrow: 1 }}>
       {/* HERO with image + logo + titles */}
@@ -281,7 +336,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
           <CircleBtn
             bg="#000000"
             icon={<Apple height={30} width={30} />}
-            onPress={() => { }}
+            onPress={handleAppleLogin}
           />
         </View>
         {/* Footer */}
