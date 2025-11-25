@@ -91,7 +91,7 @@ export default function Root() {
   }, [fadeAnim]);
   // if (!hasToken) {
   //       navigation.navigate('SignIn');
-  // }
+  // }.     
 
   if (loading) {
     return <SplashScreen fadeAnim={fadeAnim} />;
@@ -103,8 +103,7 @@ export default function Root() {
         animation: 'slide_from_bottom',
       }}
     >
-      <Stack.Screen name="About" component={AboutScreen} />
-      {/* Add preference screens here */}
+       {/* Add preference screens here */}
 
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />

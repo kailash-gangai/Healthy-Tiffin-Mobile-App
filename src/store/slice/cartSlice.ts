@@ -129,7 +129,9 @@ const cartSlice = createSlice({
         tiffinPlan,
       } = a.payload;
       const existing = s.lines.find(
-        line => line.id === id && line.variantId === variantId,
+          line => line.id === id &&
+          line.variantId === variantId &&
+          line.day === day
       );
       s.isCartCleared = false;
       if (existing) {

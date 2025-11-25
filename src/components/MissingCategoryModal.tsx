@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { COLORS as C } from '../ui/theme';
+import { COLORS as C, SHADOW } from '../ui/theme';
 import Calender from '../assets/htf-icon/icon-callendar.svg';
 import TrashIcon from '../assets/htf-icon/icon-trans.svg';
 import AddIcon from '../assets/htf-icon/icon-add.svg';
@@ -118,23 +118,43 @@ export default function MissingCategoryModal({
   }) => (
     <TouchableOpacity
       onPress={onPress}
-      style={[s.chip, active && s.chipOn]}
-      activeOpacity={0.9}
+      activeOpacity={0.85}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: active ? '#1E874B' : '#D8DCD9',
+        backgroundColor: active ? '#1E874B' : '#F4F5F4',
+        minHeight: 36,
+      }}
     >
-      {iconComponent ? (
-        iconComponent
-      ) : icon ? (
-        <FontAwesome5
-          iconStyle="solid"
-          name={icon as any}
-          size={12}
-          color={active ? '#FFF' : '#0B5733'}
-        />
-      ) : null}
-      <Text style={[s.chipTxt, active && s.chipTxtOn]} numberOfLines={1}>
-        {label}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap:4 }}>
+        {iconComponent ?? (
+          <FontAwesome5
+            name={icon}
+            size={13}
+            color={active ? '#FFFFFF' : '#1E874B'}
+          />
+        )}
+
+        <Text
+          numberOfLines={1}
+          style={{
+            fontSize: 12,
+            fontWeight: '600',
+            color: active ? '#FFFFFF' : '#1E874B',
+          }}
+        >
+          {label}
+        </Text>
+      </View>
     </TouchableOpacity>
+
+
+
   );
 
   return (
@@ -146,9 +166,9 @@ export default function MissingCategoryModal({
     >
       <View style={s.backdrop}>
         <View style={s.sheet}>
-          <View style={s.grabberWrap}>
+          <TouchableOpacity onPress={onClose} style={s.grabberWrap}>
             <View style={s.grabber} />
-          </View>
+          </TouchableOpacity>
 
           <View style={s.headerRow}>
             <View style={{ flex: 1 }}>
@@ -160,50 +180,52 @@ export default function MissingCategoryModal({
             <TouchableOpacity
               onPress={onClose}
               style={s.iconBtn}
-              hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
+              // hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
             >
-              <CrossIcon width={25} height={25} stroke="red" />
+              <CrossIcon width={25} height={25}  />
             </TouchableOpacity>
           </View>
 
-          {/* day selector */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.rowChips}
-          >
-            {days.map(d => (
-              <Chip
-                key={d}
-                label={d}
-                active={d === day}
-                iconComponent={<Calender width={12} height={12} />}
-                onPress={() => {
-                  setDay(d);
-                  const first =
-                    missingList.find(m => m.day === d)?.tiffinPlan ?? 1;
-                  setPlan(first);
-                }}
-              />
-            ))}
-          </ScrollView>
+          <View>
+            {/* day selector */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.rowChips}
+            >
+              {days.map(d => (
+                <Chip
+                  key={d}
+                  label={d}
+                  active={d === day}
+                  iconComponent={<Calender width={12} height={12} />}
+                  onPress={() => {
+                    setDay(d);
+                    const first =
+                      missingList.find(m => m.day === d)?.tiffinPlan ?? 1;
+                    setPlan(first);
+                  }}
+                />
+              ))}
+            </ScrollView>
 
-          {/* plan selector */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[s.rowChips, { paddingTop: 6 }]}
-          >
-            {plansForDay.map(p => (
-              <Chip
-                key={p}
-                label={`Tiffin ${p}`}
-                active={p === plan}
-                iconComponent={<Tiffin width={12} height={12} />}
-                onPress={() => setPlan(p)}
-              />
-            ))}
-          </ScrollView>
+            {/* plan selector */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[s.rowChips]}
+            >
+              {plansForDay.map(p => (
+                <Chip
+                  key={p}
+                  label={`Tiffin ${p}`}
+                  active={p === plan}
+                  iconComponent={<Tiffin width={12} height={12} />}
+                  onPress={() => setPlan(p)}
+                />
+              ))}
+            </ScrollView>
+          </View>
 
           {/* notice */}
           <View style={s.notice}>
@@ -226,16 +248,15 @@ export default function MissingCategoryModal({
               <Text style={s.allSet}>All set for this tiffin.</Text>
             )}
           </View>
-
           {/* suggestions */}
-          <ScrollView contentContainerStyle={{ padding: 12 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}> 
             {groups.map(g => (
-              <View key={g.key} style={s.group}>
+              <View key={g.key}>
                 <View style={s.groupHdr}>
                   <Text style={s.groupTitle}>
                     {String(g.key).toUpperCase()}
                   </Text>
-                  <View style={s.groupUnderline} />
+                  
                 </View>
 
                 {g.value.map(it => (
@@ -249,20 +270,22 @@ export default function MissingCategoryModal({
                         }
                         style={s.imgSm}
                       />
-                      <View style={s.priceBadge}>
+
+                    </View>
+
+                    <View style={{ flex: 1, minWidth: 0 }}>
+
+                      <View>
+                        <Text style={s.itemTitle} numberOfLines={2}>
+                          {it.title}
+                        </Text>
                         {Number(it.price) > 0 ? (
-                          <Text style={s.priceText}>
+                          <Text style={{ marginTop: 4, fontSize: 12, color: C.subText }}>
                             +{'('}${it.price}
                             {')'}
                           </Text>
                         ) : null}
                       </View>
-                    </View>
-
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={s.itemTitle} numberOfLines={2}>
-                        {it.title}
-                      </Text>
                     </View>
 
                     <TouchableOpacity
@@ -286,7 +309,7 @@ export default function MissingCategoryModal({
                       }
                     >
                       <AddIcon width={17} height={17} />
-                      <Text style={s.addTxt}>Add</Text>
+                      {/* <Text style={s.addTxt}>Add</Text> */}
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -302,7 +325,9 @@ export default function MissingCategoryModal({
               </View>
             )}
           </ScrollView>
+
         </View>
+
       </View>
     </Modal>
   );
@@ -311,167 +336,242 @@ export default function MissingCategoryModal({
 const s = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.32)',
     justifyContent: 'flex-end',
   },
+
   sheet: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '90%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '88%',
+    paddingBottom: 12,
     shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: -4 },
     shadowRadius: 16,
-    elevation: 10,
+    elevation: 6,
   },
-  grabberWrap: { alignItems: 'center', paddingTop: 8 },
+
+  grabberWrap: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
   grabber: {
-    width: 54,
+    width: 44,
     height: 5,
-    borderRadius: 3,
-    backgroundColor: '#E8EAE9',
+    borderRadius: 999,
+    backgroundColor: '#DADADA',
   },
+
+  // Header
   headerRow: {
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 6,
+    paddingTop: 4,
+    paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  h1: { fontSize: 18, fontWeight: '900', color: '#111' },
-  subH: { marginTop: 2, color: '#66736B', fontWeight: '700', fontSize: 12 },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F3F5F4',
-  },
-  rowChips: { paddingHorizontal: 12, paddingTop: 8, gap: 8 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#D6E5DC',
-    backgroundColor: '#F6FBF8',
-    gap: 6,
-  },
-  chipOn: { backgroundColor: '#0B5733', borderColor: '#0B5733' },
-  chipTxt: {
+
+  h1: {
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0B5733',
-    fontSize: 12,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    color: '#111',
   },
-  chipTxtOn: { color: '#FFF' },
-  notice: {
-    marginTop: 8,
-    marginHorizontal: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#FFF6E5',
-    borderWidth: 1,
-    borderColor: '#FFD699',
-    flexDirection: 'row',
-    alignItems: 'center',
+  subH: {
+    marginTop: 4,
+    color: '#707070',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  iconBtn: {
+    padding: 6,
+    backgroundColor: '#F4F4F4',
+    borderRadius: 999,
+  },
+
+  // Day / Tiffin Chips
+  rowChips: {
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 6,
     gap: 8,
   },
-  missRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  missPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: '#FFEFD1',
+  chipBase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FFE0A6',
-    alignSelf: 'flex-start',
+    gap: 6,
+
   },
-  missPillTxt: {
-    color: '#8A5A00',
-    fontWeight: '800',
-    fontSize: 12,
-    lineHeight: 16,
-    includeFontPadding: false,
+
+  chipInactive: {
+    backgroundColor: '#F4F5F4',
+    borderColor: '#D8DCD9',
   },
-  allSet: { color: '#8A5A00', fontWeight: '800' },
-  group: { marginTop: 12 },
-  groupHdr: { paddingHorizontal: 12, marginBottom: 8 },
-  groupTitle: {
-    fontWeight: '900',
-    color: '#0B5733',
-    fontSize: 12,
-    letterSpacing: 0.5,
+
+  chipActive: {
+    backgroundColor: '#1E874B',
+    borderColor: '#1E874B',
   },
-  groupUnderline: {
-    height: 2,
-    width: 44,
-    backgroundColor: '#CBE8D7',
-    borderRadius: 2,
-    marginTop: 6,
+
+  chipLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    paddingVertical: 12,
   },
-  cardSm: {
+
+  chipLabelInactive: {
+    color: '#1E874B',
+  },
+
+  chipLabelActive: {
+    color: '#FFFFFF',
+  },
+
+  // Missing category notice
+  notice: {
+    position: 'relative',
+    margin: 12,
+    padding: 8,
+    borderRadius: 16,
+    backgroundColor: '#FDF8EA',
+    borderWidth: 1,
+    borderColor: '#F5E4B1',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginHorizontal: 12,
-    marginBottom: 10,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E6EAE7',
-    padding: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
   },
-  imgWrap: { position: 'relative' },
-  imgSm: { width: 58, height: 50, borderRadius: 8, backgroundColor: '#EEF2EF' },
+
+  missRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+
+  missPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: '#F7EED7',
+  },
+  missPillTxt: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#8C6B2C',
+  },
+
+  allSet: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#8C6B2C',
+  },
+
+  // Category Groups
+
+
+  groupHdr: {
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+
+  groupTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#000',
+  },
+
+  // groupUnderline: {
+  //   marginTop: 6,
+  //   width: 36,
+  //   // height: 2,
+  //   borderRadius: 1,
+  //   backgroundColor: '#D5D5D5',
+  // },
+
+  // Item Card
+  cardSm: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 8,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 14,
+    ...SHADOW
+  },
+
+  imgWrap: {
+    position: 'relative',
+  },
+
+  imgSm: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
+  },
+
   priceBadge: {
     position: 'absolute',
-    right: 3,
-    bottom: 3,
-    paddingHorizontal: 6,
+    right: 4,
+    bottom: 4,
+    backgroundColor: '#1E874B',
     paddingVertical: 2,
+    paddingHorizontal: 6,
     borderRadius: 10,
-    backgroundColor: '#0B5733',
   },
-  priceText: { color: '#FFF', fontSize: 10, fontWeight: '800' },
+
+  priceText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
   itemTitle: {
-    color: C.black,
-    fontWeight: '800',
-    fontSize: 13,
-    lineHeight: 16,
-    includeFontPadding: false,
+    fontSize: 12,
+    color: '#000',
+    fontWeight: '600',
   },
+
+  // Add button
   addBtnSm: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 10,
-    backgroundColor: '#0B5733',
+    backgroundColor: '#1E874B',
+
   },
-  addTxt: { color: '#FFF', fontWeight: '900', fontSize: 12 },
+
+  addTxt: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  // Empty Box
   empty: {
-    marginTop: 8,
-    marginHorizontal: 12,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#FFF6E5',
+    marginTop: 14,
+    marginHorizontal: 20,
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: '#FDF8EA',
     borderWidth: 1,
-    borderColor: '#FFD699',
+    borderColor: '#F5E4B1',
     alignItems: 'center',
     gap: 6,
   },
-  emptyTxt: { color: '#8A5A00', fontWeight: '800' },
+
+  emptyTxt: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#8C6B2C',
+  },
 });
+

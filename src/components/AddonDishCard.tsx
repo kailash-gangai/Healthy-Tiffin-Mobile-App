@@ -130,6 +130,7 @@ export default React.memo(function AddonDishCard({
       tiffinPlan,
       qty: 1,
     };
+    console.log('Adding to cart:', itemWithMeta);
     dispatch(addItem(itemWithMeta as any));
     onChange?.({ ...item, selected: true, liked: isFav });
   }, [dispatch, item, category, day, tiffinPlan, onChange, isFav]);
