@@ -48,22 +48,25 @@ export default function FavoritesScreen({ navigation }: { navigation?: any }) {
             <View style={styles.list}>
               {items.map(it => (
                 <View
-                  key={`${it.id}-${it.variantId}-${it.category}-${
-                    it.day ?? ''
-                  }`}
+                  key={`${it.id}-${it.variantId}-${it.category}-${it.day ?? ''
+                    }`}
                   style={{ marginBottom: 12 }}
                 >
                   <FavoriteCard item={it as any} />
                 </View>
               ))}
+
               <TouchableOpacity
-                activeOpacity={0.6}
                 onPress={() => dispatch(clearWishlist())}
-                style={{ alignSelf: 'flex-end', marginRight: 10 }}
+                activeOpacity={0.8}
+                style={[
+                  styles.buttonBase,
+                  styles.addNewTiffin,
+                  styles.halfButton,
+                ]}
               >
-                <Text style={{ color: '#E53935', fontWeight: '700' }}>
-                  Clear
-                </Text>
+
+                <Text style={styles.newTiffinText}>Clear Favorites</Text>
               </TouchableOpacity>
               <View style={{ height: 16 }} />
               <View
@@ -108,4 +111,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B5733',
   },
   ctaTxt: { color: '#FFF', fontWeight: '700' },
+
+  buttonBase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
+  },
+  halfButton: {
+    flex: 1,
+  },
+  fullButton: {
+    flex: 1,
+    width: '100%',
+  },
+  addNewTiffin: {
+    borderColor: '#0B5733',
+    backgroundColor: '#d0ece2',
+  },
+  newTiffinText: {
+    color: '#22774fff',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
 });

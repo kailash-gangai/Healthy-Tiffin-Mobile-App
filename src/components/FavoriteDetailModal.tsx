@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Pressable,
+  Dimensions,
 } from 'react-native';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { COLORS, SHADOW } from '../ui/theme';
@@ -18,7 +19,7 @@ import { useAppDispatch } from '../store/hooks';
 import HeartIcon from '../assets/htf-icon/icon-heart.svg';
 import ShareIcon from '../assets/htf-icon/icon-shre.svg';
 import CancleIcon from '../assets/htf-icon/icon-close.svg';
-
+const height = Dimensions.get('window').height;
 type Item = {
   id: string;
   title: string;
@@ -56,6 +57,7 @@ export default function FavoriteDetailModal({
       animationType="fade"
       transparent
       onRequestClose={onClose}
+      statusBarTranslucent
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <View style={s.wrap}>
@@ -155,8 +157,8 @@ const s = StyleSheet.create({
   card: {
     position: 'relative',
     borderRadius: 18,
-    backgroundColor: COLORS.white,
     padding: 16,
+    maxHeight: height - 200,
     ...SHADOW,
   },
   close: {
@@ -172,17 +174,10 @@ const s = StyleSheet.create({
 
   imgFrame: {
     borderRadius: 14,
-    padding: 6,
-    backgroundColor: COLORS.white,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-    marginBottom: 12,
-    marginTop: 12,
+    marginVertical: 8,
+    maxHeight: 250,
   },
-  img: { width: '100%', height: 200, borderRadius: 10, resizeMode: 'cover' },
+  img: { width: '100%', height: '100%', borderRadius: 10, resizeMode:'stretch'   },
 
   titleRow: {
     flexDirection: 'row',
@@ -191,14 +186,14 @@ const s = StyleSheet.create({
   },
   title: {
     color: COLORS.black,
-    fontWeight: '800',
-    fontSize: 18,
+    fontWeight: '600',
+    fontSize: 16,
     flex: 1,
     paddingRight: 10,
   },
 
   kcal: { marginTop: 8 },
-  kcalNum: { color: COLORS.green, fontWeight: '800', fontSize: 20 },
+  kcalNum: { color: COLORS.green, fontWeight: '600', fontSize: 20 },
   kcalUnit: {
     color: COLORS.sub,
     fontWeight: '700',

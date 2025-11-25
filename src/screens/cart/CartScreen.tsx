@@ -702,5 +702,5 @@ const styles = StyleSheet.create({
   orderText: { color: '#FFF', fontWeight: '700', fontSize: 16 },
 
   // Item Price
-  itemPrice: { fontSize: 12, fontWeight: '600', color: C.black, marginTop: 4 },
+  itemPrice: { fontSize: 12, fontWeight: '600', color: C.subText, marginTop: 4 },
 });

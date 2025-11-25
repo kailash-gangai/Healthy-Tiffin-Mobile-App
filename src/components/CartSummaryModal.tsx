@@ -227,7 +227,6 @@ export default function CartSummaryModal({
     return allMissing.length ? allMissing : null;
   }, [lines, hasAnyMain]);
 
-  // Add-ons minimum validation
   const ADDONS_MIN = 29;
   const addonsOnly = hasAnyAddon && !hasAnyMain;
   const addonsMinInfo = useMemo(() => {
@@ -331,7 +330,7 @@ export default function CartSummaryModal({
                                     {item.category}
                                   </Text>
                                   <Text style={s.itemName}>{item.title}</Text>
-                                  <Text style={s.itemQty}>
+                                  <View >
                                     {Number(item.price) > 0 && (
                                       <View style={s.priceBadge}>
                                         <Text style={s.priceBadgeText}>
@@ -339,7 +338,7 @@ export default function CartSummaryModal({
                                         </Text>
                                       </View>
                                     )}
-                                  </Text>
+                                  </View>
                                 </View>
                               </View>
 
@@ -368,7 +367,7 @@ export default function CartSummaryModal({
               </View>
             )}
             {/* Add-ons Section */}
-            // Add-ons Section - Changed to same design as Tiffin
+
             {addons.length > 0 && (
               <View style={s.section}>
                 <View style={s.sectionHeader}>
@@ -396,13 +395,13 @@ export default function CartSummaryModal({
                             {item.category}
                           </Text>
                           <Text style={s.itemName}>{item.title}</Text>
-                          <Text style={s.itemQty}>
+                          <View>
                             <View style={s.priceBadge}>
-                              <Text style={s.priceBadgeText}>
-                                ${item.price}
-                              </Text>
+                              {item.price > 0 && (
+                                <Text style={s.priceBadgeText}>+${item.price}</Text>
+                              )}
                             </View>
-                          </Text>
+                          </View>
                         </View>
                       </View>
                       <View style={s.bControls}>
@@ -910,8 +909,8 @@ const s = StyleSheet.create({
     marginTop: 6,
     ...SHADOW,
   },
-  wave:{
-   marginTop: -4,
+  wave: {
+    marginTop: -4,
 
   },
   summaryRow: {
