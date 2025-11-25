@@ -35,10 +35,11 @@ import PasswoedIcon from '../../assets/htf-icon/icon-passwoed.svg';
 import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
 import UserIcon from '../../assets/htf-icon/icon-user.svg';
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
-
 import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
+import appleAuth from '@invertase/react-native-apple-authentication';
+import { AppleAuthProvider } from '@react-native-firebase/auth';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
   navigation: NavigationProp;
@@ -46,6 +47,12 @@ type Props = {
 const { width, height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
 
+GoogleSignin.configure({
+  webClientId: "176148506772-qg5spoepvr0cm5tdf965peihdq5bla54.apps.googleusercontent.com",
+  iosClientId: "176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com",
+  scopes: ['email', 'profile'],
+  offlineAccess: true,
+});
 const SignInScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState<string>('');
@@ -124,9 +131,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleGoogleLogin = async () => {
     try {
-      const a = await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
+      const a = await GoogleSignin.hasPlayServices();
       console.log(a, "aa")
       const so = await GoogleSignin.signOut();
       console.log(so, "singout")
@@ -163,6 +168,59 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
       console.log('error: ', JSON.stringify(error));
     }
   };
+
+  const handleAppleLogin = async () => {
+    try {
+      const response = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+      });
+      const { user, email, fullName, identityToken, nonce } = response;
+
+      if (!identityToken) {
+        throw new Error('No identity token returned');
+      }
+
+      // Extract name fields
+      const givenName = fullName?.givenName;
+      const familyName = fullName?.familyName;
+
+      const payload = {
+        email: email,
+        first_name: givenName,
+        last_name: familyName,
+      };
+      const baseURL = 'https://healthytiffin.app/api/shopify/multipass-token';
+
+      const { data } = await axios.post(baseURL, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const customerToken = data?.customerAccessToken;
+      const tokenExpire = data?.expiresAt;
+      saveCustomerTokens({ customerToken, tokenExpire });
+      let customerdetails = checkCustomerTokens();
+      customerdetails.then(async result => {
+        if (result) {
+          dispatch(setUser(result));
+          navigation.navigate('Home');
+        }
+      });
+
+      // Firebase credential (2 params only)
+      // const appleCredential = AppleAuthProvider.credential(
+      //   identityToken,
+      //   nonce
+      // );
+
+      // console.log('Firebase Credential:', appleCredential);
+
+    } catch (error) {
+      console.log('Apple Login Error:', error);
+    }
+  };
+
   return (
     <ScrollView bounces={false} contentContainerStyle={{ flexGrow: 1 }}>
       {/* HERO with image + logo + titles */}
@@ -278,7 +336,7 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
           <CircleBtn
             bg="#000000"
             icon={<Apple height={30} width={30} />}
-            onPress={() => { }}
+            onPress={handleAppleLogin}
           />
         </View>
         {/* Footer */}

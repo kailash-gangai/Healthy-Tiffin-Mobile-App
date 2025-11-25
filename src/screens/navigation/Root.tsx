@@ -104,9 +104,9 @@ export default function Root() {
       }}
     >
        {/* Add preference screens here */}
-
-      <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="ForgetPassword" component={ForgetPasswordScreen} />
       <Stack.Screen
         name="CodeVerification"

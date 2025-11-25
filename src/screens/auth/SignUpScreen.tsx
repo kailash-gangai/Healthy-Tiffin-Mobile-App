@@ -48,10 +48,10 @@ import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
 import UserIcon from '../../assets/htf-icon/icon-user.svg';
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 GoogleSignin.configure({
-  webClientId:
-    '678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd.apps.googleusercontent.com',
-  iosClientId:
-    '541872006500-5mlca2bgg8v4qb26muaabmcjepbekvf2.apps.googleusercontent.com',
+  webClientId: "176148506772-qg5spoepvr0cm5tdf965peihdq5bla54.apps.googleusercontent.com",
+  iosClientId: "176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com",
+  scopes: ['email', 'profile'],
+  offlineAccess: true,
 });
 
 const { height } = Dimensions.get('window');
@@ -75,9 +75,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   const positions = useRef<{ [k: string]: number }>({}).current;
   const onLayoutAt =
     (key: string) =>
-    (e: LayoutChangeEvent): void => {
-      positions[key] = e.nativeEvent.layout.y;
-    };
+      (e: LayoutChangeEvent): void => {
+        positions[key] = e.nativeEvent.layout.y;
+      };
   const ensureVisible = (key: string) => {
     const y = positions[key] ?? 0;
     requestAnimationFrame(() => {
@@ -240,7 +240,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             icon={<UserIcon width={24} height={24} />}
             placeholder="Enter full name"
             value={name}
-            onChangeText={setName}  
+            onChangeText={setName}
             autoCapitalize="words"
             returnKeyType="next"
             onFocus={() => ensureVisible('name')}
@@ -273,7 +273,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
         <View onLayout={onLayoutAt('email')}>
           <FormInput
             label="Email Address"
-             icon={<EmailIcon width={24} height={24} />}
+            icon={<EmailIcon width={24} height={24} />}
             placeholder="Enter email address"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -328,9 +328,9 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
           <CircleBtn
             bg="#1877F2"
             icon={<Facebook width={30} height={30} />}
-            onPress={() => {}}
+            onPress={() => { }}
           />
-          <InstaBtn onPress={() => {}} />
+          <InstaBtn onPress={() => { }} />
           <CircleBtn
             bg="#EA4335"
             icon={<Google width={30} height={40} />}
@@ -339,7 +339,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
           <CircleBtn
             bg="#000000"
             icon={<Apple height={30} width={30} />}
-            onPress={() => {}}
+            onPress={() => { }}
           />
         </View>
 
@@ -384,7 +384,7 @@ const InstaBtn: React.FC<InstaBtnProps> = ({ onPress }) => (
       ]}
       style={styles.circle}
     >
-      <Insta height={30} width={30}/>
+      <Insta height={30} width={30} />
     </LinearGradient>
   </TouchableOpacity>
 );

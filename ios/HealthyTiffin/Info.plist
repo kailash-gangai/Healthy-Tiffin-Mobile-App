@@ -99,12 +99,17 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<!-- Your iOS reversed client ID (from GoogleService-Info.plist) -->
-				<string>com.googleusercontent.apps.541872006500-5mlca2bgg8v4qb26muaabmcjepbekvf2</string>
+				<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0</string>
 				<!-- Optional: If you're also using web client for multipass -->
-				<string>com.googleusercontent.apps.678786774271-65v84fljs82onmftpju1fnhp1s2cnpcd</string>
+				<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0</string>
 			</array>
 		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com.apps.googleusercontent.com</string>
+	<key>GIDRedirectURI</key>
+	<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com:/oauth2redirect/google</string>
+	
 
 	<!-- Google Sign-In: Queries -->
 	<key>LSApplicationQueriesSchemes</key>

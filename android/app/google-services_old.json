@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "541872006500",
+    "project_id": "healthytiffin-a2713",
+    "storage_bucket": "healthytiffin-a2713.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:541872006500:android:430d6b54d254af50db0671",
+        "android_client_info": {
+          "package_name": "com.healthytiffin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "541872006500-so95kn3c1v5hi6a110aqm5d0867b8hm7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCazIPqc4lZ5EAilQBcaKmWKTGoP35RMBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "541872006500-so95kn3c1v5hi6a110aqm5d0867b8hm7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],  
+  "configuration_version": "1"
+}
