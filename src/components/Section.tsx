@@ -84,7 +84,7 @@ const s = StyleSheet.create({
   wrap: {
     borderRadius: 24,
     marginHorizontal: SPACING,
-    marginVertical: 10,
+    marginVertical: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
     ...SHADOW,
@@ -129,6 +129,6 @@ const s = StyleSheet.create({
   },
   body: {
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 0,
   },
 });

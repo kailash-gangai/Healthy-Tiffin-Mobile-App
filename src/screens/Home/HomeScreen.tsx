@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 10,
-    marginTop: 8,
+    // marginTop: 8,
   },
   pad: { paddingHorizontal: SPACING, marginTop: -34 },
   container: { padding: 10, marginLeft: 10, paddingTop: 15 },
