@@ -23,6 +23,7 @@ import { RootStackParamList } from '../screens/navigation/types';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store/slice/userSlice';
 import { AccessToken, AuthenticationToken, GraphRequest, GraphRequestManager, LoginManager } from 'react-native-fbsdk-next';
+import { authorize } from 'react-native-app-auth';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = {
       navigation: NavigationProp;
@@ -33,6 +34,18 @@ GoogleSignin.configure({
       scopes: ['email', 'profile'],
       offlineAccess: true,
 });
+
+// const config = {
+//       clientId: 'YOUR_INSTAGRAM_CLIENT_ID',  // Replace with your Instagram client ID
+//       clientSecret: 'YOUR_INSTAGRAM_CLIENT_SECRET',  // Replace with your Instagram client secret
+//       redirectUrl: 'myapp://oauth2redirect', // Replace with your redirect URI
+//       scopes: ['user_profile', 'user_media'], // Permissions you need
+//       serviceConfiguration: {
+//             authorizationEndpoint: 'https://api.instagram.com/oauth/authorize',
+//             tokenEndpoint: 'https://api.instagram.com/oauth/access_token',
+//             revocationEndpoint: 'https://api.instagram.com/oauth/revoke',
+//       },
+// };
 const SocialAuthButtons: React.FC<Props> = ({ navigation }) => {
       const dispatch = useDispatch();
 
@@ -164,9 +177,24 @@ const SocialAuthButtons: React.FC<Props> = ({ navigation }) => {
                   console.log('Facebook login error: ', error);
             }
       }
-      const handleInstaLogin = () => {
-            console.log('Instagram login pressed');
-      }
+      // const handleInstaLogin = async () => {
+      //       try {
+      //             // Authenticate with Instagram
+      //             const authState = await authorize(config);
+
+      //             // Get user info using the access token
+      //             const response = await fetch(
+      //                   `https://graph.instagram.com/me?fields=id,username,email&access_token=${authState.accessToken}`
+      //             );
+      //             const data = await response.json();
+
+      //             console.log('User data from Instagram:', data);
+
+
+      //       } catch (error) {
+      //             console.error('Instagram login failed:', error);
+      //       }
+      // }
       return (
             <View style={styles.row}>
 
@@ -177,7 +205,7 @@ const SocialAuthButtons: React.FC<Props> = ({ navigation }) => {
                         children={<Facebook width={30} height={30} />}
                   />
                   {/* Instagram */}
-                  <TouchableOpacity activeOpacity={0.85} onPress={handleInstaLogin}>
+                  {/* <TouchableOpacity activeOpacity={0.85} onPress={handleInstaLogin}>
                         <LinearGradient
                               colors={[
                                     '#405DE6',
@@ -194,7 +222,7 @@ const SocialAuthButtons: React.FC<Props> = ({ navigation }) => {
                         >
                               <Insta height={30} width={30} />
                         </LinearGradient>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
 
                   {/* Google */}
                   <Circle
@@ -232,8 +260,9 @@ const styles = StyleSheet.create({
       row: {
             marginTop: 16,
             flexDirection: 'row',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             paddingHorizontal: 16,
+            gap: 16,
       },
       circle: {
             width: 60,
