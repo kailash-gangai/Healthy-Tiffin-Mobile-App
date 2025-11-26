@@ -1,4 +1,3 @@
-import axios from 'axios';
 import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
@@ -8,15 +7,12 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Platform,
   GestureResponderEvent,
   Alert,
   ActivityIndicator,
   LayoutChangeEvent,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { Fontisto } from '@react-native-vector-icons/fontisto';
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
 import { Dimensions } from 'react-native';
 import FormInput from '../../components/FormInput';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -37,22 +33,12 @@ import {
   showToastError,
   showToastSuccess,
 } from '../../config/ShowToastMessages';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import auth from '@react-native-firebase/auth';
-import Facebook from '../../assets/htf-icon/fb.svg';
-import Insta from '../../assets/htf-icon/insta.svg';
-import Google from '../../assets/htf-icon/google.svg';
-import Apple from '../../assets/htf-icon/apple.svg';
 import PasswoedIcon from '../../assets/htf-icon/icon-passwoed.svg';
 import EmailIcon from '../../assets/htf-icon/icon-mail.svg';
 import UserIcon from '../../assets/htf-icon/icon-user.svg';
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
-GoogleSignin.configure({
-  webClientId: "176148506772-qg5spoepvr0cm5tdf965peihdq5bla54.apps.googleusercontent.com",
-  iosClientId: "176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com",
-  scopes: ['email', 'profile'],
-  offlineAccess: true,
-});
+import SocialAuthButtons from '../../components/SocialMediaLogin';
+
 
 const { height } = Dimensions.get('window');
 const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
@@ -165,35 +151,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     [name, email, pass, dispatch, navigation],
   );
 
-  const GoogleSingUp = async () => {
-    try {
-      await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
-      await GoogleSignin.signOut();
-      const signInResult = await GoogleSignin.signIn();
-      const user = signInResult?.data?.user;
-      const payload = {
-        email: user?.email,
-        first_name: user?.givenName,
-        last_name: user?.familyName,
-      };
-      const baseURL = 'https://healthytiffin.app/api/shopify/multipass-token';
-      const { data } = await axios.post(baseURL, payload, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const customerToken = data?.customerAccessToken;
-      const tokenExpire = data?.expiresAt;
-      saveCustomerTokens({ customerToken, tokenExpire });
-      const details = await checkCustomerTokens();
-      if (details) {
-        dispatch(setUser(details));
-        navigation.navigate('Home');
-      }
-    } catch (error) {
-      // no-op
-    }
-  };
 
   return (
     // Removed KeyboardAvoidingView to avoid large jumps.
@@ -324,24 +281,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.line} />
         </View>
 
-        <View style={styles.socialRow}>
-          <CircleBtn
-            bg="#1877F2"
-            icon={<Facebook width={30} height={30} />}
-            onPress={() => { }}
-          />
-          <InstaBtn onPress={() => { }} />
-          <CircleBtn
-            bg="#EA4335"
-            icon={<Google width={30} height={40} />}
-            onPress={GoogleSingUp}
-          />
-          <CircleBtn
-            bg="#000000"
-            icon={<Apple height={30} width={30} />}
-            onPress={() => { }}
-          />
-        </View>
+        <SocialAuthButtons navigation={navigation} />
 
         <View style={styles.footerRow}>
           <Text style={styles.footerText}>Already have an account?</Text>
@@ -353,41 +293,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     </ScrollView>
   );
 };
-
-type CircleBtnProps = {
-  bg: string;
-  icon: React.ReactNode;
-  onPress?: (e: GestureResponderEvent) => void;
-};
-
-const CircleBtn: React.FC<CircleBtnProps> = ({ bg, icon, onPress }) => (
-  <TouchableOpacity activeOpacity={0.85} onPress={onPress}>
-    <View style={[styles.circle, { backgroundColor: bg }]}>{icon}</View>
-  </TouchableOpacity>
-);
-
-type InstaBtnProps = { onPress?: (e: GestureResponderEvent) => void };
-
-const InstaBtn: React.FC<InstaBtnProps> = ({ onPress }) => (
-  <TouchableOpacity activeOpacity={0.85} onPress={onPress}>
-    <LinearGradient
-      colors={[
-        '#405DE6',
-        '#5851DB',
-        '#833AB4',
-        '#C13584',
-        '#E1306C',
-        '#FD1D1D',
-        '#F56040',
-        '#FCAF45',
-        '#FFDC80',
-      ]}
-      style={styles.circle}
-    >
-      <Insta height={30} width={30} />
-    </LinearGradient>
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   /** HERO */
@@ -455,24 +360,6 @@ const styles = StyleSheet.create({
   dividerWrap: { marginTop: 20, alignItems: 'center', flexDirection: 'row' },
   line: { flex: 1, height: 1, backgroundColor: COLORS.divider },
   orText: { marginHorizontal: 12, color: COLORS.subText, fontWeight: '600' },
-  socialRow: {
-    marginTop: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-  },
-  circle: {
-    width: 60,
-    height: 60,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
 
   /** Footer */
   footerRow: { marginTop: 22, flexDirection: 'row', justifyContent: 'center' },

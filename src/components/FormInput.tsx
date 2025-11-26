@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
         display: "flex",
         padding: 4,
         position: 'relative',
-        top: 20,
-        left: 16,
+        top: 6,
+        left: 0,
         zIndex: 1
     },
     labelLine: {

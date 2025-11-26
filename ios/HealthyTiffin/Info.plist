@@ -20,12 +20,33 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1153606970289088</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FacebookAppID</key>
+	<string>1153606970289088</string>
+	<key>FacebookClientToken</key>
+	<string>08de5546012ef041645759d2645cba1e</string>
+	<key>FacebookDisplayName</key>
+	<string>Social Auth</string>
+	<key>GIDClientID</key>
+	<string>176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com.apps.googleusercontent.com</string>
+	<key>GIDRedirectURI</key>
+	<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com:/oauth2redirect/google</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>google</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-
-	<!-- Networking -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -33,93 +54,52 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-
-	<!-- Local network / Bonjour -->
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Allow local network access to discover and connect to devices on your network.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app may access your media library to play or manage audio you select.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>This app may use Bluetooth to connect to compatible nearby devices.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>This app may use Bluetooth to discover and communicate with compatible devices.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_http._tcp</string>
 	</array>
-
-	<!-- HealthKit -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>This app may access your calendar to create or manage events you request.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to capture photos for your profile or logs.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This app may access contacts when you choose to invite or share.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID for secure authentication if you enable it.</string>
 	<key>NSHealthClinicalHealthRecordsShareUsageDescription</key>
 	<string>Read and understand clinical health data.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>This app reads your health data (e.g. steps) to show activity insights.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>This app writes health data you choose (e.g. workouts) to your Health app.</string>
-
-	<!-- Location -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app uses your location during workouts to map routes.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Allow local network access to discover and connect to devices on your network.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Allow location access in the background for continuous features you enable.</string>
-
-	<!-- Photos / Camera / Microphone -->
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs photo library access so you can select and upload images.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app may save images to your photo library when you export or download.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to capture photos for your profile or logs.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses your location during workouts to map routes.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app may use the microphone when recording audio or video.</string>
-
-	<!-- Optional capabilities often required by SDKs -->
-	<key>NSContactsUsageDescription</key>
-	<string>This app may access contacts when you choose to invite or share.</string>
-	<key>NSCalendarsUsageDescription</key>
-	<string>This app may access your calendar to create or manage events you request.</string>
-	<key>NSRemindersUsageDescription</key>
-	<string>This app may access reminders to help manage tasks you request.</string>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>This app may use Bluetooth to connect to compatible nearby devices.</string>
-	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>This app may use Bluetooth to discover and communicate with compatible devices.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>This app uses Face ID for secure authentication if you enable it.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>This app may use speech recognition when you choose voice input.</string>
-	<key>NSAppleMusicUsageDescription</key>
-	<string>This app may access your media library to play or manage audio you select.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>This app may access motion data to analyze your activity.</string>
-
-	<!-- Tracking (ATT) -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app may save images to your photo library when you export or download.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access so you can select and upload images.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>This app may access reminders to help manage tasks you request.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app may use speech recognition when you choose voice input.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Allow permission to use identifiers to personalize content and measure performance.</string>
-
-	<!-- Google Sign-In: URL Schemes -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<!-- Your iOS reversed client ID (from GoogleService-Info.plist) -->
-				<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0</string>
-				<!-- Optional: If you're also using web client for multipass -->
-				<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0</string>
-			</array>
-		</dict>
-	</array>
-	<key>GIDClientID</key>
-	<string>176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com.apps.googleusercontent.com</string>
-	<key>GIDRedirectURI</key>
-	<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0.apps.googleusercontent.com:/oauth2redirect/google</string>
-	
-
-	<!-- Google Sign-In: Queries -->
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>google</string>
-	</array>
-
-	<!-- UI -->
 	<key>RCTNewArchEnabled</key>
-	<true/>
+	<false/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

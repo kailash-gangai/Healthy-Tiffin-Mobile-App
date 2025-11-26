@@ -2,47 +2,72 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import FBSDKCoreKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-  var window: UIWindow?
+    var window: UIWindow?
 
-  var reactNativeDelegate: ReactNativeDelegate?
-  var reactNativeFactory: RCTReactNativeFactory?
+    // React Native new architecture
+    var reactNativeDelegate: ReactNativeDelegate?
+    var reactNativeFactory: RCTReactNativeFactory?
 
-  func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-  ) -> Bool {
-    let delegate = ReactNativeDelegate()
-    let factory = RCTReactNativeFactory(delegate: delegate)
-    delegate.dependencyProvider = RCTAppDependencyProvider()
+    // MARK: - Application Launch
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
+    ) -> Bool {
 
-    reactNativeDelegate = delegate
-    reactNativeFactory = factory
+        // Initialize Facebook SDK
+        ApplicationDelegate.shared.application(
+            application,
+            didFinishLaunchingWithOptions: launchOptions
+        )
 
-    window = UIWindow(frame: UIScreen.main.bounds)
+        // Initialize React Native
+        let delegate = ReactNativeDelegate()
+        let factory = RCTReactNativeFactory(delegate: delegate)
+        delegate.dependencyProvider = RCTAppDependencyProvider()
 
-    factory.startReactNative(
-      withModuleName: "HealthyTiffin",
-      in: window,
-      launchOptions: launchOptions
-    )
+        reactNativeDelegate = delegate
+        reactNativeFactory = factory
 
-    return true
-  }
+        window = UIWindow(frame: UIScreen.main.bounds)
+
+        factory.startReactNative(
+            withModuleName: "HealthyTiffin",
+            in: window,
+            launchOptions: launchOptions
+        )
+
+        return true
+    }
+
+    // MARK: - Facebook Login URL Handler (iOS 14+)
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+    ) -> Bool {
+        return ApplicationDelegate.shared.application(
+            app,
+            open: url,
+            sourceApplication: options[.sourceApplication] as? String,
+            annotation: options[.annotation]
+        )
+    }
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
-  override func sourceURL(for bridge: RCTBridge) -> URL? {
-    self.bundleURL()
-  }
+    override func sourceURL(for bridge: RCTBridge) -> URL? {
+        self.bundleURL()
+    }
 
-  override func bundleURL() -> URL? {
+    override func bundleURL() -> URL? {
 #if DEBUG
-    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+        RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
 #else
-    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+        Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
-  }
+    }
 }
