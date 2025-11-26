@@ -59,6 +59,8 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 0,
         display: 'flex',
+        position: 'relative',
+        zIndex: 1,
     },
     label: {
         color: COLORS.label,
@@ -67,9 +69,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         display: "flex",
         padding: 4,
-        position: 'relative',
-        top: 6,
-        left: 0,
+        top: 20,
+        left: 16,
         zIndex: 1
     },
     labelLine: {
