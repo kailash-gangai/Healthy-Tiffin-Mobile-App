@@ -51,7 +51,7 @@ const s = StyleSheet.create({
       card: {
             backgroundColor: '#FFFFFF',
             borderRadius: 16,
-            padding: 14,
+            padding: 8,
             ...SHADOW,
       },
       row: {
@@ -71,7 +71,7 @@ const s = StyleSheet.create({
             fontWeight: '800',
       },
       label: {
-            fontSize: 22,
+            fontSize: 16,
             fontWeight: '800',
             color: '#232323',
       },

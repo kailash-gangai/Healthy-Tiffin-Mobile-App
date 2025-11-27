@@ -15,29 +15,38 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import { connectFitbit, getValidTokens } from '../../config/fitbitService';
-import { initHealth } from '../../health/healthkit';
+import { checkHealthKitConnection, initHealth } from '../../health/healthkit';
 import { COLORS as C } from '../../ui/theme';
 import FitbitLogo from '../../assets/logo-fitbit.svg';
 import AppleHealthLogo from '../../assets/logo-apple-health.svg';
+import appleHealthKit from 'react-native-health';
 
 export default function ConnectDevicesScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState<any>(null);
   const redirected = useRef(false); // prevent loops
+  const [appleHealthConnected, setAppleHealthConnected] = useState<boolean>(false);
 
-  // Initial token check → go Home if already connected
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const t = await getValidTokens();
-        if (!alive) return;
-        setTokens(t);
-        if (t && !redirected.current) {
-          redirected.current = true;
-          navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-          return;
+        if (Platform.OS === 'ios') {
+          const isConnected = await checkHealthKitConnection();
+          if (!alive) return;
+          setAppleHealthConnected(isConnected as boolean);
+        } else {
+          const t = await getValidTokens();
+          if (!alive) return;
+          setTokens(t);
+          if (t && !redirected.current) {
+            console.log('already connected');
+            redirected.current = true;
+            navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+            return;
+          }
         }
+
       } finally {
         if (alive) setLoading(false);
       }
@@ -45,19 +54,18 @@ export default function ConnectDevicesScreen({ navigation }: any) {
     return () => {
       alive = false;
     };
-  }, [navigation]);
+  }, []);
 
   // Android hardware back → Splash (not Home)
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS !== 'android') return () => {};
+      if (Platform.OS !== 'android') return () => { };
 
       // 1) Catch physical back button
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
         return true; // consume event
       });
-
       // 2) Also guard against default "goBack" (gestures or system back fallback)
       const removeBeforeRemove = navigation.addListener(
         'beforeRemove',
@@ -142,7 +150,7 @@ export default function ConnectDevicesScreen({ navigation }: any) {
         <DeviceCard
           icon={<AppleHealthLogo width={44} height={44} />}
           title="Apple Health"
-          status={tokens ? 'Connected' : 'SETUP'}
+          status={appleHealthConnected ? 'Connected' : 'SETUP'}
           onPress={onPressConnect}
         />
       </View>

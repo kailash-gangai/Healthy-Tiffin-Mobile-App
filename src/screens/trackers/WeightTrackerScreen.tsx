@@ -11,7 +11,6 @@ import {
       Platform,
       TouchableWithoutFeedback,
       Image,
-      Button,
       Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,11 +20,12 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { COLORS as C, SPACING } from "../../ui/theme";
-import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
+import FontAwesome5 from "@react-native-vector-icons/FontAwesome5";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { getValidTokens, getfitBitWeight, setfitBitWeight } from "../../config/fitbitService";
+import { checkHealthKitConnection } from "../../health/healthkit";
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
-
+import appleHealthKit from "react-native-health";
 const { width } = Dimensions.get("window");
 const RING_SIZE = Math.min(width * 0.52, 130);
 const R = (RING_SIZE - 14) / 2;
@@ -43,59 +43,106 @@ export default function WeightTrackerScreen() {
       const [accessToken, setAccessToken] = useState<string | null>(null);
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-      //check connection 
+      // Check connection for both platforms and fetch data
       useFocusEffect(
             useCallback(() => {
                   let alive = true;
                   (async () => {
                         setLoading(true);
                         setError(null);
-                        const t = await getValidTokens(); // load/refresh from Keychain
-                        setAccessToken(t?.accessToken);
-                        if (!alive) return;
-                        if (!t) {
-                              navigate.replace("ConnectDevice"); // not connected → go connect
-                              return;
-                        }
-                        try {
-                              const s = await getfitBitWeight(t.accessToken, '');
-                              console.log('fitbit weight data', s);
-                              setCurrent(s?.goal.startWeight);
-                              setGoal(s?.goal?.weight);
-                              setStartingDate(s?.goal?.startDate);
 
+                        // iOS (Apple Health) or Android (Fitbit) platform check
+                        if (Platform.OS === "ios") {
+                              const appleHealthConnected = await checkHealthKitConnection();
+                              if (!appleHealthConnected) {
+                                    navigate.replace("ConnectDevice");
+                                    setLoading(false);
+                                    return;
+                              }
+                              // Fetch weight data from Apple Health
+                              try {
+                                    const weightData = await fetchAppleHealthWeight();
+                                    console.log('weightData', weightData);
+                                    setCurrent(weightData);
+                                    setGoal(0); // Example static goal, since Apple Health doesn't allow setting goals programmatically
+                              } catch (e) {
+                                    setError("Failed to load Apple Health weight data.");
+                              }
+                        } else {
+                              const t = await getValidTokens(); // load/refresh from Keychain
+                              setAccessToken(t?.accessToken as string);
                               if (!alive) return;
-                        } catch (e: any) {
-                              if (!alive) return;
-                              setError(e?.message ?? "Failed to load steps");
-                        } finally {
-                              if (alive) setLoading(false);
+                              if (!t) {
+                                    navigate.replace("ConnectDevice"); // not connected → go connect
+                                    return;
+                              }
+                              // Fetch weight data from Fitbit (Android)
+                              try {
+                                    const s = await getfitBitWeight(t.accessToken, "");
+                                    setCurrent(s?.goal.startWeight);
+                                    setGoal(s?.goal?.weight);
+                                    setStartingDate(s?.goal?.startDate);
+                              } catch (e) {
+                                    setError(e?.message ?? "Failed to load Fitbit weight data.");
+                              }
                         }
+                        setLoading(false);
                   })();
-                  return () => { alive = false; };
+                  return () => {
+                        alive = false;
+                  };
             }, [navigate])
       );
+
+      // Fetch weight data from Apple Health (iOS)
+      const fetchAppleHealthWeight = async () => {
+            const options = {
+                  unit: 'kg', // Specify the unit, e.g., 'kg' or 'lbs'
+            };
+
+            return new Promise((resolve, reject) => {
+                  appleHealthKit.getLatestWeight(options, (err, results) => {
+                        if (err) {
+                              console.error('Error getting latest weight: ', err);
+                              reject("Error fetching weight from Apple Health.");
+                        } else {
+                              console.log('Latest weight: ', results);
+                              // Check if results are available and return it
+                              if (results && results.value) {
+                                    resolve(results.value);
+                              } else {
+                                    console.log('No weight data available.');
+                                    resolve(0); // Return default 0 if no data available
+                              }
+                        }
+                  });
+            });
+      };
+
+      // Submit the weight goal for Fitbit (Android) only
       const submit = async () => {
             const c = parseInt(curDraft, 10);
             const g = parseInt(goalDraft, 10);
 
             try {
-                  const r = await setfitBitWeight(accessToken, startingDate, c, g);
-                  console.log('set weight result', r);
-                  setCurrent(c);
-                  setGoal(g);
-                  Alert.alert("Goal updated", `Weight goal set to ${g.toLocaleString()} lbs.`);
+                  if (Platform.OS === "android") {
+                        const result = await setfitBitWeight(accessToken as string, startingDate, c, g);
+                        console.log("Set weight result", result);
+                        setCurrent(c);
+                        setGoal(g);
+                        Alert.alert("Goal updated", `Weight goal set to ${g.toLocaleString()} Kg.`);
+                  } else {
+                        // Apple Health: Display message that setting goal is not supported
+                        Alert.alert("Apple Health", "Setting weight goal programmatically is not supported. Please set it manually.");
+                  }
             } catch (e: any) {
-                  const msg =
-                        typeof e?.message === "string" ? e.message :
-                              "Could not update your Fitbit goal. Please try again.";
-                  Alert.alert("Fitbit error", msg);
+                  const msg = typeof e?.message === "string" ? e.message : "Could not update your Fitbit goal. Please try again.";
+                  Alert.alert("Error", msg);
             } finally {
                   setOpen(false);
             }
       };
 
-      //check connection and fetch data
       const showDatePicker = () => {
             setDatePickerVisibility(true);
       };
@@ -105,40 +152,36 @@ export default function WeightTrackerScreen() {
       };
 
       const handleConfirm = (date) => {
-            //format date to yyyy-mm-dd
-            date = date.toISOString().slice(0, 10);
+            date = date.toISOString().slice(0, 10); // Format date as yyyy-mm-dd
             setStartingDate(date);
             hideDatePicker();
       };
 
-
       return (
-            <SafeAreaView >
+            <SafeAreaView>
                   <AppHeader title="Weight Tracker" onBack={() => { navigate.goBack() }} />
                   <View style={s.container}>
-
-
-                        {/* Current */}
+                        {/* Current Weight */}
                         <View style={s.section}>
                               <Image source={require('../../assets/icons/overweight.png')} style={s.img} />
                               <Text style={s.q}>Current Weight?</Text>
                               <Text style={s.value}>
-                                    {current} <Text style={s.unit}>lbs</Text>
+                                    {current} <Text style={s.unit}>kg</Text>
                               </Text>
                         </View>
                         <View style={s.divider} />
 
-                        {/* Target */}
+                        {/* Target Weight */}
                         <View style={s.section}>
                               <Image source={require('../../assets/icons/diet.png')} style={s.img} />
                               <Text style={s.q}>Target Weight?</Text>
                               <Text style={s.value}>
-                                    {goal} <Text style={s.unit}>lbs</Text>
+                                    {goal} <Text style={s.unit}>kg</Text>
                               </Text>
                         </View>
                         <View style={s.divider} />
 
-                        {/* Ring */}
+                        {/* Progress Ring */}
                         <View style={s.ringWrap}>
                               <Svg width={RING_SIZE} height={RING_SIZE}>
                                     <Circle
@@ -156,17 +199,16 @@ export default function WeightTrackerScreen() {
                                           stroke={C.green}
                                           strokeWidth={5}
                                           fill="none"
-                                          // strokeDasharray={[20, 20] as any}
                                           strokeLinecap="round"
                                     />
                               </Svg>
                               <View style={s.ringCenter}>
                                     <Text style={s.diff}>{goal - current}</Text>
-                                    <Text style={s.diffUnit}>lbs</Text>
+                                    <Text style={s.diffUnit}>kg</Text>
                               </View>
                         </View>
 
-                        {/* CTA */}
+                        {/* CTA Button */}
                         <Pressable
                               style={s.cta}
                               onPress={() => {
@@ -175,11 +217,11 @@ export default function WeightTrackerScreen() {
                                     setOpen(true);
                               }}
                         >
-                              <Text style={s.ctaText}>Update Weight    <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} /></Text>
+                              <Text style={s.ctaText}>Update Weight <ContinueIcon height={24} width={24} style={{ marginLeft: 8 }} /></Text>
                         </Pressable>
 
-
                   </View>
+
                   {/* Modal */}
                   <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
                         <TouchableWithoutFeedback onPress={() => setOpen(false)}>
@@ -197,7 +239,6 @@ export default function WeightTrackerScreen() {
                                                 style={s.input}
                                                 placeholder="yyyy-mm-dd" //2019-03-21
                                                 placeholderTextColor="#9AA2AF"
-
                                                 onFocus={showDatePicker} />
                                           <DateTimePickerModal
                                                 isVisible={isDatePickerVisible}
@@ -205,8 +246,8 @@ export default function WeightTrackerScreen() {
                                                 onConfirm={handleConfirm}
                                                 onCancel={hideDatePicker}
                                           />
-
                                     </View>
+
                                     <Text style={s.label}>Current Weight</Text>
                                     <View style={s.inputWrap}>
                                           <TextInput
@@ -217,7 +258,7 @@ export default function WeightTrackerScreen() {
                                                 placeholder="200"
                                                 placeholderTextColor="#9AA2AF"
                                           />
-                                          <View style={s.addon}><Text style={s.addonText}>Lbs</Text></View>
+                                          <View style={s.addon}><Text style={s.addonText}>kg</Text></View>
                                     </View>
 
                                     <Text style={[s.label, { marginTop: 10 }]}>Weight Goal</Text>
@@ -230,7 +271,7 @@ export default function WeightTrackerScreen() {
                                                 placeholder="150"
                                                 placeholderTextColor="#9AA2AF"
                                           />
-                                          <View style={s.addon}><Text style={s.addonText}>Lbs</Text></View>
+                                          <View style={s.addon}><Text style={s.addonText}>kg</Text></View>
                                     </View>
 
                                     <View style={s.row}>
@@ -247,6 +288,7 @@ export default function WeightTrackerScreen() {
             </SafeAreaView>
       );
 }
+
 
 const s = StyleSheet.create({
       container: { paddingHorizontal: SPACING * 2 },

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { FlatList, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
-// correct import path for RN Vector Icons
-import { FontAwesome5 } from '@react-native-vector-icons/fontawesome5';
+import RightArrowIcon from '../assets/newicon/right-arrow-white.svg';
 import { COLORS } from '../ui/theme';
 
 type Props = {
@@ -92,7 +91,7 @@ export default function DateTabs({ onChange, defaultYMD }: Props) {
           onPress={() => select(Math.max(0, index - 1))}
           disabled={index === 0}
         >
-          <FontAwesome5 iconStyle='solid' name="chevron-left" size={18} color="#F6D873" />
+          <RightArrowIcon style={{ transform: [{ rotate: '180deg' }] }} width={24} height={24} stroke='#fff' />
         </TouchableOpacity>
 
         <View style={{ alignItems: 'center' }}>
@@ -105,7 +104,7 @@ export default function DateTabs({ onChange, defaultYMD }: Props) {
           onPress={() => select(Math.min(items.length - 1, index + 1))}
           disabled={index === items.length - 1}
         >
-          <FontAwesome5 iconStyle='solid' name="chevron-right" size={18} color="#F6D873" />
+          <RightArrowIcon width={24} height={24} stroke='#fff' />
         </TouchableOpacity>
       </View>
     );
@@ -155,7 +154,7 @@ const s = StyleSheet.create({
     fontWeight: '700',
     color: '#eef5f0ff',
   },
-  chev: { position: 'absolute', top: 20, padding: 6 },
+  chev: { position: 'absolute', top: 16, padding: 6 },
   day: { color: '#fff', fontSize: 15, fontWeight: '800', marginTop: 10 },
   date: { color: '#F6D873', fontSize: 12, fontWeight: '700', marginTop: 2 },
 });

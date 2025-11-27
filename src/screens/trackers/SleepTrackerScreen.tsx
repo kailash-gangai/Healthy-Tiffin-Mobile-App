@@ -10,6 +10,7 @@ import {
       Platform,
       TouchableWithoutFeedback,
       Image,
+      Alert,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,9 +18,11 @@ import { RootStackParamList } from "../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
-import { COLORS, SHADOW, SPACING } from "../../ui/theme";
+import { COLORS, SPACING } from "../../ui/theme";
 import SleepSVG from "../../assets/svg/Sleep-analysis-amico.svg";
-import { getfitBitSleepgoal, getValidTokens, setfitBitSleepgoal } from "../../config/fitbitService";
+import { getValidTokens, getfitBitSleepgoal, setfitBitSleepgoal } from "../../config/fitbitService";
+import { checkHealthKitConnection } from "../../health/healthkit";
+import AppleHealthKit from "react-native-health";
 
 type Clock = { h: number | null; m: number | null; am: boolean | null };
 
@@ -42,8 +45,6 @@ const fmt24 = (t: Clock) => {
 
 export default function SleepTrackerScreen() {
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-      // defaults: 12:00 AM -> 8:00 AM
-
       const [bed, setBed] = useState<Clock>({ h: null, m: null, am: null });
       const [wake, setWake] = useState<Clock>({ h: null, m: null, am: null });
 
@@ -87,42 +88,90 @@ export default function SleepTrackerScreen() {
                   (async () => {
                         setLoading(true);
                         setError(null);
-                        const t = await getValidTokens(); // load/refresh from Keychain
-                        setAccessToken(t?.accessToken ?? null);
-                        if (!alive) return;
-                        if (!t) {
-                              navigate.replace("ConnectDevice"); // not connected → go connect
-                              return;
-                        }
-                        try {
-                              const goals = await getfitBitSleepgoal(t.accessToken);
-                              const [b_hrs, b_mins] = goals?.goal?.bedtime.split(":").map(Number);
-                              setBed({
-                                    h: to12(b_hrs).h,
-                                    m: b_mins,
-                                    am: to12(b_hrs).am,
-                              });
-                              const [w_hrs, w_mins] = goals?.goal?.wakeupTime.split(":").map(Number);
-                              setWake({
-                                    h: to12(w_hrs).h,
-                                    m: w_mins,
-                                    am: to12(w_hrs).am,
-                              })
+
+                        // iOS (Apple Health) or Android (Fitbit) platform check
+                        if (Platform.OS === "ios") {
+                              const appleHealthConnected = await checkHealthKitConnection();
+                              if (!appleHealthConnected) {
+                                    navigate.replace("ConnectDevice");
+                                    setLoading(false);
+                                    return;
+                              }
+
+                              // Fetch sleep goal data from Apple Health
+                              try {
+                                    const goals = await fetchAppleHealthSleepgoal();
+                                    setBed({
+                                          h: to12(goals?.bedtime?.h || 0).h,
+                                          m: goals?.bedtime?.m || 0,
+                                          am: to12(goals?.bedtime?.h || 0).am,
+                                    });
+                                    setWake({
+                                          h: to12(goals?.wakeupTime?.h || 8).h,
+                                          m: goals?.wakeupTime?.m || 0,
+                                          am: to12(goals?.wakeupTime?.h || 8).am,
+                                    });
+                              } catch (e) {
+                                    setError("Failed to load Apple Health sleep data.");
+                              }
+                        } else {
+                              const t = await getValidTokens(); // load/refresh from Keychain
+                              setAccessToken(t?.accessToken ?? null);
                               if (!alive) return;
-                        } catch (e: any) {
-                              if (!alive) return;
-                              setError(e?.message ?? "Failed to load steps");
-                        } finally {
-                              if (alive) setLoading(false);
+                              if (!t) {
+                                    navigate.replace("ConnectDevice"); // not connected → go connect
+                                    return;
+                              }
+
+                              // Fetch sleep goal data from Fitbit (Android)
+                              try {
+                                    const goals = await getfitBitSleepgoal(t.accessToken);
+                                    const [b_hrs, b_mins] = goals?.goal?.bedtime.split(":").map(Number);
+                                    setBed({
+                                          h: to12(b_hrs).h,
+                                          m: b_mins,
+                                          am: to12(b_hrs).am,
+                                    });
+                                    const [w_hrs, w_mins] = goals?.goal?.wakeupTime.split(":").map(Number);
+                                    setWake({
+                                          h: to12(w_hrs).h,
+                                          m: w_mins,
+                                          am: to12(w_hrs).am,
+                                    });
+                              } catch (e) {
+                                    setError(e?.message ?? "Failed to load Fitbit sleep data.");
+                              }
                         }
+                        setLoading(false);
                   })();
-                  return () => { alive = false; };
+                  return () => {
+                        alive = false;
+                  };
             }, [navigate])
       );
+
+      // For iOS (Apple Health) to fetch sleep goal data
+      const fetchAppleHealthSleepgoal = async () => {
+            return new Promise((resolve, reject) => {
+                  AppleHealthKit.getSleepSamples(
+                        { startDate: new Date().toISOString() }, // You can adjust the date range
+                        (err, results) => {
+                              console.log('Sleep goal data:', results);
+                              if (err) {
+                                    reject("Error fetching sleep goal from Apple Health.");
+                              } else {
+                                    resolve(results[0] || { bedtime: "00:00", wakeupTime: "08:00" });
+                              }
+                        }
+                  );
+            });
+      };
+
       const submit = () => {
             const h = Math.max(1, Math.min(12, parseInt(hDraft || "0", 10) || 12));
             const mNum = Math.max(0, Math.min(59, parseInt(mDraft || "0", 10) || 0));
             const next: Clock = { h, m: mNum, am: amDraft };
+
             // convert to ms
             let bedtime = fmt24(bed);
             let wakeupTime = fmt24(wake);
@@ -134,10 +183,17 @@ export default function SleepTrackerScreen() {
                   setWake(next);
                   wakeupTime = fmt24(next);
             }
+
             let minDuration = diffMinutes(bedtime, wakeupTime);
             const minutes = minDuration.hrs * 60 + minDuration.mins;
-            const res = setfitBitSleepgoal(accessToken, bedtime, wakeupTime, minutes);
-            console.log("res", res);
+
+            if (Platform.OS === "android") {
+                  setfitBitSleepgoal(accessToken || "", bedtime, wakeupTime, minutes);
+            } else {
+                  // Apple Health: Inform that the goal can't be set programmatically
+                  Alert.alert("Apple Health", "Setting sleep goal programmatically is not supported.");
+            }
+
             setOpen(null);
       };
 
@@ -153,7 +209,6 @@ export default function SleepTrackerScreen() {
             <SafeAreaView>
                   <AppHeader title="Sleep Tracker" onBack={() => navigate.goBack()} />
                   <View style={styles.container}>
-
                         <View style={styles.header}>
                               <Text style={styles.title}>Select bed and wakeup time to track sleep</Text>
                               <SleepSVG />
@@ -164,16 +219,10 @@ export default function SleepTrackerScreen() {
                               </View>
                         </View>
 
-                        {/* Illustration placeholder */}
                         <View>
-                              {/* Summary */}
                               <Text style={styles.summary}>
                                     Sleep Hours {total.hrs} hr {total.mins} m
                               </Text>
-                              {/* CTA */}
-                              {/* <Pressable style={styles.cta} onPress={() => setOpen("bed")}>
-                                    <Text style={styles.ctaText}>Update Sleep Data    <FontAwesome5 iconStyle='solid' name="sign-in-alt" size={18} color={COLORS.white} style={{ marginLeft: 8 }} /></Text>
-                              </Pressable> */}
                         </View>
 
                         {/* Modal */}
@@ -212,16 +261,10 @@ export default function SleepTrackerScreen() {
                                                 </View>
 
                                                 <View style={styles.ampmCol}>
-                                                      <Pressable
-                                                            style={[styles.amBtn, amDraft && styles.amActive]}
-                                                            onPress={() => setAmDraft(true)}
-                                                      >
+                                                      <Pressable style={[styles.amBtn, amDraft && styles.amActive]} onPress={() => setAmDraft(true)}>
                                                             <Text style={[styles.amText, amDraft && styles.amTextActive]}>AM</Text>
                                                       </Pressable>
-                                                      <Pressable
-                                                            style={[styles.amBtn, !amDraft && styles.amActive]}
-                                                            onPress={() => setAmDraft(false)}
-                                                      >
+                                                      <Pressable style={[styles.amBtn, !amDraft && styles.amActive]} onPress={() => setAmDraft(false)}>
                                                             <Text style={[styles.amText, !amDraft && styles.amTextActive]}>PM</Text>
                                                       </Pressable>
                                                 </View>
@@ -242,6 +285,7 @@ export default function SleepTrackerScreen() {
             </SafeAreaView>
       );
 }
+
 function diffMinutes(start: string, end: string) {
       const [sh, sm] = start.split(":").map(Number);
       const [eh, em] = end.split(":").map(Number);

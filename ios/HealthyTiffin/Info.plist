@@ -114,5 +114,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>This app requires access to your health data (e.g., weight, calories) to track your nutrition and fitness goals.</string>
+
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>This app requires permission to write your health data (e.g., calories consumed, weight) to help you monitor and achieve your fitness goals.</string>
+
 </dict>
 </plist>

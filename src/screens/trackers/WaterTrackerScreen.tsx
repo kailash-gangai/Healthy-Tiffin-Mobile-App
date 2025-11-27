@@ -1,4 +1,3 @@
-// WaterTrackerScreen.tsx
 import React, { useState, useCallback } from "react";
 import {
       View,
@@ -18,7 +17,6 @@ import AppHeader from "../../components/AppHeader";
 import { COLORS, SPACING } from "../../ui/theme";
 import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
 import Glass from "../../assets/svg/water-glass.svg";
-import DurationTabs from "../../components/DurationTabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -26,8 +24,13 @@ import { getValidTokens, getfitBitWater, getfitBitWaterLog, setfitBitWaterGole, 
 import { showToastError } from "../../config/ShowToastMessages";
 import PlusIcon from '../../assets/htf-icon/icon-add.svg';
 import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
+import { checkHealthKitConnection } from "../../health/healthkit";
+import AppleHealthKit from 'react-native-health'; // Apple HealthKit for iOS
+import appleHealthKit from "react-native-health";
 
 type TabKey = "today" | "weekly" | "monthly";
+
+const GOAL_OPTIONS = [8, 10, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64]; // Available water goal options (in glasses)
 
 export default function WaterTrackerScreen() {
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -42,88 +45,130 @@ export default function WaterTrackerScreen() {
       const [loading, setLoading] = useState(true);
       const [error, setError] = useState<string | null>(null);
 
-
-      const GOAL_OPTIONS = [8, 10, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64];
-
-      //check connection 
+      // Fetch water goal and log from Fitbit or Apple Health (based on platform)
       useFocusEffect(
             useCallback(() => {
                   let alive = true;
                   (async () => {
                         setLoading(true);
                         setError(null);
-                        const t = await getValidTokens(); // load/refresh from Keychain
-                        setAccessToken(t?.accessToken);
-                        if (!alive) return;
-                        if (!t) {
-                              navigation.replace("ConnectDevice"); // not connected → go connect
-                              return;
-                        }
-                        try {
-                              const s = await getfitBitWater(t.accessToken);
-                              console.log('myres', s);
-                              // setCurrent(s?.goal.goal);
-                              setGoal(s?.goal?.goal);
-                              // setStartingDate(s?.goal?.startDate);
-                              const log = await getfitBitWaterLog(t.accessToken, new Date().toISOString().slice(0, 10), 0);
-                              // console.log('log', log);
-                              const waterCount = Math.floor((log?.summary?.water ?? 0) / 236);
-                              // console.log('waterCount', waterCount);
-                              setCount(waterCount > 0 ? waterCount : 0);
+                        // Handle iOS vs Android platform-specific logic
+                        if (Platform.OS === "ios") {
+                              const appleHealthConnected = await checkHealthKitConnection();
+                              if (!appleHealthConnected) {
+                                    navigation.replace("ConnectDevice");
+                                    setLoading(false);
+                                    return;
+                              }
+
+                              // Fetch water data from Apple HealthKit (iOS)
+                              try {
+                                    // const goals = await fetchAppleHealthWaterGoal();
+                                    // setGoal(goals?.goal || 8); // Default goal to 8 if no goal set
+                                    const log = await fetchAppleHealthWater() as { value: number } | null;
+                                    if (log && typeof log.value === "number") {
+                                          setCount(Number(convertLitersToUSCups(log.value).toFixed(2)));
+                                    } else {
+                                          setError("Invalid water log data.");
+                                    }
+                              } catch (e) {
+                                    setError("Failed to load water data from Apple Health.");
+                              }
+                        } else {
+                              // Android-specific (Fitbit)
+                              const t = await getValidTokens(); // load/refresh from Keychain
+                              setAccessToken(t?.accessToken || '');
                               if (!alive) return;
-                        } catch (e: any) {
-                              if (!alive) return;
-                              setError(e?.message ?? "Failed to load steps");
-                        } finally {
-                              if (alive) setLoading(false);
+                              if (!t) {
+                                    navigation.replace("ConnectDevice"); // not connected → go connect
+                                    return;
+                              }
+
+                              try {
+                                    const s = await getfitBitWater(t.accessToken);
+                                    setGoal(s?.goal?.goal);
+                                    const log = await getfitBitWaterLog(t.accessToken, new Date().toISOString().slice(0, 10), 0);
+                                    setCount(Math.floor((log?.summary?.water ?? 0) / 236)); // Convert ml to glasses
+                              } catch (e) {
+                                    setError(e instanceof Error ? e.message : "Failed to load water data from Fitbit.");
+                              }
                         }
+                        setLoading(false);
                   })();
                   return () => { alive = false; };
             }, [navigation])
       );
+
+      // iOS (Apple Health) - Fetch the water goal
+      const fetchAppleHealthWater = async () => {
+            const options = {
+                  date: new Date().toISOString(), // optional; default now
+            };
+
+            return new Promise((resolve, reject) => {
+                  AppleHealthKit.getWater(options, (err, results) => {
+                        if (err) {
+                              reject("Error fetching water data from Apple Health.");
+                        } else {
+                              resolve(results);
+                        }
+                  });
+            });
+      };
+
+
+      const convertLitersToUSCups = (liters: number): number => {
+            const cupsPerLiter = 4.22675;
+            return (liters * cupsPerLiter);
+      };
+
+
+      // Android (Fitbit) - Submit water goal update
       const submit = () => {
             const n = parseInt(draft, 10);
-            console.log(n);
             if (Number.isNaN(n) || n <= 0) {
                   Alert.alert("Invalid goal", "Enter a positive number.");
                   return;
             }
-            try {
-                  setSaving(true);
-                  setfitBitWaterGole(accessToken, n);
-                  setGoal(n);
-                  setOpen(false);
-                  Alert.alert("Goal updated", `Daily water goal set to ${n.toLocaleString()} glasses.`);
-            } catch (e: any) {
-                  const msg =
-                        typeof e?.message === "string" ? e.message :
-                              "Could not update your Fitbit goal. Please try again.";
-                  Alert.alert("Fitbit error", msg);
-            } finally {
-                  setSaving(false);
+
+            if (Platform.OS === "android") {
+                  try {
+                        setSaving(true);
+                        setfitBitWaterGole(accessToken as string, n); // Update Fitbit goal
+                        setGoal(n);
+                        setOpen(false);
+                        Alert.alert("Goal updated", `Daily water goal set to ${n.toLocaleString()} glasses.`);
+                  } catch (e: any) {
+                        const msg = typeof e?.message === "string" ? e.message : "Could not update your Fitbit goal. Please try again.";
+                        Alert.alert("Fitbit error", msg);
+                  } finally {
+                        setSaving(false);
+                  }
+            } else if (Platform.OS === "ios") {
+                  Alert.alert("Apple Health", "You cannot set the water goal programmatically for Apple Health.");
+
             }
       };
 
+      // Update water count (increasing or decreasing)
       const updateCount = (n: number) => {
             setCount((c) => c + n);
-            if (count + n < 0) {
+            if (count + n < 0 && Platform.OS === "android") {
                   setCount(0);
                   showToastError("Count cannot be negative");
                   return;
             }
-            console.log('count', count);
-            const res = setfitBitWaterLog(accessToken, new Date().toISOString().slice(0, 10), n);
-            console.log('res', res);
+            // Log the water intake
+            const res = Platform.OS === "android"
+                  ? setfitBitWaterLog(accessToken as string, new Date().toISOString().slice(0, 10), n)
+                  : Alert.alert("Apple Health", "You cannot log water programmatically for Apple Health."); // For iOS, call an appropriate Apple Health function
       };
 
       return (
             <SafeAreaView>
                   <AppHeader title="Water Tracker" onBack={() => navigation.goBack()} />
-                  {/* <View style={{ marginVertical: 16 }}>
-                        <DurationTabs days={["Today", "Weekly", "Monthly", "Yearly"]} onChange={setActiveTab} />
-                  </View> */}
                   <View style={styles.container}>
-                        {/* Tabs */}
+                        {/* Image */}
                         <View style={styles.imageContainer}>
                               <Image source={require("../../assets/svg/image-drinking.png")} style={styles.image} />
                         </View>
@@ -139,11 +184,9 @@ export default function WaterTrackerScreen() {
                               <View style={styles.row}>
                                     <Pressable style={styles.circleBtn} onPress={() => updateCount(-1)}>
                                           <MinusIcon width={24} height={24} />
-
                                     </Pressable>
                                     <Glass />
                                     <Pressable style={styles.circleBtn} onPress={() => updateCount(1)}>
-
                                           <PlusIcon width={24} height={24} />
                                     </Pressable>
                               </View>
@@ -158,17 +201,12 @@ export default function WaterTrackerScreen() {
                                     setSelectOpen(false);
                               }}
                         >
-                              <Text style={styles.ctaText}>Update Goal  </Text>
+                              <Text style={styles.ctaText}>Update Goal</Text>
                         </Pressable>
 
                         {/* Modal with scrollable Select */}
                         <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-                              <TouchableWithoutFeedback
-                                    onPress={() => {
-                                          setOpen(false);
-                                          setSelectOpen(false);
-                                    }}
-                              >
+                              <TouchableWithoutFeedback onPress={() => { setOpen(false); setSelectOpen(false); }}>
                                     <View style={styles.backdrop} />
                               </TouchableWithoutFeedback>
 
@@ -181,23 +219,16 @@ export default function WaterTrackerScreen() {
                                                 <Pressable style={styles.input} onPress={() => setSelectOpen((v) => !v)}>
                                                       <Text style={styles.selectText}>{draft} Glass</Text>
                                                       <View style={styles.addon}>
-
-                                                            <FontAwesome5 iconStyle='solid' name="chevron-down" size={16} />
-
+                                                            <FontAwesome5 iconStyle="solid" name="chevron-down" size={16} />
                                                       </View>
                                                 </Pressable>
 
-
                                                 {selectOpen && (
                                                       <View style={styles.menu}>
-                                                            <ScrollView
-                                                                  style={{ maxHeight: 340 }}
-
-                                                            >
+                                                            <ScrollView style={{ maxHeight: 340 }}>
                                                                   {GOAL_OPTIONS.map((v) => (
-                                                                        <View key={v} >
+                                                                        <View key={v}>
                                                                               <Pressable
-                                                                                    key={v}
                                                                                     style={styles.option}
                                                                                     onPress={() => {
                                                                                           setDraft(String(v));
@@ -214,13 +245,7 @@ export default function WaterTrackerScreen() {
                                           </View>
 
                                           <View style={styles.rowBtns}>
-                                                <Pressable
-                                                      onPress={() => {
-                                                            setOpen(false);
-                                                            setSelectOpen(false);
-                                                      }}
-                                                      style={[styles.btn, styles.btnGhost]}
-                                                >
+                                                <Pressable onPress={() => { setOpen(false); setSelectOpen(false); }} style={[styles.btn, styles.btnGhost]}>
                                                       <Text style={[styles.btnText, { color: "#333" }]}>Cancel</Text>
                                                 </Pressable>
                                                 <Pressable onPress={submit} style={[styles.btn, styles.btnPrimary]}>
@@ -231,9 +256,11 @@ export default function WaterTrackerScreen() {
                               </KeyboardAvoidingView>
                         </Modal>
                   </View>
-            </SafeAreaView >
+            </SafeAreaView>
       );
 }
+
+
 
 const styles = StyleSheet.create({
       container: { paddingHorizontal: SPACING * 2, display: "flex", flexDirection: "column", justifyContent: "space-between" },
