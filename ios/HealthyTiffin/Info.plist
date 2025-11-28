@@ -25,6 +25,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>com.googleusercontent.apps.176148506772-h8u6uj4a62eak00r9n027eghutf9jbc0</string>
 				<string>fb1153606970289088</string>
 			</array>
 		</dict>
@@ -75,9 +76,9 @@
 	<key>NSHealthClinicalHealthRecordsShareUsageDescription</key>
 	<string>Read and understand clinical health data.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>This app reads your health data (e.g. steps) to show activity insights.</string>
+	<string>This app requires access to your health data (e.g., weight, calories) to track your nutrition and fitness goals.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>This app writes health data you choose (e.g. workouts) to your Health app.</string>
+	<string>This app requires permission to write your health data (e.g., calories consumed, weight) to help you monitor and achieve your fitness goals.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Allow local network access to discover and connect to devices on your network.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -114,11 +115,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NSHealthShareUsageDescription</key>
-	<string>This app requires access to your health data (e.g., weight, calories) to track your nutrition and fitness goals.</string>
-
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>This app requires permission to write your health data (e.g., calories consumed, weight) to help you monitor and achieve your fitness goals.</string>
-
 </dict>
 </plist>
