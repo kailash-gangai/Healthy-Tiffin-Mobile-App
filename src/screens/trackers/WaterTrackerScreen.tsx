@@ -21,18 +21,23 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { getValidTokens, getfitBitWater, getfitBitWaterLog, setfitBitWaterGole, setfitBitWaterLog } from "../../config/fitbitService";
-import { showToastError } from "../../config/ShowToastMessages";
+import { showToastError, showToastSuccess } from "../../config/ShowToastMessages";
 import PlusIcon from '../../assets/htf-icon/icon-add.svg';
 import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
 import { checkHealthKitConnection } from "../../health/healthkit";
 import AppleHealthKit from 'react-native-health'; // Apple HealthKit for iOS
 import appleHealthKit from "react-native-health";
+import { customerMetafieldUpdate } from "../../shopify/mutation/CustomerAuth";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
+import { getCustomerMetaField } from "../../shopify/query/CustomerQuery";
 
 type TabKey = "today" | "weekly" | "monthly";
 
 const GOAL_OPTIONS = [8, 10, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64]; // Available water goal options (in glasses)
 
 export default function WaterTrackerScreen() {
+      const user = useSelector((state: RootState) => state.user);
       const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
       const [activeTab, setActiveTab] = useState(0); // TAB STATE
       const [count, setCount] = useState(0);
@@ -52,6 +57,10 @@ export default function WaterTrackerScreen() {
                   (async () => {
                         setLoading(true);
                         setError(null);
+                        if (user?.customerToken) {
+                              const water_goal = await getCustomerMetaField(user?.customerToken, 'water_goal');
+                              setGoal(water_goal ? Number(water_goal) : 0);
+                        }
                         // Handle iOS vs Android platform-specific logic
                         if (Platform.OS === "ios") {
                               const appleHealthConnected = await checkHealthKitConnection();
@@ -130,24 +139,31 @@ export default function WaterTrackerScreen() {
                   Alert.alert("Invalid goal", "Enter a positive number.");
                   return;
             }
-
+            let response = customerMetafieldUpdate([
+                  { key: 'water_goal', value: n, type: 'number_integer' },
+            ], user?.id ?? '');
+            response.then(res => {
+                  console.log('res', res);
+                  if (res.metafieldsSet.metafields.length > 0) {
+                        showToastSuccess('Updated successfully.');
+                        setGoal(n);
+                        setOpen(false);
+                  }
+            });
             if (Platform.OS === "android") {
                   try {
                         setSaving(true);
                         setfitBitWaterGole(accessToken as string, n); // Update Fitbit goal
                         setGoal(n);
                         setOpen(false);
-                        Alert.alert("Goal updated", `Daily water goal set to ${n.toLocaleString()} glasses.`);
                   } catch (e: any) {
                         const msg = typeof e?.message === "string" ? e.message : "Could not update your Fitbit goal. Please try again.";
-                        Alert.alert("Fitbit error", msg);
+                        Alert.alert("Error", msg);
                   } finally {
                         setSaving(false);
                   }
-            } else if (Platform.OS === "ios") {
-                  Alert.alert("Apple Health", "You cannot set the water goal programmatically for Apple Health.");
-
             }
+
       };
 
       // Update water count (increasing or decreasing)
@@ -161,7 +177,7 @@ export default function WaterTrackerScreen() {
             // Log the water intake
             const res = Platform.OS === "android"
                   ? setfitBitWaterLog(accessToken as string, new Date().toISOString().slice(0, 10), n)
-                  : Alert.alert("Apple Health", "You cannot log water programmatically for Apple Health."); // For iOS, call an appropriate Apple Health function
+                  : Alert.alert("Apple Health", "You cannot log water programmatically for Apple Health."); // For iOS, 
       };
 
       return (

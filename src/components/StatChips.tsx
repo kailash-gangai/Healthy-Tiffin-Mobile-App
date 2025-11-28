@@ -22,6 +22,9 @@ import {
 } from '../config/fitbitService';
 import { showToastError } from '../config/ShowToastMessages';
 import appleHealthKit from 'react-native-health';
+import { getCustomerMetaField } from '../shopify/query/CustomerQuery';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 const width = Dimensions.get('window').width;
 const DIAMETER = width / 5 - 10;
 const items_old = [
@@ -114,7 +117,7 @@ const fetchAppleHealthData = async (startDate: string, endDate: string) => {
         else resolve(results?.value || '0');
       });
     });
-  
+
 
     return { steps, sleep, calories, water };
   } catch (error) {
@@ -146,6 +149,7 @@ const fetchFitbitData = async (token: string) => {
   }
 };
 export default function StatsCard() {
+  const user = useSelector((state: RootState) => state.user);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [items, setItems] = React.useState(items_old);
@@ -163,9 +167,36 @@ export default function StatsCard() {
       const cupsPerLiter = 4.22675;
       return (liters * cupsPerLiter);
     };
+    function calculateSleepMinutes(bed: string, wake: string): number {
+      const [bh, bm] = bed.split(':').map(Number);
+      const [wh, wm] = wake.split(':').map(Number);
+
+      const bedTotal = bh * 60 + bm;
+      const wakeTotal = wh * 60 + wm;
+
+      // If wake time is next day (crossed midnight)
+      if (wakeTotal < bedTotal) {
+        return (24 * 60 - bedTotal) + wakeTotal;
+      }
+
+      return wakeTotal - bedTotal;
+    }
+
     const fetchData = async () => {
       try {
         let steps = '0', calories = '0', weight = '0', sleep = '0 H 0 M', water = '0';
+        if (user?.customerToken) {
+          const bed_time = await getCustomerMetaField(user.customerToken, 'bed_time');       // "22:30"
+          const wake_up_time = await getCustomerMetaField(user.customerToken, 'wake_up_time'); // "07:15"
+
+          if (bed_time && wake_up_time) {
+            const sleepMinutes = calculateSleepMinutes(bed_time, wake_up_time);
+            const sleepHours = Math.floor(sleepMinutes / 60);
+            const sleepMins = sleepMinutes % 60;
+
+            sleep = `${sleepHours} H ${sleepMins} M`;
+          }
+        }
 
         if (Platform.OS === 'ios') {
           const today = new Date();
@@ -174,9 +205,9 @@ export default function StatsCard() {
           const appleHealthData = await fetchAppleHealthData(startDate, endDate);
           console.log('appleHealthData', appleHealthData);
           steps = appleHealthData.steps;
-          sleep = appleHealthData.sleep;
+
           calories = appleHealthData.calories;
-          water = convertLitersToUSCups(appleHealthData.water).toFixed(2);
+          water = convertLitersToUSCups(appleHealthData.water).toFixed(1);
         } else {
           const t = await withRetry(() => getValidTokens());
           const token = t?.accessToken as string;

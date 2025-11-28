@@ -26,11 +26,17 @@ import { getValidTokens, getfitBitWeight, setfitBitWeight } from "../../config/f
 import { checkHealthKitConnection } from "../../health/healthkit";
 import ContinueIcon from '../../assets/htf-icon/icon-continue.svg';
 import appleHealthKit from "react-native-health";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
+import { customerMetafieldUpdate } from "../../shopify/mutation/CustomerAuth";
+import { showToastSuccess } from "../../config/ShowToastMessages";
+import { getCustomerMetaField } from "../../shopify/query/CustomerQuery";
 const { width } = Dimensions.get("window");
 const RING_SIZE = Math.min(width * 0.52, 130);
 const R = (RING_SIZE - 14) / 2;
 
 export default function WeightTrackerScreen() {
+      const user = useSelector((state: RootState) => state.user);
       const [current, setCurrent] = useState(0);
       const [goal, setGoal] = useState(0);
       const [open, setOpen] = useState(false);
@@ -50,7 +56,12 @@ export default function WeightTrackerScreen() {
                   (async () => {
                         setLoading(true);
                         setError(null);
-
+                        if (user?.customerToken) {
+                              const goalWeight = await getCustomerMetaField(user?.customerToken, 'goal_weight');
+                              const currentWeight = await getCustomerMetaField(user?.customerToken, 'cur_weight');
+                              setGoal(goalWeight ? Number(goalWeight) : 0);
+                              setCurrent(currentWeight ? Number(currentWeight) : 0);
+                        }
                         // iOS (Apple Health) or Android (Fitbit) platform check
                         if (Platform.OS === "ios") {
                               const appleHealthConnected = await checkHealthKitConnection();
@@ -63,8 +74,8 @@ export default function WeightTrackerScreen() {
                               try {
                                     const weightData = await fetchAppleHealthWeight();
                                     console.log('weightData', weightData);
-                                    setCurrent(weightData);
-                                    setGoal(0); // Example static goal, since Apple Health doesn't allow setting goals programmatically
+                                    setCurrent(weightData ? Number(weightData) : 0);
+
                               } catch (e) {
                                     setError("Failed to load Apple Health weight data.");
                               }
@@ -103,15 +114,15 @@ export default function WeightTrackerScreen() {
             return new Promise((resolve, reject) => {
                   appleHealthKit.getLatestWeight(options, (err, results) => {
                         if (err) {
-                              console.error('Error getting latest weight: ', err);
+                              // console.error('Error getting latest weight: ', err);
                               reject("Error fetching weight from Apple Health.");
                         } else {
-                              console.log('Latest weight: ', results);
+                              // console.log('Latest weight: ', results);
                               // Check if results are available and return it
                               if (results && results.value) {
                                     resolve(results.value);
                               } else {
-                                    console.log('No weight data available.');
+                                    // console.log('No weight data available.');
                                     resolve(0); // Return default 0 if no data available
                               }
                         }
@@ -130,11 +141,21 @@ export default function WeightTrackerScreen() {
                         console.log("Set weight result", result);
                         setCurrent(c);
                         setGoal(g);
-                        Alert.alert("Goal updated", `Weight goal set to ${g.toLocaleString()} Kg.`);
-                  } else {
-                        // Apple Health: Display message that setting goal is not supported
-                        Alert.alert("Apple Health", "Setting weight goal programmatically is not supported. Please set it manually.");
                   }
+                  let response = customerMetafieldUpdate([
+                        { key: 'cur_weight', value: c, type: 'single_line_text_field' },
+                        { key: 'goal_weight', value: g, type: 'single_line_text_field' },
+                  ], user?.id ?? '');
+                  response.then(res => {
+                        setCurrent(c);
+                        setGoal(g);
+                        // console.log('res', res);
+                        if (res.metafieldsSet.metafields.length > 0) {
+                              showToastSuccess('Weight updated successfully.');
+                        }
+                  });
+
+
             } catch (e: any) {
                   const msg = typeof e?.message === "string" ? e.message : "Could not update your Fitbit goal. Please try again.";
                   Alert.alert("Error", msg);

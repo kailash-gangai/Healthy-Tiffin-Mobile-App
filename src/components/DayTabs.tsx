@@ -24,13 +24,13 @@ export default function DayTabs({
 }) {
   const listRef = useRef<FlatList<string>>(null);
   const WEEK = [
+    'sunday',
     'monday',
     'tuesday',
     'wednesday',
     'thursday',
     'friday',
     'saturday',
-    'sunday',
   ];
 
   const filteredDays = useMemo(

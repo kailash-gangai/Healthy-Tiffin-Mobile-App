@@ -22,6 +22,11 @@ import FontAwesome5 from "@react-native-vector-icons/FontAwesome5";
 import AppHeader from "../../components/AppHeader";
 import { COLORS, SPACING } from "../../ui/theme";
 import appleHealthKit from "react-native-health";
+import { showToastSuccess } from "../../config/ShowToastMessages";
+import { customerMetafieldUpdate } from "../../shopify/mutation/CustomerAuth";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
+import { getCustomerMetaField } from "../../shopify/query/CustomerQuery";
 
 // Constants for the circular progress display
 const SIZE = 280;
@@ -32,6 +37,7 @@ const RING_R = R - STROKE / 2;
 const CIRCUM = 2 * Math.PI * RING_R;
 
 export default function StepsTrackerScreen() {
+      const user = useSelector((state: RootState) => state.user);
       const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
       const [goal, setGoal] = useState(0);
       const [steps, setSteps] = useState(0);
@@ -44,9 +50,15 @@ export default function StepsTrackerScreen() {
 
       // Check connection and fetch data on platform
       useEffect(() => {
+
             const checkConnectionAndFetchData = async () => {
                   setLoading(true);
                   setError(null);
+                  if (user?.customerToken) {
+                        const stepsGoal = await getCustomerMetaField(user?.customerToken, 'steps_goal');
+                        console.log('stepsGoal', stepsGoal);
+                        setGoal(stepsGoal ? Number(stepsGoal) : 0);
+                  }
                   if (Platform.OS === "ios") {
                         // iOS: Check Apple HealthKit connection
                         const appleHealthConnected = await checkHealthKitConnection();
@@ -58,8 +70,7 @@ export default function StepsTrackerScreen() {
                         // Fetch steps and goal from Apple Health
                         try {
                               const appleHealthData = await fetchAppleHealthData();
-                              setGoal(appleHealthData.goal);
-                              setSteps(appleHealthData.steps);
+                              setSteps(appleHealthData?.steps);
                         } catch (e) {
                               setError("Failed to load Apple Health data.");
                         }
@@ -109,7 +120,7 @@ export default function StepsTrackerScreen() {
                                     // Summing up the steps for today
                                     const steps = results.reduce((total, item) => total + item.value, 0);
                                     resolve({
-                                          goal: 10000, // Example goal, you can modify this as needed
+
                                           steps: steps,
                                     });
                               }
@@ -143,12 +154,17 @@ export default function StepsTrackerScreen() {
                   if (Platform.OS === "android") {
                         // Set goal only for Fitbit (Android)
                         setActivityGoal(accessToken as string, "daily", "steps", n);
-                        setGoal(n);
-                        Alert.alert("Goal updated", `Daily steps goal set to ${n.toLocaleString()} steps.`);
-                  } else if (Platform.OS === "ios") {
-                        // For iOS (Apple Health), you can only display the goal, not set it
-                        Alert.alert("Apple Health", "You cannot set the steps goal programmatically for Apple Health.");
                   }
+                  let response = customerMetafieldUpdate([
+                        { key: 'steps_goal', value: n, type: 'number_integer' },
+                  ], user?.id ?? '');
+                  response.then(res => {
+                        setGoal(n);
+                        // console.log('res', res);
+                        if (res.metafieldsSet.metafields.length > 0) {
+                              showToastSuccess('Goal updated successfully.');
+                        }
+                  });
                   setOpen(false);
             } catch (e: any) {
                   const msg = typeof e?.message === "string" ? e.message : "An error occurred. Please try again.";

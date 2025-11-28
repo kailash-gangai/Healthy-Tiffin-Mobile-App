@@ -89,13 +89,13 @@ interface BlogProp {
 }
 
 const ALL_DAYS = [
+  'Sunday',
   'Monday',
   'Tuesday',
   'Wednesday',
   'Thursday',
   'Friday',
   'Saturday',
-  'Sunday',
 ] as const;
 
 const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
@@ -123,13 +123,13 @@ function rankOf(key: string, ordered: string[]) {
 function getAbsoluteTodayIndex() {
   const js = new Date().getDay();
   const week = [
+    'Sunday',
     'Monday',
     'Tuesday',
     'Wednesday',
     'Thursday',
     'Friday',
     'Saturday',
-    'Sunday',
   ];
 
   return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);

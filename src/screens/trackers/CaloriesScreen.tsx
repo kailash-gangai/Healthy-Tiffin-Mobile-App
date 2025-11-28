@@ -46,7 +46,7 @@ export default function CaloriesScreen() {
     lastFetchAt.current = now;
 
     (async () => {
-      fetchFoodLogs();
+      fetchFoodLogs(now);
     })();
   }, []);
 
@@ -78,20 +78,29 @@ export default function CaloriesScreen() {
     });
   };
   const fetchAppleHealthFoodLog = async (date?: string) => {
-    console.log('fetchAppleHealthFoodLog', date);
+
+    const base = date ? new Date(date) : new Date();
+
+    const start = new Date(base);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(base);
+    end.setHours(23, 59, 59, 999);
+
     const options = {
-      startDate: date ? new Date(new Date(date).setHours(0, 0, 0, 0)).toISOString() : new Date(new Date().setHours(0, 0, 0, 0)).toISOString(), // Midnight of the given date
-      endDate: date ? new Date(new Date(date).setHours(23, 59, 59, 999)).toISOString() : new Date().toISOString(), // End of the given date (11:59:59.999)
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
       ascending: false,
       limit: 20,
     };
+    console.log('fetchAppleHealthFoodLog options', options);
     return new Promise((resolve, reject) => {
       // Fetching Energy Consumed (calories) samples from Apple HealthKit
       AppleHealthKit.getEnergyConsumedSamples(options, (err, results) => {
         if (err) {
           reject('Error fetching food log from Apple Health.');
         } else {
-          // console.log('Fetched food log from Apple Health:', results);
+          console.log('Fetched food log from Apple Health:', results);
           // You can now process the results
           const totalCalories = results.reduce((total, record) => total + (record.value || 0), 0);
           resolve({
@@ -256,9 +265,9 @@ export default function CaloriesScreen() {
         activeOpacity={0.8}
         style={styles.summaryHeader}
       >
-        <Text style={styles.summaryTitle}>Today • Summary</Text>
+        <Text style={styles.summaryTitle}> Summary</Text>
         <View style={styles.summaryRight}>
-          <Text style={styles.summaryTotal}>{summary || '0'}</Text>
+          <Text style={styles.summaryTotal}>{summary + ' kcal' || '0'}</Text>
           <Text style={styles.chev}><DownArrow style={expanded ? { transform: [{ rotate: '180deg' }] } : {}} width={16} height={16} /></Text>
         </View>
       </TouchableOpacity>
