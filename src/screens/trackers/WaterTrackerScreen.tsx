@@ -24,13 +24,14 @@ import { getValidTokens, getfitBitWater, getfitBitWaterLog, setfitBitWaterGole, 
 import { showToastError, showToastSuccess } from "../../config/ShowToastMessages";
 import PlusIcon from '../../assets/htf-icon/icon-add.svg';
 import MinusIcon from '../../assets/htf-icon/icon-remove.svg';
-import { checkHealthKitConnection } from "../../health/healthkit";
+import { checkHealthKitConnection, saveWaterAppleHealth } from "../../health/healthkit";
 import AppleHealthKit from 'react-native-health'; // Apple HealthKit for iOS
 import appleHealthKit from "react-native-health";
 import { customerMetafieldUpdate } from "../../shopify/mutation/CustomerAuth";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { getCustomerMetaField } from "../../shopify/query/CustomerQuery";
+import { SuccessToast } from "react-native-toast-message";
 
 type TabKey = "today" | "weekly" | "monthly";
 
@@ -169,16 +170,31 @@ export default function WaterTrackerScreen() {
       // Update water count (increasing or decreasing)
       const updateCount = (n: number) => {
             setCount((c) => c + n);
-            if (count + n < 0 && Platform.OS === "android") {
+            if (count + n < 0) {
                   setCount(0);
                   showToastError("Count cannot be negative");
                   return;
             }
-            // Log the water intake
-            const res = Platform.OS === "android"
-                  ? setfitBitWaterLog(accessToken as string, new Date().toISOString().slice(0, 10), n)
-                  : Alert.alert("Apple Health", "You cannot log water programmatically for Apple Health."); // For iOS, 
+            if (Platform.OS === "android") {
+                  try {
+                        setSaving(true);
+                        setfitBitWaterLog(accessToken as string, new Date().toISOString().slice(0, 10), n);
+                        showToastSuccess("Water logged successfully.");
+
+                  } catch (e: any) {
+                        const msg = typeof e?.message === "string" ? e.message : "Could not update your Fitbit log. Please try again.";
+                        Alert.alert("Error", msg);
+                  } finally {
+                        setSaving(false);
+                  }
+
+            } else {
+                  const res = saveWaterAppleHealth(n * 0.2);
+                  showToastSuccess("Water logged successfully.");
+            }
+
       };
+
 
       return (
             <SafeAreaView>

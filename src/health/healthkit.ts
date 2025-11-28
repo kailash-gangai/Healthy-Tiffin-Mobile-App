@@ -220,5 +220,18 @@ const getHealthDataForDateRange = async (
   }
 };
 
+export function saveWaterAppleHealth(value: number) {
+  const options = {
+    value, // Water in liters (e.g., 0.2)
+    date: new Date().toISOString(), // ALWAYS current timestamp
+  };
 
-
+  AppleHealthKit.saveWater(options, (err, success) => {
+    if (err) {
+      console.log('Error saving water to HealthKit:', err);
+      return;
+    }
+    console.log('Water saved successfully:', success);
+    return success;
+  });
+}
