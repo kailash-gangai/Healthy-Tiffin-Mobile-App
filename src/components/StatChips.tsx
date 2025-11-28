@@ -164,8 +164,7 @@ export default function StatsCard() {
     if (now - lastFetchAt.current < 60_000) return;
     lastFetchAt.current = now;
     const convertLitersToUSCups = (liters: number): number => {
-      const cupsPerLiter = 4.22675;
-      return (liters * cupsPerLiter);
+      return (liters / 0.25);
     };
     function calculateSleepMinutes(bed: string, wake: string): number {
       const [bh, bm] = bed.split(':').map(Number);

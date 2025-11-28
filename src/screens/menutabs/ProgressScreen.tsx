@@ -161,7 +161,6 @@ export default function ProgressScreen() {
 
   const computeSleepFmt = (minutes: number) =>
     `${Math.floor(minutes / 60)} H ${minutes % 60} M`;
-
   // Update UI safely
   const safeSetItems = useCallback((d: DaySummary) => {
     setItems(prev => {
@@ -232,21 +231,21 @@ export default function ProgressScreen() {
       unit: 'litre', // optional: default: litrer
       startDate: startDate, // required
       endDate: endDate, // required
-      includeManuallyAdded: true, // optional: default true
       ascending: false, // optional; default false
     }
     const water = await new Promise(resolve => {
       appleHealthKit.getWaterSamples(options, (err, r) => {
         if (err || !r) return resolve(0);
+
         const total = r.reduce((sum, x) => sum + (x.value || 0), 0);
         resolve(total);
       });
     });
 
     console.log(
-      `Apple Health: ${ymd} Steps: ${steps} Sleep: ${sleep} Calories: ${calories} Water: ${water}`
+      `Apple Health: ${ymd} Steps: ${steps} Sleep: ${sleep} Calories: ${calories} Water: ${water.toFixed(1)}ml`
     )
-    const glasses = (Number(water) * 4.22675).toFixed(1);
+    const glasses = (Number(water / 0.25));
 
     return {
       steps: String(steps),
@@ -311,22 +310,7 @@ export default function ProgressScreen() {
     [queue, safeSetItems]
   );
 
-  // ==================================
-  // PRELOAD LAST 7 DAYS (on init ONLY)
-  // ==================================
-  const preloadLast7Days = useCallback(
-    async (todayYMD: string) => {
-      const base = new Date();
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(base);
-        d.setDate(base.getDate() - i);
-        const ymd = formatYMD(d);
-
-        await fetchDay(ymd, ymd === todayYMD);
-      }
-    },
-    [fetchDay]
-  );
+ 
 
   // ==============================
   // INIT
@@ -344,7 +328,6 @@ export default function ProgressScreen() {
           const today = formatYMD(new Date());
           setLoadingYMD(today);
 
-          await preloadLast7Days(today);
         } else {
           const t = await withRetry(() => getValidTokens());
           const token = t?.accessToken as string;
@@ -359,7 +342,6 @@ export default function ProgressScreen() {
           const today = formatYMD(new Date());
           setLoadingYMD(today);
 
-          await preloadLast7Days(today);
         }
       } catch (e) {
         showToastError('Unable to load health data.');
@@ -368,7 +350,7 @@ export default function ProgressScreen() {
         setInitLoading(false);
       }
     })();
-  }, [navigate, preloadLast7Days]);
+  }, [navigate]);
 
   // ==============================
   // DATE CHANGE HANDLER

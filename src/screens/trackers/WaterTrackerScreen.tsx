@@ -128,8 +128,9 @@ export default function WaterTrackerScreen() {
 
 
       const convertLitersToUSCups = (liters: number): number => {
-            const cupsPerLiter = 4.22675;
-            return (liters * cupsPerLiter);
+            console.log('liters', liters);
+            const cupsPerLiter = 0.25;
+            return (liters / cupsPerLiter);
       };
 
 
@@ -189,7 +190,8 @@ export default function WaterTrackerScreen() {
                   }
 
             } else {
-                  const res = saveWaterAppleHealth(n * 0.2);
+                  //1 glass of water = 0.25 liters or 250 milliliters
+                  const res = saveWaterAppleHealth(n * 0.25);
                   showToastSuccess("Water logged successfully.");
             }
 
@@ -222,6 +224,8 @@ export default function WaterTrackerScreen() {
                                           <PlusIcon width={24} height={24} />
                                     </Pressable>
                               </View>
+                              <Text style={{ fontSize: 10, marginTop: 8, textAlign: "center" }}>1 glass of water = 0.25 liters or 250 milliliters</Text>
+
                         </View>
 
                         {/* CTA */}
