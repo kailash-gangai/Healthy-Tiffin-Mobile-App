@@ -232,9 +232,9 @@ export default React.memo(function AddonDishCard({
           >
             <EyeShow width={16} height={16} />
           </TouchableOpacity>
-          <Text style={[s.radio, isItemInCart && s.radioOn]}>
+          <View style={[s.radio, isItemInCart && s.radioOn]}>
             {isItemInCart && <Text style={s.radioDot} />}
-          </Text>
+          </View>
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
