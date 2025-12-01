@@ -182,9 +182,9 @@ export default function DishCard({
           </TouchableOpacity>
 
           {/* Selection circle */}
-          <Text style={[s.radio, isItemInCart && s.radioOn]}>
+          <View style={[s.radio, isItemInCart && s.radioOn]}>
             {isItemInCart && <Text style={s.radioDot} />}
-          </Text>
+          </View>
         </View>
 
         <View style={s.tagContainer}>
@@ -273,6 +273,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   radioOn: {
+    borderRadius: 10,
     borderColor: '#FFFFFF',
     backgroundColor: '#0B5733',
   },

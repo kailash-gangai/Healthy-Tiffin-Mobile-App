@@ -24,13 +24,13 @@ export default function DayTabs({
 }) {
   const listRef = useRef<FlatList<string>>(null);
   const WEEK = [
-    'sunday',
     'monday',
     'tuesday',
     'wednesday',
     'thursday',
     'friday',
     'saturday',
+    'sunday',
   ];
 
   const filteredDays = useMemo(
@@ -46,18 +46,42 @@ export default function DayTabs({
 
   const [active, setActive] = useState(activeDay);
 
+  // const dateForDayName = (name: string) => {
+
+  //   const idx = WEEK.indexOf(name.toLowerCase());
+  //   console.log('idx', idx)
+  //   const now = new Date();
+  //   const monday = new Date(now);
+  //   monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  //   console.log('monday', monday)
+  //   const d = new Date(monday);
+  //   console.log('d', d)
+  //   d.setDate(monday.getDate() + idx);
+  //   console.log('d', String(d.getDate()).padStart(2, '0'))
+  //   return {
+  //     day: String(d.getDate()).padStart(2, '0'),
+  //     month: d.toLocaleString('en-US', { month: 'long' }),
+  //   };
+  // };
+
   const dateForDayName = (name: string) => {
     const idx = WEEK.indexOf(name.toLowerCase());
+    if (idx === -1) throw new Error('Invalid weekday name');
     const now = new Date();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + idx);
+    now.setHours(0, 0, 0, 0);
+    // Convert JS weekday (0=Sun → 6=Sat) into ISO-week indexing (Mon=0 → Sun=6)
+    const todayIndex = (now.getDay() + 6) % 7;
+    // Calculate how many days until the target day
+    // If idx <= todayIndex → next week
+    const diff = idx <= todayIndex ? (idx + 7) - todayIndex : idx - todayIndex;
+    const target = new Date(now);
+    target.setDate(now.getDate() + diff);
     return {
-      day: String(d.getDate()).padStart(2, '0'),
-      month: d.toLocaleString('en-US', { month: 'long' }),
+      day: String(target.getDate()).padStart(2, '0'),
+      month: target.toLocaleString('en-US', { month: 'long' }),
     };
   };
+
 
   const weekRangeLabel = useMemo(() => {
     const now = new Date();
@@ -98,8 +122,10 @@ export default function DayTabs({
   };
 
   const renderItem = ({ item, index }: { item: string; index: number }) => {
+
     const isActive = index === active;
     const { day } = dateForDayName(item);
+
     return (
       <TouchableOpacity
         activeOpacity={0.9}

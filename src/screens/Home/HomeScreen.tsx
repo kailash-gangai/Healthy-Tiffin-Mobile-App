@@ -89,13 +89,13 @@ interface BlogProp {
 }
 
 const ALL_DAYS = [
-  'Sunday',
   'Monday',
   'Tuesday',
   'Wednesday',
   'Thursday',
   'Friday',
   'Saturday',
+  'Sunday',
 ] as const;
 
 const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
@@ -123,13 +123,13 @@ function rankOf(key: string, ordered: string[]) {
 function getAbsoluteTodayIndex() {
   const js = new Date().getDay();
   const week = [
-    'Sunday',
     'Monday',
     'Tuesday',
     'Wednesday',
     'Thursday',
     'Friday',
     'Saturday',
+    'Sunday',
   ];
 
   return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
@@ -532,11 +532,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       } else {
         setPriceThreshold([]);
       }
-
       // Cutoff meta
       const single: any[] = await getMetaObjectByHandle(cutOffMenu?.[0]?.id);
-      const structured = structureCutoffData(single);
 
+      const structured = structureCutoffData(single);
       const disableKey = `disable_${lowerDay}_menu`;
       if (structured[disableKey] === true) {
         setMenuDisabled(true);
