@@ -33,6 +33,7 @@ const COLORS = {
 
 export default function DishCard({
   day,
+  date,
   category,
   type,
   tiffinPlan,
@@ -87,7 +88,6 @@ export default function DishCard({
   } else {
     customTags = []; // Default to empty array if no tags are found
   }
-  const date = new Intl.DateTimeFormat('en-US').format(new Date());
   const toggleSelection = () => {
     const itemWithMeta = {
       ...item,

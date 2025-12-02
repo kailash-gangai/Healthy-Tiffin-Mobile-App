@@ -1,131 +1,159 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
+import { FlatList, Text, TouchableOpacity, View, StyleSheet, Dimensions } from "react-native";
+import ArrowLeftIcon from "../assets/newicon/left-arrow.svg";
+import ArrowRightIcon from "../assets/newicon/right-arrow.svg";
+import LinearGradient from "react-native-linear-gradient";
+import Divider from "../assets/newicon/divider.svg";
+import { SHADOW, SPACING } from "../ui/theme";
 import {
-  FlatList,
-  Text,
-  TouchableOpacity,
-  View,
-  StyleSheet,
-} from 'react-native';
-import ArrowLeftIcon from '../assets/newicon/left-arrow.svg';
-import ArrowRightIcon from '../assets/newicon/right-arrow.svg';
-import { COLORS, SHADOW, SPACING } from '../ui/theme';
-import LinearGradient from 'react-native-linear-gradient';
-import Divider from '../assets/newicon/divider.svg';
+  getAllMetaobjects,
+  getMetaObjectByHandle,
+} from "../shopify/queries/getMetaObject";
+
 const ITEM_W = 60;
+const SCREEN_W = Dimensions.get("window").width;
+const SIDE_SPACER = (SCREEN_W - ITEM_W) / 2;
+
+type Field = { key: string; value: string };
+type MenuDay = {
+  id: string;
+  date: string;
+  jsDate: Date;
+  labelDay: string;
+  dayNum: string;
+  month: string;
+  fields: Field[];
+};
 
 export default function DayTabs({
-  days,
+  activeIndex,
   onChange,
-  activeDay, // Accept activeDay as a prop
 }: {
-  days: string[];
-  onChange?: (i: number) => void;
-  activeDay?: number;
+  activeIndex: number;
+  onChange?: (data: {
+    id: string;
+    index: number;
+    day: string;
+    date: string;
+  }) => void;
 }) {
-  const listRef = useRef<FlatList<string>>(null);
-  const WEEK = [
-    'monday',
-    'tuesday',
-    'wednesday',
-    'thursday',
-    'friday',
-    'saturday',
-    'sunday',
-  ];
+  const listRef = useRef<FlatList<MenuDay>>(null);
+  const [menuDays, setMenuDays] = useState<MenuDay[]>([]);
+  const [active, setActive] = useState(activeIndex);
 
-  const filteredDays = useMemo(
-    () => days.filter(d => !['saturday', 'sunday'].includes(d.toLowerCase())),
-    [days],
-  );
+  /* ============================================================
+     1) LOAD METAOBJECTS & APPLY RULES
+     ============================================================ */
+  useEffect(() => {
+    (async () => {
+      const metaobjects = await getAllMetaobjects("menu_products_monthly");
+      if (!metaobjects?.length) return;
 
-  const todayIdx = useMemo(() => {
-    const js = new Date().getDay();
-    const i = filteredDays.map(d => d.toLowerCase()).indexOf(WEEK[js]);
-    return i >= 0 ? i : 0;
-  }, [filteredDays]);
+      const allData: any[] = await Promise.all(
+        metaobjects.map((m) => getMetaObjectByHandle(m.id))
+      );
 
-  const [active, setActive] = useState(activeDay);
-
-  // const dateForDayName = (name: string) => {
-
-  //   const idx = WEEK.indexOf(name.toLowerCase());
-  //   console.log('idx', idx)
-  //   const now = new Date();
-  //   const monday = new Date(now);
-  //   monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  //   console.log('monday', monday)
-  //   const d = new Date(monday);
-  //   console.log('d', d)
-  //   d.setDate(monday.getDate() + idx);
-  //   console.log('d', String(d.getDate()).padStart(2, '0'))
-  //   return {
-  //     day: String(d.getDate()).padStart(2, '0'),
-  //     month: d.toLocaleString('en-US', { month: 'long' }),
-  //   };
-  // };
-
-  const dateForDayName = (name: string) => {
-    const idx = WEEK.indexOf(name.toLowerCase());
-    if (idx === -1) throw new Error('Invalid weekday name');
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    // Convert JS weekday (0=Sun → 6=Sat) into ISO-week indexing (Mon=0 → Sun=6)
-    const todayIndex = (now.getDay() + 6) % 7;
-    // Calculate how many days until the target day
-    // If idx <= todayIndex → next week
-    const diff = idx <= todayIndex ? (idx + 7) - todayIndex : idx - todayIndex;
-    const target = new Date(now);
-    target.setDate(now.getDate() + diff);
-    return {
-      day: String(target.getDate()).padStart(2, '0'),
-      month: target.toLocaleString('en-US', { month: 'long' }),
-    };
-  };
-
-
-  const weekRangeLabel = useMemo(() => {
-    const now = new Date();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    const fmt = (d: Date) =>
-      `${String(d.getDate()).padStart(2, '0')} ${d.toLocaleString('en-US', {
-        month: 'long',
-      })}`;
-    return `${fmt(monday)} - ${fmt(sunday)} ${monday.getFullYear()}`;
+      const parsed = buildMenuDays(metaobjects, allData);
+      setMenuDays(parsed);
+    })();
   }, []);
 
-  // useEffect(() => {
-  //   listRef.current?.scrollToIndex({ index: todayIdx, viewPosition: 0.5, animated: true });
-  //   onChange?.(todayIdx);
-  // }, [todayIdx, onChange]);
+  /** Build the menu days from metaobjects + fields */
+  const buildMenuDays = (metaobjects: any[], allData: any[]): MenuDay[] => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const result: MenuDay[] = allData
+      .map((fieldsArr, idx) => {
+        if (!Array.isArray(fieldsArr)) return null;
+
+        const fields = fieldsArr as Field[];
+        const menuDate = fields.find((f) => f.key === "menu_date")?.value;
+        if (!menuDate) return null;
+
+        const d = new Date(menuDate);
+        d.setHours(0, 0, 0, 0);
+
+        if (d < now) return null;
+
+        return {
+          id: metaobjects[idx].id,
+          date: menuDate,
+          jsDate: d,
+          labelDay: d.toLocaleString("en-US", { weekday: "long" }),
+          dayNum: String(d.getDate()).padStart(2, "0"),
+          month: d.toLocaleString("en-US", { month: "long" }),
+          fields,
+        };
+      })
+      .filter(Boolean) as MenuDay[];
+
+    return result.sort((a, b) => a.jsDate.getTime() - b.jsDate.getTime());
+  };
+
+  /* ============================================================
+     2) SCROLL CENTER UTILITY
+     ============================================================ */
+  const centerItem = (index: number, animated = true) => {
+    if (!menuDays.length) return;
+
+    setTimeout(() => {
+      try {
+        listRef.current?.scrollToIndex({
+          index,
+          viewPosition: 0.5, // use spaces for proper centering
+          animated,
+        });
+      } catch {
+        listRef.current?.scrollToOffset({
+          offset: Math.max(0, index * ITEM_W),
+          animated,
+        });
+      }
+    }, 20);
+  };
 
   useEffect(() => {
-    // Update the active state when the parent changes the active day
-    setActive(activeDay);
-    listRef.current?.scrollToIndex({
-      index: todayIdx,
-      viewPosition: 0.5,
-      animated: true,
-    });
-  }, [activeDay, todayIdx]);
+    if (menuDays.length) {
+      // Whenever active changes, scroll to the correct day
+      centerItem(active, false);
+    }
+  }, [menuDays, active]);
+
+  /* ============================================================
+     3) SELECT A DAY
+     ============================================================ */
   const select = (i: number) => {
-    if (i < 0 || i >= filteredDays.length) return;
-    setActive(i);
-    onChange?.(i);
-    listRef.current?.scrollToIndex({
+    if (i < 0 || i >= menuDays.length) return;
+
+    setActive(i);  // Set the active day index
+    centerItem(i);
+
+    const item = menuDays[i];
+    onChange?.({
+      id: item.id,
       index: i,
-      viewPosition: 0.4,
-      animated: true,
+      day: item.labelDay,
+      date: item.date,
     });
   };
 
-  const renderItem = ({ item, index }: { item: string; index: number }) => {
+  /* ============================================================
+     4) HEADER LABEL
+     ============================================================ */
+  const weekRangeLabel = () => {
+    if (!menuDays.length) return "";
+    const first = menuDays[0];
+    const last = menuDays[menuDays.length - 1];
 
+    return `${first.dayNum} ${first.month} - ${last.dayNum} ${last.month}`;
+  };
+
+  /* ============================================================
+     5) RENDER
+     ============================================================ */
+  const renderItem = ({ item, index }: { item: MenuDay; index: number }) => {
     const isActive = index === active;
-    const { day } = dateForDayName(item);
-
     return (
       <TouchableOpacity
         activeOpacity={0.9}
@@ -133,22 +161,20 @@ export default function DayTabs({
         style={s.dayItem}
       >
         <Text style={[s.dayName, isActive && s.activeDayName]}>
-          {item.slice(0, 3).toUpperCase()}
+          {item.labelDay.slice(0, 3).toUpperCase()}
         </Text>
 
         {isActive ? (
           <LinearGradient
-            colors={['#F9C711', '#DFB318']}
-            start={{ x: 0.2, y: 0 }}
-            end={{ x: 0.8, y: 1 }}
+            colors={["#F9C711", "#DFB318"]}
             style={[s.dateBox, s.dateBoxActive]}
           >
-            <Text style={[s.dateText, s.dateTextActive]}>{day}</Text>
+            <Text style={[s.dateText, s.dateTextActive]}>{item.dayNum}</Text>
             <View style={s.dot} />
           </LinearGradient>
         ) : (
           <View style={[s.dateBox, s.dateBoxInactive]}>
-            <Text style={s.dateText}>{day}</Text>
+            <Text style={s.dateText}>{item.dayNum}</Text>
             <View style={s.dot} />
           </View>
         )}
@@ -159,125 +185,103 @@ export default function DayTabs({
   return (
     <View style={s.wrapper}>
       <View style={s.header}>
-        <LinearGradient
-          colors={[
-            'rgba(66, 210, 150, 0.2)', // start color
-            'rgba(42, 180, 123, 0.2)', // end color
-          ]}
-          start={{ x: 0.3, y: 0 }} // roughly matches 189.66° angle
-          end={{ x: 1, y: 1 }}
-          style={{ borderRadius: 8 }}
+        <TouchableOpacity
+          onPress={() => select(active - 1)}
+          disabled={active === 0}
+          style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}
         >
-          <TouchableOpacity
-            onPress={() => select(active - 1)}
-            disabled={active === 0}
-            style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}
-          >
-            <View>
-              <ArrowLeftIcon width={16} height={16} />
-            </View>
-          </TouchableOpacity>
-        </LinearGradient>
-        <Text style={s.rangeText}>{weekRangeLabel}</Text>
-        <LinearGradient
-          colors={[
-            'rgba(66, 210, 150, 0.2)', // start color
-            'rgba(42, 180, 123, 0.2)', // end color
+          <ArrowLeftIcon width={16} height={16} />
+        </TouchableOpacity>
+
+        <Text style={s.rangeText}>{weekRangeLabel()}</Text>
+
+        <TouchableOpacity
+          onPress={() => select(active + 1)}
+          disabled={active === menuDays.length - 1}
+          style={[
+            s.iconWrap,
+            active === menuDays.length - 1 && { opacity: 0.3 },
           ]}
-          start={{ x: 0.3, y: 0 }} // roughly matches 189.66° angle
-          end={{ x: 1, y: 1 }}
-          style={{ borderRadius: 8 }}
         >
-          <TouchableOpacity
-            onPress={() => select(active + 1)}
-            disabled={active === filteredDays.length - 1}
-          >
-            <View
-              style={[
-                s.iconWrap,
-                active === filteredDays.length - 1 && { opacity: 0.3 },
-              ]}
-            >
-              <ArrowRightIcon width={16} height={16} />
-            </View>
-          </TouchableOpacity>
-        </LinearGradient>
+          <ArrowRightIcon width={16} height={16} />
+        </TouchableOpacity>
       </View>
+
       <Divider />
 
       <FlatList
         ref={listRef}
         horizontal
-        data={filteredDays}
+        data={menuDays}
         renderItem={renderItem}
-        keyExtractor={(d, i) => `${d}-${i}`}
-        getItemLayout={(_, i) => ({
-          length: ITEM_W,
-          offset: ITEM_W * i,
-          index: i,
-        })}
+        keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.listContainer}
+        ListHeaderComponent={<View />}
+        ListFooterComponent={<View style={{ width: SIDE_SPACER }} />}
       />
     </View>
   );
 }
 
+/* ============================================================
+   STYLES
+   ============================================================ */
 const s = StyleSheet.create({
   wrapper: {
     marginHorizontal: SPACING,
     borderRadius: 22,
     paddingVertical: 14,
     paddingHorizontal: 14,
-    alignItems: 'center',
+    alignItems: "center",
     ...SHADOW,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
     marginBottom: 14,
   },
   iconWrap: {
     width: 30,
     height: 30,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   rangeText: {
     fontSize: 16,
-    fontWeight: '400',
-    color: '#7C7C7C',
-    fontFamily: 'Poppins',
-    lineHeight: 20,
-    letterSpacing: -0.24,
+    color: "#7C7C7C",
   },
-  listContainer: { justifyContent: 'center', gap: 8, width: '100%' },
-  dayItem: { alignItems: 'center', marginTop: 16 },
-  dayName: { fontSize: 12, fontWeight: '400', color: '#000', marginBottom: 6 },
-  activeDayName: { color: '#8A8A8A' },
+  dayItem: {
+    alignItems: "center",
+    marginTop: 16,
+    width: ITEM_W,
+  },
+  dayName: {
+    fontSize: 12,
+    color: "#000",
+    marginBottom: 6,
+  },
+  activeDayName: { color: "#8A8A8A" },
   dateBox: {
     width: 42,
     height: 42,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
   },
-  dateBoxActive: { backgroundColor: '#FFCA40' },
+  dateBoxActive: { backgroundColor: "#FFCA40" },
   dateBoxInactive: {},
-  dateText: { fontSize: 15, fontWeight: '700', color: '#000' },
-  dateTextActive: { color: '#fff' },
+  dateText: { fontSize: 15, fontWeight: "700", color: "#000" },
+  dateTextActive: { color: "#fff" },
   dot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#ffff',
-    position: 'absolute',
+    backgroundColor: "#fff",
+    position: "absolute",
     bottom: 6,
   },
 });

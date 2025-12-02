@@ -49,12 +49,11 @@ const COLORS = {
   shadow: 'rgba(0,0,0,0.08)',
 };
 
-function nowStr() {
-  return new Intl.DateTimeFormat('en-US').format(new Date());
-}
+
 
 export default React.memo(function AddonDishCard({
   day,
+  date,
   category,
   type,
   tiffinPlan,
@@ -64,6 +63,7 @@ export default React.memo(function AddonDishCard({
 }: {
   category: string;
   day: string;
+  date: any;
   type: 'main' | 'addon';
   item: Dish;
   onChange?: (d: Dish) => void;
@@ -126,7 +126,7 @@ export default React.memo(function AddonDishCard({
       type: 'addon',
       category,
       day,
-      date: nowStr(),
+      date,
       tiffinPlan,
       qty: 1,
     };
@@ -141,7 +141,7 @@ export default React.memo(function AddonDishCard({
       type: 'addon',
       category,
       day,
-      date: nowStr(),
+      date,
       tiffinPlan,
       qty: 1,
     };
@@ -202,7 +202,7 @@ export default React.memo(function AddonDishCard({
         image: item.image,
         price: item.price,
         type: 'addon',
-        date: nowStr(),
+        date,
         tags: item.tags,
       }),
     );

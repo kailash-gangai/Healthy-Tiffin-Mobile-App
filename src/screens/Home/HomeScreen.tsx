@@ -1,223 +1,92 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import PlusIcon from '../../assets/newicon/icon-plus.svg';
-import RightArrowIcon from '../../assets/newicon/icon-right-arrow.svg';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ScrollView,
   View,
   StyleSheet,
   Text,
   TouchableOpacity,
-} from 'react-native';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { COLORS, SPACING } from '../../ui/theme';
-import HeaderGreeting from '../../components/HeaderGreeting';
-import StatChips from '../../components/StatChips';
-import OrderToggle from '../../components/OrderToggle';
-import DayTabs from '../../components/DayTabs';
-import Section from '../../components/Section';
-import DishCard from '../../components/DishCard';
-import PriceSummary from '../../components/PriceSummary';
-import CTAButton from '../../components/CTAButton';
-import FitnessCarousel from '../../components/FitnessCarousel';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
+} from "react-native";
+import PlusIcon from '../../assets/newicon/icon-plus.svg';
+import RightArrowIcon from '../../assets/newicon/icon-right-arrow.svg';
+
+import HeaderGreeting from "../../components/HeaderGreeting";
+import OrderToggle from "../../components/OrderToggle";
+import DayTabs from "../../components/DayTabs";
+import Section from "../../components/Section";
+import DishCard from "../../components/DishCard";
+import AddonDishCard from "../../components/AddonDishCard";
+import SkeletonLoading from "../../components/SkeletonLoading";
+import EmptyState from "../../components/EmptyState";
+import TagListFilter from "../../components/TagListFilter";
+import CartSummaryModal from "../../components/CartSummaryModal";
+
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { cartFLag } from "../../store/slice/cartSlice";
+import { upsertDay } from "../../store/slice/catalogSlice";
+import { setAll } from "../../store/slice/priceSlice";
+
 import {
-  addItems,
-  cartFLag,
-  removeDayMains,
-} from '../../store/slice/cartSlice';
-import { upsertDay } from '../../store/slice/catalogSlice';
-import {
-  getAllMetaobjects,
   getMetaObjectByHandle,
-} from '../../shopify/queries/getMetaObject';
-import { getProductsByIds } from '../../shopify/queries/getProducts';
-import { getAllArticles } from '../../shopify/queries/blogs';
-import AddonDishCard from '../../components/AddonDishCard';
-import SkeletonLoading from '../../components/SkeletonLoading';
-import EmptyState from '../../components/EmptyState';
-import {
-  buildEasternCutoff,
-  toUSEasternDate,
-  US_DAY_INDEX,
-} from '../../utils/ESTtime';
-import { setAll } from '../../store/slice/priceSlice';
-import CartSummaryModal from '../../components/CartSummaryModal';
-import Toast from 'react-native-toast-message';
-import TagListFilter from '../../components/TagListFilter';
+} from "../../shopify/queries/getMetaObject";
+import { getProductsByIds } from "../../shopify/queries/getProducts";
+import Toast from "react-native-toast-message";
 
-type SectionKey = string;
+const MAIN_ORDER = ["proteins", "veggies", "sides", "probiotics"];
 
-interface CategoriesProps {
-  key: string;
-  value: {
-    id: string;
-    title: string;
-    description: string;
-    tags: string[];
-    image: string;
-    price: string | number;
-    variantId: string;
-  }[];
-  _sectionType?: 'main' | 'addon';
-}
-
-export type Item = {
-  id: string;
-  variantId: string;
-  title: string;
-  description: string;
-  type: 'main' | 'addon';
-  tags: string[];
-  image: string;
-  qty?: number;
-  category?: string;
-  price: string | number;
-  day?: string;
-  date?: string;
-  tiffinPlan?: number;
-};
-
-interface BlogProp {
-  id: string;
-  title: string;
-  image?: { url: string | null };
-  date: string;
-  video?: string | null;
-  author?: string;
-  content?: string | null;
-  excerpt?: string;
-}
-
-const ALL_DAYS = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-] as const;
-
-const ORDER_RANK = ['protein', 'veggies', 'sides', 'probiotics'];
-const A_LA_CARTE_RANK = [
-  'protein',
-  'veggies',
-  'sides',
-  'probiotics',
-  'paranthas',
-  'drinks',
-  'desserts',
-  'kids',
-  'oatmeal',
+const ALA_ORDER = [
+  "protein",
+  "veggies",
+  "sides",
+  "probiotics",
+  "paranthas",
+  "drinks",
+  "desserts",
+  "kids",
+  "oatmeal",
 ];
 
-function keepDecimals(from: string | number, num: number) {
-  const s = String(from);
-  const decs = (s.split('.')[1] ?? '').length;
-  return decs > 0 ? Number(num.toFixed(decs)) : Math.trunc(num);
-}
-function rankOf(key: string, ordered: string[]) {
-  const i = ordered.indexOf(key.toLowerCase());
-  return i === -1 ? 1e9 : i;
-}
-function getAbsoluteTodayIndex() {
-  const js = new Date().getDay();
-  const week = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+//----------------------------------------------
+// Helpers
+//----------------------------------------------
+const safeKey = (raw: any) =>
+  typeof raw === "string" ? raw : "";
 
-  return ALL_DAYS.indexOf(week[js] as (typeof ALL_DAYS)[number]);
-}
-function toMoney(n: number) {
-  return `$${Number.isFinite(n) ? n : 0}`;
-}
-async function expandCategoryFields(metaObjectId: string) {
-  const single: any[] = await getMetaObjectByHandle(metaObjectId);
-  const expanded = await Promise.all(
-    single
-      .filter(d => d.value?.startsWith('[') && d.value?.endsWith(']'))
-      .map(async d => {
-        if (d.value) d.value = (await getProductsByIds(d.value)) ?? [];
-        return d;
-      }),
-  );
-  return expanded.filter(Boolean) as CategoriesProps[];
-}
+const extractMainKey = (key: string) =>
+  safeKey(key).replace("main_tiffin_", "").toLowerCase();
 
-export function applyPriceThresholds(
-  categories: CategoriesProps[],
-  thresholds: any[],
-): CategoriesProps[] {
-  const map: Record<string, number> = {};
-  for (const t of thresholds) {
-    const prefix = t.key.split('_')[0]?.trim();
-    if (!prefix) continue;
-    const v = parseFloat(t.value);
-    if (Number.isFinite(v)) map[prefix] = v;
-  }
-  return categories.map(cat => {
-    const thr = map[cat.key];
-    if (!Number.isFinite(thr)) return cat;
-    const nextItems = cat.value.map(it => {
-      const priceNum = parseFloat(String(it.price));
-      if (!Number.isFinite(priceNum)) return it;
-      const newNum = Math.max(priceNum - thr, 0);
-      return { ...it, price: keepDecimals(it.price, newNum) };
-    });
-    return { ...cat, value: nextItems };
+const extractAddonKey = (key: string) =>
+  safeKey(key).replace("ala_carte_", "").toLowerCase();
+
+const sortByOrder = (items: any[], orderList: string[], extractor: (k: string) => string) =>
+  items.sort((a, b) => {
+    const aKey = extractor(a.key);
+    const bKey = extractor(b.key);
+
+    const aIndex = orderList.indexOf(aKey);
+    const bIndex = orderList.indexOf(bKey);
+
+    return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
   });
-}
-
-// cutoff helpers
-function formatHourValue(num: number) {
-  if (num === 0) return '12:00 AM';
-  if (num < 12) return `${num}:00 AM`;
-  if (num === 12) return '12:00 PM';
-  if (num > 12) return `${num - 12}:00 PM`;
-  return `${num}:00`;
-}
-function structureCutoffData(raw: any[]) {
-  const obj: Record<string, any> = {};
-  raw.forEach(({ key, value }) => {
-    if (value === 'true' || value === 'false') {
-      obj[key] = value === 'true';
-    } else if (!isNaN(Number(value))) {
-      obj[key] = formatHourValue(Number(value));
-    } else {
-      obj[key] = value;
-    }
-  });
-  return obj;
-}
-function getNumberFromThreshold(ths: any[], key: string, fallback: number) {
-  const row = ths?.find(
-    (t: any) => String(t.key).toLowerCase() === key.toLowerCase(),
-  );
-  const v = parseFloat(row?.value);
-  return Number.isFinite(v) ? v : fallback;
-}
-
-// Helper function to filter items based on selected tags
 const filterItemsByTags = (items: any[], selectedTags: string[]) => {
   if (!selectedTags || selectedTags.length === 0) {
     return items; // Return all items if no tags selected
   }
 
-  return items.filter(item => {
+  return items.filter((item) => {
     let customTags = item?.metafields?.find(
-      (mf: any) => mf && mf.key === 'dietary_tags',
+      (mf: any) => mf && mf.key === "dietary_tags"
     );
     if (customTags) {
       try {
         customTags = JSON.parse(customTags.value);
       } catch (error) {
-        console.error('Error parsing dietary tags:', error);
+        console.error("Error parsing dietary tags:", error);
         customTags = []; // Default to empty array if parsing fails
       }
     } else {
@@ -229,445 +98,296 @@ const filterItemsByTags = (items: any[], selectedTags: string[]) => {
 
     // Convert both item tags and selected tags to lowercase for case-insensitive comparison
     const itemTagsLower = customTags.map((tag: string) => tag.toLowerCase());
-    const selectedTagsLower = selectedTags.map(tag => tag.toLowerCase());
+    const selectedTagsLower = selectedTags.map((tag) => tag.toLowerCase());
 
     // Check if any of the selected tags match any of the item's tags
-    return selectedTagsLower.some(selectedTag =>
-      itemTagsLower.some((itemTag: any) => itemTag.includes(selectedTag)),
+    return selectedTagsLower.some((selectedTag) =>
+      itemTagsLower.some((itemTag: any) => itemTag.includes(selectedTag))
     );
   });
 };
-
+//----------------------------------------------
+// MAIN COMPONENT
+//----------------------------------------------
 const HomeScreen: React.FC = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
-  const { lines } = useAppSelector(state => state.cart);
+  const { lines } = useAppSelector((state) => state.cart);
+  const [previousTiffinPlan, setPreviousTiffinPlan] = useState<number>(1);
+  const scrollRef = useRef<ScrollView | null>(null);
 
   const [tab, setTab] = useState<0 | 1>(0);
-  const [daysMeta, setDaysMeta] = useState<any[]>([]);
-  const [addonsMeta, setAddonsMeta] = useState<any[]>([]);
-  const [categories, setCategories] = useState<CategoriesProps[]>([]);
-  const [addonCategories, setAddonCategories] = useState<CategoriesProps[]>([]);
-  const [priceThreshold, setPriceThreshold] = useState<any[]>([]);
+  const [currentDay, setCurrentDay] = useState<string | null>(null);
+  const [currentDate, setCurrentDate] = useState<string | null>(null);
+  const [currentMetaId, setCurrentMetaId] = useState<string | null>(null);
+
+  const [categories, setCategories] = useState<any[]>([]);
+  const [addonCategories, setAddonCategories] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [menuDisabled, setMenuDisabled] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [filteredIndex, setFilteredIndex] = useState(0);
-  const [openByKey, setOpenByKey] = useState<Record<SectionKey, boolean>>({});
-  const [previousTiffinPlan, setPreviousTiffinPlan] = useState<number>(1);
 
-  const isOpen = (k: SectionKey) => openByKey[k] ?? true;
-  const setOpen = (k: SectionKey, v: boolean) =>
-    setOpenByKey(s => ({ ...s, [k]: v }));
+  const [openByKey, setOpenByKey] = useState<Record<string, boolean>>({});
+  const isOpen = (k: string) => openByKey[k] ?? true;
+  const setOpen = (k: string, v: boolean) =>
+    setOpenByKey((s) => ({ ...s, [k]: v }));
 
-  const absoluteTodayIndex = useMemo(() => getAbsoluteTodayIndex(), []);
-  const FILTERED_DAYS = useMemo(() => {
-    if (absoluteTodayIndex < 0) return ALL_DAYS as unknown as string[];
-    return ALL_DAYS.slice(absoluteTodayIndex) as unknown as string[];
-  }, [absoluteTodayIndex]);
-  const absoluteDayIndex = useMemo(
-    () => Math.min(ALL_DAYS.length - 1, absoluteTodayIndex + filteredIndex),
-    [absoluteTodayIndex, filteredIndex],
-  );
-  const currentDay = ALL_DAYS[absoluteDayIndex];
-  const lowerDay = currentDay?.toLowerCase();
-  const currentDayMetaObjectId = useMemo(
-    () =>
-      daysMeta.find(d => d.handle?.toLowerCase() === currentDay?.toLowerCase())
-        ?.id,
-    [daysMeta, currentDay],
-  );
-  const addonsMetaObjectId = useMemo(
-    () =>
-      addonsMeta.find(
-        (d: any) => d.handle?.toLowerCase() === currentDay?.toLowerCase(),
-      )?.id,
-    [addonsMeta, currentDay],
-  );
+  //---------------------------------------------------
+  // Day change
+  //---------------------------------------------------
+  const handleDayChange = ({ id, day, date }: { id: string; day: string; date: string }) => {
+    setCurrentDay(day);
+    setCurrentDate(date);
+    setCurrentMetaId(id);
+    setMenuDisabled(false);
+  };
 
-  const sortedCategories = useMemo(
-    () =>
-      categories
-        .slice()
-        .sort((a, b) => rankOf(a.key, ORDER_RANK) - rankOf(b.key, ORDER_RANK)),
-    [categories],
-  );
-  const updatedMains = useMemo(
-    () => applyPriceThresholds(sortedCategories, priceThreshold),
-    [sortedCategories, priceThreshold],
-  );
+  //---------------------------------------------------
+  // Load Shopify MetaObjects
+  //---------------------------------------------------
+  async function expandCategoryFields(metaObjectId: string) {
+    const single: any[] = await getMetaObjectByHandle(metaObjectId);
 
-  // Filter mains based on selected tags
-  const filteredMains = useMemo(() => {
-    return updatedMains.map(category => ({
-      ...category,
-      value: filterItemsByTags(category.value, selectedTags),
-    }));
-  }, [updatedMains, selectedTags]);
-
-  // Filter addons based on selected tags
-  const sortedAddons = useMemo(
-    () =>
-      addonCategories
-        .slice()
-        .sort(
-          (a, b) =>
-            rankOf(a.key, A_LA_CARTE_RANK) - rankOf(b.key, A_LA_CARTE_RANK),
-        ),
-    [addonCategories],
-  );
-
-  const filteredAddons = useMemo(() => {
-    return sortedAddons.map(category => ({
-      ...category,
-      value: filterItemsByTags(category.value, selectedTags),
-    }));
-  }, [sortedAddons, selectedTags]);
-
-  // Get all tiffin plans for current day
-  const dayTiffinPlans = useMemo(() => {
-    const dayMainItems = lines.filter(
-      (item: any) => item.day === currentDay && item.type === 'main',
+    return Promise.all(
+      single
+        .filter(
+          (d) =>
+            typeof d.value === "string" &&
+            d.value.startsWith("[") &&
+            d.value.endsWith("]")
+        )
+        .map(async (d) => {
+          d.value = await getProductsByIds(d.value);
+          return d;
+        })
     );
+  }
 
-    const allTiffinPlans = [
-      ...new Set(dayMainItems.map(item => item.tiffinPlan || 1)),
-    ];
-    return allTiffinPlans.sort((a, b) => a - b);
-  }, [lines, currentDay]);
-
-  // Find incomplete tiffin plans (missing categories)
-  const incompleteTiffinPlans = useMemo(() => {
-    const dayMainItems = lines.filter(
-      (item: any) => item.day === currentDay && item.type === 'main',
-    );
-
-    return dayTiffinPlans.filter(tiffinPlan => {
-      const itemsForPlan = dayMainItems.filter(
-        item => item.tiffinPlan === tiffinPlan,
-      );
-      const categoriesForPlan = itemsForPlan.map(item => item.category);
-      const allCategories = updatedMains.map(cat => cat.key.toUpperCase());
-
-      return !allCategories.every(cat => categoriesForPlan.includes(cat));
-    });
-  }, [lines, currentDay, dayTiffinPlans, updatedMains]);
-
-  // Calculate current tiffin plan - prioritize incomplete ones, then next available
-  const currentTiffinPlan = useMemo(() => {
-    if (incompleteTiffinPlans.length > 0) {
-      // Return the first incomplete tiffin plan
-      return incompleteTiffinPlans[0];
-    }
-
-    // If all existing tiffin plans are complete, return next available number
-    const maxTiffinPlan =
-      dayTiffinPlans.length > 0 ? Math.max(...dayTiffinPlans) : 0;
-    return maxTiffinPlan + 1;
-  }, [incompleteTiffinPlans, dayTiffinPlans]);
-
-  // Show toast when tiffin plan changes
-  useEffect(() => {
-    if (previousTiffinPlan !== currentTiffinPlan && tab === 0) {
-      const message = `Switching to Tiffin ${currentTiffinPlan} for ${currentDay}`;
-
-      // Show toast using react-native-toast-message
-      Toast.show({
-        type: 'success',
-        text1: message,
-        position: 'top',
-        visibilityTime: 3000,
-        autoHide: true,
-      });
-
-      setPreviousTiffinPlan(currentTiffinPlan);
-    }
-    const hasMainItems = lines.some(
-      item => item.type === 'main' && item.day === currentDay,
-    );
-    if (!hasMainItems) {
-      openAllMain();
-    }
-  }, [currentTiffinPlan, previousTiffinPlan, currentDay, tab]);
-
-  // Get selected item for each category in current tiffin plan
-  const getSelectedItemForCategory = useCallback(
-    (category: string, tiffinPlan: number) => {
-      return lines.find(
-        (item: any) =>
-          item.day === currentDay &&
-          item.category?.toLowerCase() === category.toLowerCase() &&
-          item.type === 'main' &&
-          item.tiffinPlan === tiffinPlan,
-      );
-    },
-    [lines, currentDay],
-  );
-
-  // Check if current tiffin plan is complete
-  const isCurrentTiffinComplete = useMemo(() => {
-    const allCategories = updatedMains.map(cat => cat.key.toUpperCase());
-    return allCategories.every(cat =>
-      getSelectedItemForCategory(cat, currentTiffinPlan),
-    );
-  }, [updatedMains, currentTiffinPlan, getSelectedItemForCategory]);
-
-  const openAllMain = useCallback(() => {
-    const next: Record<SectionKey, boolean> = {};
-    updatedMains.forEach(cat => {
-      const t = (cat as any)._sectionType ?? 'main';
-      const k = `${t}:${cat.key}`;
-      next[k] = true;
-    });
-    setOpenByKey(s => ({ ...s, ...next }));
-  }, [updatedMains]);
-
-  const closeAllMain = useCallback(() => {
-    const next: Record<SectionKey, boolean> = {};
-    updatedMains.forEach(cat => {
-      const t = (cat as any)._sectionType ?? 'main';
-      const k = `${t}:${cat.key}`;
-      next[k] = false;
-    });
-    setOpenByKey(s => ({ ...s, ...next }));
-  }, [updatedMains]);
-
-  // Initialize addon sections to always be open
-  useEffect(() => {
-    if (tab === 1 && sortedAddons.length > 0) {
-      const next: Record<SectionKey, boolean> = {};
-      sortedAddons.forEach((cat, i) => {
-        const key = `addon:${cat.key}-${i}`;
-        next[key] = true; // Always keep addon sections open
-      });
-      setOpenByKey(s => ({ ...s, ...next }));
-    }
-  }, [tab, sortedAddons]);
-
-  const handleAddNewTiffin = useCallback(() => {
-    // When adding new tiffin, we need to calculate the next available tiffin number
-    const maxTiffinPlan =
-      dayTiffinPlans.length > 0 ? Math.max(...dayTiffinPlans) : 0;
-    const nextTiffinPlan = maxTiffinPlan + 1;
-
-    // Show toast for switching to the new tiffin
-    Toast.show({
-      type: 'success',
-      text1: `Switching to Tiffin ${nextTiffinPlan} for ${currentDay}`,
-      position: 'top',
-      visibilityTime: 3000,
-      autoHide: true,
-    });
-
-    // Open all main sections for the new tiffin
-    openAllMain();
-  }, [dayTiffinPlans, currentDay, openAllMain]);
-
-  const handleGoToNextDay = useCallback(() => {
-    // Move to next day if available
-    if (filteredIndex < FILTERED_DAYS.length - 1) {
-      setFilteredIndex(prev => prev + 1);
-
-      // Show toast for the new day
-      const nextDayIndex = Math.min(
-        absoluteTodayIndex + filteredIndex + 1,
-        ALL_DAYS.length - 1,
-      );
-      const nextDay = ALL_DAYS[nextDayIndex];
-
-      Toast.show({
-        type: 'success',
-        text1: `Switching to ${nextDay}`,
-        position: 'top',
-        visibilityTime: 3000,
-        autoHide: true,
-      });
-
-      // Open all main sections for the new day
-      openAllMain();
-    } else {
-      // If it's the last day, show message
-      Toast.show({
-        type: 'info',
-        text1: 'You have reached the last available day',
-        position: 'top',
-        visibilityTime: 3000,
-        autoHide: true,
-      });
-    }
-  }, [filteredIndex, FILTERED_DAYS.length, absoluteTodayIndex, openAllMain]);
-
-  const handleItemSelection = useCallback(
-    (category: string) => {
-      const key = `main:${category}`;
-      setOpen(key, false);
-
-      if (isCurrentTiffinComplete) {
-        closeAllMain();
-      }
-    },
-    [isCurrentTiffinComplete, closeAllMain],
-  );
-
+  //---------------------------------------------------
+  // Fetch Menu
+  //---------------------------------------------------
   const fetchMetaAndData = useCallback(async () => {
+    if (!currentDay || !currentMetaId) return;
+
     setLoading(true);
     try {
-      const [mainList, addonList, thresholdList, cutOffMenu] =
-        await Promise.all([
-          getAllMetaobjects('main_menus'),
-          getAllMetaobjects('addon_menu'),
-          getAllMetaobjects('price_threshold'),
-          getAllMetaobjects('menu_cut_off_menu'),
-        ]);
+      const mainCat = await expandCategoryFields(currentMetaId);
 
-      setDaysMeta(mainList ?? []);
-      setAddonsMeta(addonList ?? []);
+      // MAIN
+      const mainItem = mainCat.filter(
+        (item) =>
+          item &&
+          typeof item.key === "string" &&
+          item.key.startsWith("main_tiffin_")
+      );
 
-      if (thresholdList?.[0]?.id) {
-        const priceMetaobject: any = await getMetaObjectByHandle(
-          thresholdList[0].id,
-        );
-        setPriceThreshold(priceMetaobject ?? []);
-        dispatch(setAll(priceMetaobject ?? []));
-      } else {
-        setPriceThreshold([]);
-      }
-      // Cutoff meta
-      const single: any[] = await getMetaObjectByHandle(cutOffMenu?.[0]?.id);
+      const mainItemSorted = sortByOrder(
+        mainItem,
+        MAIN_ORDER,
+        extractMainKey
+      );
 
-      const structured = structureCutoffData(single);
-      const disableKey = `disable_${lowerDay}_menu`;
-      if (structured[disableKey] === true) {
-        setMenuDisabled(true);
-        setCategories([]);
-        setAddonCategories([]);
-        setLoading(false);
-        return;
-      }
+      // ADDONS
+      const addOnCat = mainCat.filter(
+        (item) =>
+          item &&
+          typeof item.key === "string" &&
+          item.key.startsWith("ala_carte_")
+      );
 
-      const cutoffKey = `${lowerDay}_cut_off_time`;
-      const cutoffVal = structured[cutoffKey];
-      if (cutoffVal) {
-        const deviceNow = new Date();
-        const usNow = toUSEasternDate(deviceNow);
-        const usDayIdx = usNow.getDay();
-        const currentDayIndex = US_DAY_INDEX[lowerDay];
-        const cutoffUS = buildEasternCutoff(usNow, cutoffVal);
-        if (usDayIdx === currentDayIndex && usNow > cutoffUS) {
-          setMenuDisabled(true);
-          setCategories([]);
-          setAddonCategories([]);
-          setLoading(false);
-          return;
-        }
-      }
+      const addOnCatSorted = sortByOrder(
+        addOnCat,
+        ALA_ORDER,
+        extractAddonKey
+      );
+      // Apply filtering by tags
+      const filteredMainCategories = mainItemSorted.map((category) => ({
+        ...category,
+        value: filterItemsByTags(category.value, selectedTags), // Apply filter to main items
+      }));
 
-      setMenuDisabled(false);
-
-      const [mainCat, addOnCat] = await Promise.all([
-        currentDayMetaObjectId
-          ? expandCategoryFields(currentDayMetaObjectId)
-          : Promise.resolve([]),
-        addonsMetaObjectId
-          ? expandCategoryFields(addonsMetaObjectId)
-          : Promise.resolve([]),
-      ]);
-
-      setCategories(mainCat);
-      setAddonCategories(addOnCat);
-
-      if (mainCat.length)
-        dispatch(
-          upsertDay({ catalog: mainCat as any, day: currentDay as any }),
-        );
-    } catch (e) {
-      console.error('Error fetching metaobjects:', e);
+      const filteredAddonCategories = addOnCatSorted.map((category) => ({
+        ...category,
+        value: filterItemsByTags(category.value, selectedTags), // Apply filter to addon items
+      }));
+      console.log('filteredAddonCategories', filteredAddonCategories)
+      setCategories(filteredMainCategories);
+      setAddonCategories(filteredAddonCategories);
+    } catch (err) {
+      console.log("Menu Load Error:", err);
       setCategories([]);
       setAddonCategories([]);
     } finally {
       setLoading(false);
     }
-  }, [
-    currentDay,
-    currentDayMetaObjectId,
-    addonsMetaObjectId,
-    dispatch,
-    lowerDay,
-  ]);
+  }, [currentDay, currentMetaId, selectedTags]);
+
+
+  //-------------------------------
+  // TIFFIN LOGIC (FULL)
+  //-------------------------------
+
+  // 1. All main categories for current day
+  const mainCategoryKeys = useMemo(
+    () => categories.map(cat => extractMainKey(cat.key).toUpperCase()),
+    [categories]
+  );
+
+  // 2. All main items selected today
+  const dayMainItems = useMemo(
+    () => lines.filter(i => i.day === currentDay && i.type === "main"),
+    [lines, currentDay]
+  );
+
+  // 3. Get all tiffin plan numbers used today
+  const dayTiffinPlans = useMemo(() => {
+    const all = [...new Set(dayMainItems.map(i => i.tiffinPlan || 1))];
+    return all.sort((a, b) => a - b);
+  }, [dayMainItems]);
+
+  // 4. Find incomplete tiffins
+  const incompleteTiffinPlans = useMemo(() => {
+    return dayTiffinPlans.filter(plan => {
+      const items = dayMainItems.filter(i => i.tiffinPlan === plan);
+      const selectedCats = items.map(i => i.category?.toUpperCase());
+
+      // If ANY category missing → incomplete
+      return !mainCategoryKeys.every(cat => selectedCats.includes(cat));
+    });
+  }, [dayTiffinPlans, dayMainItems, mainCategoryKeys]);
+
+  // 5. Determine current tiffin plan
+  const currentTiffinPlan = useMemo(() => {
+    if (incompleteTiffinPlans.length > 0) return incompleteTiffinPlans[0];
+
+    const max = dayTiffinPlans.length > 0 ? Math.max(...dayTiffinPlans) : 0;
+    return max + 1; // start a new tiffin
+  }, [incompleteTiffinPlans, dayTiffinPlans]);
+
+  // 6. When tiffin changes → UX Toast
+  useEffect(() => {
+    if (!currentDay) return;
+    Toast.show({
+      type: "success",
+      text1: `Using Tiffin ${currentTiffinPlan} for ${currentDay}`,
+      position: "top",
+      visibilityTime: 1500,
+    });
+  }, [currentTiffinPlan, currentDay]);
+
+  // 7. Helper to get selected item for a category
+  const getSelectedForCategory = useCallback(
+    (category: string) => {
+      return dayMainItems.find(
+        i =>
+          i.category?.toLowerCase() === category.toLowerCase() &&
+          i.tiffinPlan === currentTiffinPlan
+      );
+    },
+    [dayMainItems, currentTiffinPlan]
+  );
+
 
   useEffect(() => {
     dispatch(cartFLag());
-    if (currentDay !== 'Saturday' && currentDay !== 'Sunday') {
-      fetchMetaAndData();
-    } else {
-      setCategories([]);
-      setAddonCategories([]);
-    }
+    if (currentDay) fetchMetaAndData();
   }, [dispatch, fetchMetaAndData, currentDay]);
+  const openNextMainSection = (currentKey: string, sortedCategories: any[], setOpen: any) => {
+    const index = sortedCategories.findIndex(cat => cat.key === currentKey);
+    const next = sortedCategories[index + 1];
 
-  // Calculate cart total
-  // Calculate cart total - FIXED VERSION
-  // Calculate cart total - UPDATED VERSION
-  // Alternative: Always charge $29 per tiffin plan + individual prices
-  const cartTotal = useMemo(() => {
-    let total = 0;
+    if (!next) return; // No next category
 
-    // Count unique tiffin plans with main items
-    const tiffinPlans = new Set();
-    lines.forEach(item => {
-      if (item.type === 'main') {
-        tiffinPlans.add(`${item.day}-${item.tiffinPlan || 1}`);
+    const nextKey = `main:${next.key}`;
+    setOpen(nextKey, true); // Open the next category
+  };
+
+  const handleItemSelection = useCallback(
+    (category: string) => {
+      const key = `main:${category}`;
+      setOpen(key, false); // Close the selected category
+
+      // Automatically open the next category for the current tiffin plan
+      openNextMainSection(category, categories, setOpen);
+
+      // Track which items are selected for the current tiffin plan
+      const selectedNow = getSelectedForCategory(category);
+      const updatedSelected = [...dayMainItems, selectedNow];
+
+      // Check if all categories have been selected for the current tiffin plan
+      const selectedCats = updatedSelected.map(i => i?.category?.toUpperCase());
+      const complete = mainCategoryKeys.every(cat => selectedCats.includes(cat));
+
+      if (complete) {
+        // Show toast that the tiffin is complete
+        Toast.show({
+          type: "success",
+          text1: `Tiffin ${currentTiffinPlan} completed!`,
+          visibilityTime: 1800,
+        });
       }
+      // Don't close categories if the tiffin plan is not complete
+    },
+    [categories, dayMainItems, mainCategoryKeys, currentTiffinPlan, getSelectedForCategory]
+  );
+
+  //---------------------------------------------------
+  // Handle "Add Another Tiffin" logic
+  //---------------------------------------------------
+  const openAllMain = useCallback(() => {
+    const next: Record<string, boolean> = {};
+    categories.forEach((cat) => {
+      const key = `main:${cat.key}`;
+      next[key] = true; // Set all sections to open
+    });
+    setOpenByKey((s) => ({ ...s, ...next }));
+  }, [categories]);
+  const handleAddNewTiffin = useCallback(() => {
+    const dayTiffinPlans = new Set(
+      lines.filter(item => item.day === currentDay && item.type === "main").map(item => item.tiffinPlan || 1)
+    );
+    const nextTiffinPlan = Math.max(...Array.from(dayTiffinPlans)) + 1;
+
+    // Show toast for adding a new tiffin
+    Toast.show({
+      type: "success",
+      text1: `Switching to Tiffin ${nextTiffinPlan} for ${currentDay}`,
+      position: "top",
+      visibilityTime: 3000,
+      autoHide: true,
     });
 
-    // Add $29 for each tiffin plan that has at least one main item
-    total += tiffinPlans.size * 29;
-
-    // Add individual prices for all items (both main and addon)
-    lines.forEach(item => {
-      total += Number(item.price) * (item.qty || 1);
-    });
-
-    return total;
-  }, [lines]);
-
-  const handleTagChange = (updatedTags: string[]) => {
-    setSelectedTags(updatedTags);
-  };
-
-  const handleDayChange = (index: number) => {
-    setFilteredIndex(index);
+    setPreviousTiffinPlan(nextTiffinPlan);
     openAllMain();
-  };
+    // scroll to top 
+    scrollRef?.current?.scrollTo({ y: 0, animated: true });
+  }, [lines, currentDay]);
 
-  // Check if any category has items after filtering
-  const hasFilteredMains = filteredMains.some(
-    category => category.value.length > 0,
-  );
-  const hasFilteredAddons = filteredAddons.some(
-    category => category.value.length > 0,
-  );
-  const hasAnyMain = lines.some(item => item.type === 'main');
+  //---------------------------------------------------
+  // Handle "Go to Next Day" logic
+  //---------------------------------------------------
+  const handleGoToNextDay = useCallback(() => {
+    // const nextDayIndex = currentDate + 1;
 
+  }, []);
+
+  //---------------------------------------------------
+  // Tag filtering
+  //---------------------------------------------------
+  const handleTagChange = (tags: string[]) => setSelectedTags(tags);
+
+  //---------------------------------------------------
+  // Render
+  //---------------------------------------------------
   return (
-    <View style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
-      <ScrollView bounces={false}>
+    <View style={{ flex: 1, backgroundColor: "#f6f6f8" }}>
+      <ScrollView ref={scrollRef} bounces={false}>
         <HeaderGreeting name="Sam" />
 
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 7,
-            padding: 4,
-          }}
-        >
+        <View style={{ gap: 7, padding: 4 }}>
           <OrderToggle index={tab} onChange={setTab} />
-          <DayTabs
-            days={FILTERED_DAYS as string[]}
-            onChange={handleDayChange}
-            activeDay={filteredIndex}
-          />
+          <DayTabs activeIndex={filteredIndex} onChange={handleDayChange} />
           <TagListFilter
             selectedTags={selectedTags}
             onChange={handleTagChange}
@@ -676,64 +396,39 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
         {menuDisabled && (
           <EmptyState
-            key={'disabled-menu'}
-            currentDay={currentDay}
-            message="Menu not available for this day."
+            currentDay={currentDay || ""}
+            message="Menu not available."
           />
         )}
 
-        {!menuDisabled &&
-          !categories.length &&
-          currentDay !== 'Saturday' &&
-          currentDay !== 'Sunday' && <SkeletonLoading count={5} />}
+        {!menuDisabled && isLoading && <SkeletonLoading count={5} />}
 
-        {!menuDisabled && tab === 0 && (
+        {/* MAIN SECTION */}
+        {!menuDisabled && currentDay && tab === 0 && (
           <View>
-            {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
-              <EmptyState
-                key={'addon-menu'}
-                currentDay={currentDay}
-                message="Weekend menu coming soon!"
-              />
-            )}
-
-            {hasFilteredMains ? (
-              filteredMains.map(cat => {
-                if (cat.value.length === 0) return null; // Skip empty categories
-
-                const sectionType =
-                  ((cat as any)._sectionType as 'main' | 'addon') ?? 'main';
-                const key = `${sectionType}:${cat.key}`;
-
-                // Find selected item for this category and current tiffin plan
-                const selectedItem = getSelectedItemForCategory(
-                  cat.key,
-                  currentTiffinPlan,
-                );
-
+            {categories.length > 0 ? (
+              categories.map((cat) => {
+                if (cat.value.length === 0) return null;
+                const k = `main:${cat.key}`;
                 return (
                   <Section
-                    key={key}
-                    title={cat.key.toUpperCase()}
-                    note={
-                      selectedItem
-                        ? selectedItem.title?.length > 30
-                          ? `${selectedItem.title.slice(0, 30)}...`
-                          : selectedItem.title
-                        : 'Choose your ' + cat.key + ' to continue.'
-                    }
-                    open={isOpen(key)}
-                    setOpen={(v: boolean) => setOpen(key, v)}
+                    key={k}
+                    title={extractMainKey(cat.key).toUpperCase()}
+                    note={'Choose your ' + cat.key.replace("main_tiffin_", "") + ' to continue'}
+                    open={isOpen(k)}
+                    setOpen={(v) => setOpen(k, v)}
+                    onToggle={(v) => setOpen(k, v)}
                   >
                     <View style={styles.gridWrap}>
                       {cat.value.map((d: any) => (
                         <DishCard
-                          key={d.id}
-                          category={cat.key.toUpperCase()}
+                          key={`${d.id}-${d.variantId}-${cat.key}-${currentDay}`} // Ensure a unique key
+                          category={cat.key.replace("main_tiffin_", "")}
                           day={currentDay}
-                          type="main"
-                          item={d as any}
+                          date={currentDate}
                           tiffinPlan={currentTiffinPlan}
+                          type="main"
+                          item={d}
                           isLoading={isLoading}
                           onChange={(picked: any) => {
                             if (picked?.selected) {
@@ -746,163 +441,129 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                   </Section>
                 );
               })
-            ) : selectedTags.length > 0 ? (
-              <EmptyState
-                key={'no-filtered-mains'}
-                currentDay={currentDay}
-                message={`No dishes found for ${selectedTags.join(', ')}`}
-              />
             ) : (
               <EmptyState
-                key={'no-mains'}
                 currentDay={currentDay}
-                message="No dishes available today"
+                message="No dishes available"
               />
             )}
 
-            {filteredAddons.length > 0 && (
+            {/* ADDONS */}
+            {addonCategories.length > 0 && (
+
               <Section
-                key="main-addons-section"
-                title="Select Add ons"
-                note=""
-                open={isOpen('main:addons')}
-                setOpen={(v: boolean) => setOpen('main:addons', v)}
+                key="addons"
+                title="Addons"
+                open={isOpen("addons")}
+                setOpen={(v) => setOpen("addons", v)}
+                onToggle={(v) => setOpen("addons", v)}
               >
                 <View style={styles.gridWrap}>
-                  {filteredAddons.map((cat, i) =>
-                    cat.value.map(d => (
+                  {addonCategories.flatMap((cat) =>
+                    cat.value.map((d: any) => (
+
                       <AddonDishCard
-                        key={d.id}
-                        category={cat.key.toUpperCase()}
+                        key={`${d.id}-${d.variantId}-${cat.key}-${currentDay}`} // Ensure a unique key
                         day={currentDay}
+                        date={currentDate}
+                        category={cat.key.replace("ala_carte_", "")}
                         type="addon"
-                        item={d as any}
-                        tiffinPlan={currentTiffinPlan}
+                        item={d}
                         isLoading={isLoading}
                       />
-                    )),
+                    ))
                   )}
                 </View>
               </Section>
             )}
-
           </View>
         )}
 
+        {/* A LA CARTE TAB */}
         {!menuDisabled && tab === 1 && (
-          <>
-            {(currentDay === 'Saturday' || currentDay === 'Sunday') && (
-              <EmptyState
-                key="a-la-carte"
-                currentDay={currentDay}
-                message="A La Carte available weekdays only"
-              />
-            )}
+          <View>
+            {addonCategories.length > 0 ? (
+              addonCategories.map((cat) => {
+                if (cat.value.length === 0) return null;
 
-            {hasFilteredAddons ? (
-              filteredAddons.map((cat, i) => {
-                if (cat.value.length === 0) return null; // Skip empty categories
-
-                const key = `addon:${cat.key}-${i}`;
+                const k = `ala:${cat.key}`;
                 return (
                   <Section
-                    key={key}
-                    title={cat.key.toUpperCase()}
-                    note={`Select from ${cat.value.length} options`}
-                    open={isOpen(key)} // Always open for addons
-                    setOpen={(v: boolean) => setOpen(key, v)}
+                    key={k}
+                    title={extractAddonKey(cat.key).toUpperCase()}
+                    open={isOpen(k)}
+                    setOpen={(v) => setOpen(k, v)}
                   >
                     <View style={styles.gridWrap}>
-                      {cat.value.map(d => (
+                      {cat.value.map((d: any) => (
                         <AddonDishCard
-                          key={d.id}
-                          category={cat.key.toUpperCase()}
-                          day={currentDay}
+                          key={`${d.id}-${d.variantId}-${cat.key}-${currentDay}`} // Ensure a unique key
+                          date={currentDate}
+                          day={currentDay || ""}
+                          category={cat.key.replace("ala_carte_", "")}
                           type="addon"
-                          item={d as any}
-                          tiffinPlan={currentTiffinPlan}
+                          item={d}
                           isLoading={isLoading}
-                          onChange={picked => {
-                            // No need to close section for addons
-                          }}
                         />
                       ))}
                     </View>
                   </Section>
                 );
               })
-            ) : selectedTags.length > 0 ? (
-              <EmptyState
-                key={'no-filtered-addons'}
-                currentDay={currentDay}
-                message={`No add-ons found for ${selectedTags.join(', ')}`}
-              />
             ) : (
               <EmptyState
-                key={'no-addons'}
-                currentDay={currentDay}
-                message="No add-ons available today"
+                currentDay={currentDay || ""}
+                message="No add-ons available"
               />
             )}
-          </>
+          </View>
         )}
 
-        {/* per-tiffin add */}
+        {/* Add New Tiffin Button */}
+        {/* Action Buttons */}
         <View style={styles.dualButtonWrap}>
-          {!menuDisabled && (
-            <TouchableOpacity
-              onPress={handleAddNewTiffin}
-              activeOpacity={0.8}
-              style={[
-                styles.buttonBase,
-                styles.addNewTiffin,
-                styles.halfButton,
-              ]}
-            >
-              <PlusIcon width={16} height={16} fill="#0B5733" />
-              <Text style={styles.newTiffinText}>Add another tiffin</Text>
-            </TouchableOpacity>
-          )}
-
-          {currentDay !== 'Friday' && (
-            <TouchableOpacity
-              onPress={handleGoToNextDay}
-              activeOpacity={0.8}
-              style={[
-                styles.buttonBase,
-                styles.goToNextDay,
-                menuDisabled ? styles.fullButton : styles.halfButton,
-              ]}
-            >
-              <Text style={styles.goToNextText}>Go to next day</Text>
-              <RightArrowIcon width={16} height={16} fill="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Clear Day Button */}
-        {/* {!menuDisabled && totalTiffinCount > 0 && (
           <TouchableOpacity
-            onPress={() => dispatch(removeDayMains({ day: currentDay }))}
-            style={styles.clearDayButton}
+            onPress={handleAddNewTiffin}
+            activeOpacity={0.8}
+            style={[
+              styles.buttonBase,
+              styles.addNewTiffin,
+              styles.halfButton,
+            ]}
           >
-            <Text style={styles.clearDayText}>
-              Clear all tiffins for {currentDay}
-            </Text>
+            <PlusIcon width={16} height={16} fill="#0B5733" />
+            <Text style={styles.newTiffinText}>Add another tiffin</Text>
           </TouchableOpacity>
-        )} */}
+
+          <TouchableOpacity
+            onPress={handleGoToNextDay}
+            activeOpacity={0.8}
+            style={[
+              styles.buttonBase,
+              styles.goToNextDay,
+              menuDisabled ? styles.fullButton : styles.halfButton,
+            ]}
+          >
+            <Text style={styles.goToNextText}>Go to next day</Text>
+            <RightArrowIcon width={16} height={16} fill="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
-      {/* Cart Summary Bar */}
+      {/* CART BAR */}
       <TouchableOpacity
         onPress={() => setShowCart(true)}
-        activeOpacity={0.9}
         style={styles.cartBar}
       >
         <View style={styles.cartNotch} />
         <View style={styles.cartBarContent}>
           <Text style={styles.cartLabel}>Cart Summary</Text>
-          <Text style={styles.cartTotal}>Total ${cartTotal.toFixed(2)}</Text>
+          <Text style={styles.cartTotal}>
+            Total $
+            {lines
+              .reduce((sum, i) => sum + Number(i.price || 0), 0)
+              .toFixed(2)}
+          </Text>
         </View>
       </TouchableOpacity>
 
@@ -915,19 +576,16 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   );
 };
 
-export default HomeScreen;
-
+//----------------------------------------------
+// STYLES
+//----------------------------------------------
 const styles = StyleSheet.create({
   gridWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 10,
-    // marginTop: 8,
   },
-  pad: { paddingHorizontal: SPACING, marginTop: -34 },
-  container: { padding: 10, marginLeft: 10, paddingTop: 15 },
-  heading: { fontSize: 24, fontWeight: 'bold', color: '#333' },
   dualButtonWrap: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -974,101 +632,40 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   cartBar: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#101010',
+    backgroundColor: "#101010",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: 14,
-    paddingBottom: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#232323',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 6,
+    paddingVertical: 14,
+    alignItems: "center",
   },
   cartNotch: {
-    position: 'absolute',
+    position: "absolute",
     top: 6,
     width: 40,
     height: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#ffffff",
     borderRadius: 3,
-    opacity: 0.9,
   },
   cartBarContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '90%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "90%",
     marginTop: 10,
   },
   cartLabel: {
-    color: '#FFFFFF',
+    color: "#ffffff",
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   cartTotal: {
-    color: '#FFFFFF',
+    color: "#ffffff",
     fontSize: 15,
-    fontWeight: '800',
-  },
-  tiffinIndicator: {
-    backgroundColor: '#E8F5E8',
-    padding: 12,
-    marginHorizontal: 20,
-    marginTop: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  tiffinText: {
-    color: '#0B5733',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  clearDayButton: {
-    backgroundColor: '#FFE8E8',
-    padding: 12,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  clearDayText: {
-    color: '#D32F2F',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  filterIndicator: {
-    backgroundColor: '#E8F5E8',
-    padding: 12,
-    marginHorizontal: 20,
-    marginTop: 10,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  filterText: {
-    color: '#0B5733',
-    fontSize: 14,
-    fontWeight: '600',
-    flex: 1,
-  },
-  clearFilterButton: {
-    backgroundColor: '#0B5733',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  clearFilterText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "800",
   },
 });
+
+export default HomeScreen;

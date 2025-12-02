@@ -314,7 +314,7 @@ export default function CartSummaryModal({
                       <View style={s.planItems}>
                         {plan.items.map((item: any) => (
                           <View
-                            key={`${item.id}-${item.variantId}-${item.tiffinPlan}`}
+                            key={`${item.id}-${item.variantId}-${item.tiffinPlan}-${item.type}-${item.day}-${item.category}-${item.title}`}
                             style={s.itemRow}
                           >
                             <View style={s.itemContent}>
