@@ -31,6 +31,7 @@ import {
 import { createCart } from '../shopify/mutation/cart';
 import { useShopifyCheckoutSheet } from '@shopify/checkout-sheet-kit';
 import { catRank, formatDate, rotateFromToday } from '../utils/tiffinHelpers';
+import MobileMenubg from '../assets/newicon/mobile-menu-oprn.svg'
 
 const { height } = Dimensions.get('window');
 const REQUIRED_CATS = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -253,7 +254,7 @@ export default function CartSummaryModal({
       message: `Minimum $${ADDONS_MIN} for A La Carte orders`,
     };
   }, [addonsOnly, addons]);
-
+  const width = Dimensions.get('window').width;
   const canProceed = !missingInfo && !addonsMinInfo && lines.length > 0;
 
   const DayBlock = ({ date, mains, addons, tiffinPlans }: any) => {
@@ -474,18 +475,25 @@ export default function CartSummaryModal({
       onRequestClose={onClose}
     >
       <Pressable style={s.backdrop} onPress={onClose} />
-      <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
+      <Animated.View style={[s.sheet, { transform: [{ translateY }], }]}>
+        <MobileMenubg height={75} width={width} style={{ position: "absolute", top: 5, left: 0, right: 0 }} />
         <TouchableOpacity style={s.handleWrapper} onPress={onClose}>
           <View style={s.handle}></View>
-        </TouchableOpacity>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
-        >
-          <Text style={s.title}>Cart Summary</Text>
 
-          {/* Container Type */}
-          {/* <Text style={s.label}>Select container type</Text>
+        </TouchableOpacity>
+
+        <View style={{  backgroundColor: '#F7F7F9',}}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              padding: 16,
+              paddingTop: 0,
+              paddingBottom: 120,
+            }}
+          >
+            <Text style={s.title}>Cart Summary</Text>
+            {/* Container Type */}
+            {/* <Text style={s.label}>Select container type</Text>
           <View style={s.toggleWrap}>
             {['Steel', 'ECO'].map(opt => {
               const isActive = selectedType === opt;
@@ -513,29 +521,29 @@ export default function CartSummaryModal({
             })}
           </View> */}
 
-          {/* Cart Items */}
-          {grouped.map(({ date, mains, addons, tiffinPlans }) => (
-            <DayBlock
-              key={date}
-              // day={day}
-              date={date}
-              mains={mains}
-              addons={addons}
-              tiffinPlans={tiffinPlans}
-            />
-          ))}
+            {/* Cart Items */}
+            {grouped.map(({ date, mains, addons, tiffinPlans }) => (
+              <DayBlock
+                key={date}
+                // day={day}
+                date={date}
+                mains={mains}
+                addons={addons}
+                tiffinPlans={tiffinPlans}
+              />
+            ))}
 
-          {/* Validation Messages */}
-          {missingInfo && (
-            <View style={s.validationBox}>
-              <Text style={s.validationTitle}>Missing Items</Text>
-              <Text style={s.validationText}>
-                Please complete all tiffins before proceeding
-              </Text>
-            </View>
-          )}
+            {/* Validation Messages */}
+            {missingInfo && (
+              <View style={s.validationBox}>
+                <Text style={s.validationTitle}>Missing Items</Text>
+                <Text style={s.validationText}>
+                  Please complete all tiffins before proceeding
+                </Text>
+              </View>
+            )}
 
-          {/* {addonsMinInfo && (
+            {/* {addonsMinInfo && (
             <View style={s.validationBox}>
               <Text style={s.validationTitle}>Minimum Not Met</Text>
               <Text style={s.validationText}>{addonsMinInfo.message}</Text>
@@ -545,62 +553,63 @@ export default function CartSummaryModal({
             </View>
           )} */}
 
-          {/* Cart Summary */}
-          <View style={s.summaryCard}>
-            {(addonsMinInfo || missingInfo) && (
-              <View style={s.noticeBox}>
-                <Text style={s.noticeText}>
-                  {addonsMinInfo && addonsMinInfo.message}
-                  {missingInfo &&
-                    'Please complete all tiffins before proceeding'}
-                </Text>
-              </View>
-            )}
+            {/* Cart Summary */}
+            <View style={s.summaryCard}>
+              {(addonsMinInfo || missingInfo) && (
+                <View style={s.noticeBox}>
+                  <Text style={s.noticeText}>
+                    {addonsMinInfo && addonsMinInfo.message}
+                    {missingInfo &&
+                      'Please complete all tiffins before proceeding'}
+                  </Text>
+                </View>
+              )}
 
-            <View>
-              <View style={s.summaryRow}>
-                <Text style={s.label}>Subtotal</Text>
-                <Text style={s.value}>
-                  ${(mealCost + tiffinPrice).toFixed(2)}
-                </Text>
-              </View>
-              <View style={s.summaryRow}>
-                <Text style={s.label}>Addons</Text>
-                <Text style={s.value}>${addons.toFixed(2)}</Text>
-              </View>
+              <View>
+                <View style={s.summaryRow}>
+                  <Text style={s.label}>Subtotal</Text>
+                  <Text style={s.value}>
+                    ${(mealCost + tiffinPrice).toFixed(2)}
+                  </Text>
+                </View>
+                <View style={s.summaryRow}>
+                  <Text style={s.label}>Addons</Text>
+                  <Text style={s.value}>${addons.toFixed(2)}</Text>
+                </View>
 
-              <View style={{ marginBottom: 16 }}>
-                <Divider />
-              </View>
+                <View style={{ marginBottom: 16 }}>
+                  <Divider />
+                </View>
 
-              <View style={s.summaryRow}>
-                <Text style={s.totalLabel}>Total Payable</Text>
-                <Text style={s.totalValue}>${total.toFixed(2)}</Text>
+                <View style={s.summaryRow}>
+                  <Text style={s.totalLabel}>Total Payable</Text>
+                  <Text style={s.totalValue}>${total.toFixed(2)}</Text>
+                </View>
               </View>
             </View>
-          </View>
-          <WaveImageOrder style={s.wave} />
+            <WaveImageOrder style={s.wave} />
 
-          <LinearGradient
-            colors={
-              canProceed ? ['#5FBC9B', '#1E9E64'] : ['#CCCCCC', '#999999']
-            }
-            style={s.orderBtn}
-          >
-            <TouchableOpacity
-              style={s.orderBtnContent}
-              activeOpacity={0.9}
-              onPress={() => canProceed && onOrderPress()}
-              disabled={!canProceed}
+            <LinearGradient
+              colors={
+                canProceed ? ['#5FBC9B', '#1E9E64'] : ['#5FBC9B', '#88c3a8ff']
+              }
+              style={s.orderBtn}
             >
-              <Text style={s.orderText}>
-                {canProceed
-                  ? `Place an Order ($${total.toFixed(2)})`
-                  : 'Complete Your Order'}
-              </Text>
-            </TouchableOpacity>
-          </LinearGradient>
-        </ScrollView>
+              <TouchableOpacity
+                style={[s.orderBtnContent, !canProceed && { opacity: 0.5}]}
+                activeOpacity={0.9}
+                onPress={() => canProceed && onOrderPress()}
+                disabled={!canProceed}
+              >
+                <Text style={s.orderText}>
+                  {canProceed
+                    ? `Place an Order ($${total.toFixed(2)})`
+                    : 'Complete Your Order'}
+                </Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </ScrollView>
+        </View>
       </Animated.View>
     </Modal>
   );
@@ -615,11 +624,11 @@ const s = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: '#f7f7f9',
+    // backgroundColor: '#f7f7f9',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 20,
-    paddingTop: 0,
+    // padding: 20,
+    // paddingTop: 0,
     maxHeight: height * 0.9,
     shadowColor: '#000',
     shadowOpacity: 0.15,
@@ -635,7 +644,7 @@ const s = StyleSheet.create({
     width: 50,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#E0E0E0',
+
     alignSelf: 'center',
     // marginBottom: 12,
   },

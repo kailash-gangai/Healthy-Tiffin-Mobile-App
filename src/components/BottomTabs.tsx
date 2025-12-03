@@ -7,6 +7,7 @@ import ProgressIcon from '../assets/htf-icon/icon-progress (1).svg';
 import HeartIcon from '../assets/htf-icon/icon-favorites.svg';
 import OrderIcon from '../assets/htf-icon/icon-orders.svg';
 import AccountIcon from '../assets/htf-icon/icon-account.svg';
+import LinearGradient from 'react-native-linear-gradient';
 
 type TabKey = 'progress' | 'favorites' | 'Home' | 'Order' | 'account';
 type Props = { active: TabKey; onChange: (k: TabKey) => void; };
@@ -22,7 +23,7 @@ export default function BottomTabs({ active, onChange }: Props) {
             const isActive = active === k;
             const stroke = isActive ? YELLOW : WHITE;
             const fill = isActive ? YELLOW : 'none';
-            
+
 
             if (center) {
                   return (
@@ -46,21 +47,28 @@ export default function BottomTabs({ active, onChange }: Props) {
       };
 
       return (
-            <SafeAreaView style={s.safe} edges={['bottom'] as any}>
-                  <View style={s.bar}>
-                        <Item k="progress" label="Progress" Icon={ProgressIcon} />
-                        <Item k="favorites" label="Favorites" Icon={HeartIcon} />
-                        <Item k="Home" label="Home" center />
-                        <Item k="Order" label="Orders" Icon={OrderIcon} />
-                        <Item k="account" label="Account" Icon={AccountIcon} />
-                  </View>
-            </SafeAreaView>
+            <LinearGradient
+                  colors={['#333333', '#181818']}
+                  start={{ x: 0.1, y: 0 }}  // Define the starting point of the gradient
+                  end={{ x: 0.9, y: 1 }}    // Define the ending point of the gradient
+                  locations={[0.0908, 0.9107]} // Define where each color will end
+            >
+                  <SafeAreaView edges={['bottom'] as any}>
+                        <View style={s.bar}>
+                              <Item k="progress" label="Progress" Icon={ProgressIcon} />
+                              <Item k="favorites" label="Favorites" Icon={HeartIcon} />
+                              <Item k="Home" label="Home" center />
+                              <Item k="Order" label="Orders" Icon={OrderIcon} />
+                              <Item k="account" label="Account" Icon={AccountIcon} />
+                        </View>
+                  </SafeAreaView>
+            </LinearGradient>
       );
 }
 
 const s = StyleSheet.create({
-      safe: { backgroundColor: BLACK },
-      bar: { height: 64, backgroundColor: BLACK, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
+      safe: {},
+      bar: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
       item: { alignItems: 'center', justifyContent: 'center', width: 70 },
       iconWrap: { marginBottom: 4 },
       label: { color: WHITE, fontSize: 12 },

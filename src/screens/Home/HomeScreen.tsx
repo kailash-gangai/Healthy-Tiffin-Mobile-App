@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import PlusIcon from '../../assets/newicon/icon-plus.svg';
 import RightArrowIcon from '../../assets/newicon/icon-right-arrow.svg';
@@ -25,7 +26,7 @@ import SkeletonLoading from "../../components/SkeletonLoading";
 import EmptyState from "../../components/EmptyState";
 import TagListFilter from "../../components/TagListFilter";
 import CartSummaryModal from "../../components/CartSummaryModal";
-
+import MobileMenubg from '../../assets/newicon/mobile-menu.svg'
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { cartFLag } from "../../store/slice/cartSlice";
 import { upsertDay } from "../../store/slice/catalogSlice";
@@ -52,7 +53,7 @@ const ALA_ORDER = [
   "kids",
   "oatmeal",
 ];
-
+const width = Dimensions.get("window").width;
 //----------------------------------------------
 // MAIN COMPONENT
 //----------------------------------------------
@@ -304,6 +305,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       mainCategoryKeys,
       currentTiffinPlan,
       getSelectedForCategory,
+      isTiffinComplete,
     ]
   );
 
@@ -350,6 +352,26 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   //---------------------------------------------------
   const handleTagChange = (tags: string[]) => setSelectedTags(tags);
 
+  const getSelectedItemForCategory = useCallback(
+    (category: string, tiffinPlan: number) => {
+      return lines.find(
+        (item: any) =>
+          item.day === currentDay &&
+          item.category?.toLowerCase() === category.toLowerCase() &&
+          item.type === 'main' &&
+          item.tiffinPlan === tiffinPlan,
+      );
+    },
+    [lines, currentDay],
+  );
+
+  // Check if current tiffin plan is complete
+  const isCurrentTiffinComplete = useMemo(() => {
+    const allCategories = categories.map(cat => cat.key.toUpperCase());
+    return allCategories.every(cat =>
+      getSelectedItemForCategory(cat, currentTiffinPlan),
+    );
+  }, [categories, currentTiffinPlan, getSelectedItemForCategory]);
   //---------------------------------------------------
   // Render
   //---------------------------------------------------
@@ -383,11 +405,21 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               categories.map((cat) => {
                 if (cat.value.length === 0) return null;
                 const k = `main:${cat.key}`;
+                const selectedItem = getSelectedItemForCategory(
+                  cat.key,
+                  currentTiffinPlan,
+                );
                 return (
                   <Section
                     key={k}
                     title={extractMainKey(cat.key).toUpperCase()}
-                    note={'Choose your ' + cat.key.replace("main_tiffin_", "") + ' to continue'}
+                    note={
+                      selectedItem
+                        ? selectedItem.title?.length > 30
+                          ? `${selectedItem.title.slice(0, 30)}...`
+                          : selectedItem.title
+                        : 'Choose your ' + cat.key.replace("main_tiffin_", "") + ' to continue.'
+                    }
                     open={isOpen(k)}
                     setOpen={(v) => setOpen(k, v)}
                     onToggle={(v) => setOpen(k, v)}
@@ -521,14 +553,17 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             <RightArrowIcon width={16} height={16} fill="#FFFFFF" />
           </TouchableOpacity>
         </View>
+
       </ScrollView>
 
       {/* CART BAR */}
       <TouchableOpacity
         onPress={() => setShowCart(true)}
-        style={styles.cartBar}
+        style={[styles.cartBar]}
+        activeOpacity={0.9}
       >
-        <View style={styles.cartNotch} />
+        {/* <View style={styles.cartNotch} /> */}
+      <MobileMenubg height={75} width={width} style={{ position: "absolute",marginBottom: -20, bottom: 0, left: 0, right: 0 }} />
         <View style={styles.cartBarContent}>
           <Text style={styles.cartLabel}>Cart Summary</Text>
           <Text style={styles.cartTotal}>
@@ -538,6 +573,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               .toFixed(2)}
           </Text>
         </View>
+
       </TouchableOpacity>
 
       <CartSummaryModal
@@ -610,11 +646,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#101010",
+    // backgroundColor: "#101010",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingVertical: 14,
     alignItems: "center",
+    width: width,
   },
   cartNotch: {
     position: "absolute",
