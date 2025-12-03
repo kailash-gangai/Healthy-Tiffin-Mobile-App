@@ -9,8 +9,12 @@ import {
   getAllMetaobjects,
   getMetaObjectByHandle,
 } from "../shopify/queries/getMetaObject";
+import { showToastInfo } from "../config/ShowToastMessages";
+import SkeletonLoading from "./SkeletonLoading";
+import { useAppSelector } from "../store/hooks";
+import { useFocusEffect } from "@react-navigation/native";
 
-const ITEM_W = 60;
+const ITEM_W = 50;
 const SCREEN_W = Dimensions.get("window").width;
 const SIDE_SPACER = (SCREEN_W - ITEM_W) / 2;
 
@@ -40,23 +44,61 @@ export default function DayTabs({
   const listRef = useRef<FlatList<MenuDay>>(null);
   const [menuDays, setMenuDays] = useState<MenuDay[]>([]);
   const [active, setActive] = useState(activeIndex);
-
+  const [isloading, setIsLoading] = useState(false);
+  const { lines } = useAppSelector(state => state.cart);
+  const [uniqueDates, setUniqueDates] = useState<string[]>([]);
+  useEffect(() => {
+    const dates = lines.map((item: any) => item.date);
+    const uniqueDates = Array.from(new Set(dates));
+    setUniqueDates(uniqueDates);
+  }, [ active, activeIndex]);
   /* ============================================================
      1) LOAD METAOBJECTS & APPLY RULES
      ============================================================ */
+  // Load menuDays once
   useEffect(() => {
     (async () => {
-      const metaobjects = await getAllMetaobjects("menu_products_monthly");
-      if (!metaobjects?.length) return;
+      setIsLoading(true);
+      try {
+        const metaobjects = await getAllMetaobjects("menu_products_monthly");
+        if (!metaobjects?.length) return;
 
-      const allData: any[] = await Promise.all(
-        metaobjects.map((m) => getMetaObjectByHandle(m.id))
-      );
+        const allData: any[] = await Promise.all(
+          metaobjects.map((m) => getMetaObjectByHandle(m.id))
+        );
 
-      const parsed = buildMenuDays(metaobjects, allData);
-      setMenuDays(parsed);
+        const parsed = buildMenuDays(metaobjects, allData);
+        setMenuDays(parsed);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
     })();
   }, []);
+
+  // Sync activeIndex from parent
+  useEffect(() => {
+    if (menuDays.length === 0) return;
+    if (active >= menuDays.length - 1) {
+      showToastInfo('No more days to show.');
+      return;
+    }
+    setActive(active + 1);
+    centerItem(active + 1);
+
+    const item = menuDays[active + 1];
+    if (item) {
+      onChange?.({
+        id: item.id,
+        index: active + 1,
+        day: item.labelDay,
+        date: item.date,
+      });
+    }
+  }, [activeIndex, menuDays]);
+
+
 
   /** Build the menu days from metaobjects + fields */
   const buildMenuDays = (metaobjects: any[], allData: any[]): MenuDay[] => {
@@ -120,6 +162,7 @@ export default function DayTabs({
     }
   }, [menuDays, active]);
 
+
   /* ============================================================
      3) SELECT A DAY
      ============================================================ */
@@ -154,13 +197,14 @@ export default function DayTabs({
      ============================================================ */
   const renderItem = ({ item, index }: { item: MenuDay; index: number }) => {
     const isActive = index === active;
+    const isSelected = uniqueDates.includes(item.date);
     return (
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => select(index)}
-        style={s.dayItem}
+        style={[s.dayItem]}
       >
-        <Text style={[s.dayName, isActive && s.activeDayName]}>
+        <Text style={[s.dayName, isActive && s.activeDayName,]}>
           {item.labelDay.slice(0, 3).toUpperCase()}
         </Text>
 
@@ -173,9 +217,9 @@ export default function DayTabs({
             <View style={s.dot} />
           </LinearGradient>
         ) : (
-          <View style={[s.dateBox, s.dateBoxInactive]}>
+          <View style={[s.dateBox, s.dateBoxInactive, isSelected && s.dayItemSelected]}>
             <Text style={s.dateText}>{item.dayNum}</Text>
-            <View style={s.dot} />
+            <View style={[s.dot, isSelected && { backgroundColor: "#F9C711" }]} />
           </View>
         )}
       </TouchableOpacity>
@@ -184,27 +228,46 @@ export default function DayTabs({
 
   return (
     <View style={s.wrapper}>
+      {isloading && <SkeletonLoading count={5} />}
       <View style={s.header}>
-        <TouchableOpacity
-          onPress={() => select(active - 1)}
-          disabled={active === 0}
-          style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}
-        >
-          <ArrowLeftIcon width={16} height={16} />
-        </TouchableOpacity>
-
-        <Text style={s.rangeText}>{weekRangeLabel()}</Text>
-
-        <TouchableOpacity
-          onPress={() => select(active + 1)}
-          disabled={active === menuDays.length - 1}
-          style={[
-            s.iconWrap,
-            active === menuDays.length - 1 && { opacity: 0.3 },
+        <LinearGradient
+          colors={[
+            'rgba(66, 210, 150, 0.2)', // start color
+            'rgba(42, 180, 123, 0.2)', // end color
           ]}
+          start={{ x: 0.3, y: 0 }} // roughly matches 189.66° angle
+          end={{ x: 1, y: 1 }}
+          style={{ borderRadius: 8 }}
         >
-          <ArrowRightIcon width={16} height={16} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => select(active - 1)}
+            disabled={active === 0}
+            style={[s.iconWrap, active === 0 && { opacity: 0.3 }]}
+          >
+            <ArrowLeftIcon width={16} height={16} />
+          </TouchableOpacity>
+        </LinearGradient>
+        <Text style={s.rangeText}>{weekRangeLabel()}</Text>
+        <LinearGradient
+          colors={[
+            'rgba(66, 210, 150, 0.2)', // start color
+            'rgba(42, 180, 123, 0.2)', // end color
+          ]}
+          start={{ x: 0.3, y: 0 }} // roughly matches 189.66° angle
+          end={{ x: 1, y: 1 }}
+          style={{ borderRadius: 8 }}
+        >
+          <TouchableOpacity
+            onPress={() => select(active + 1)}
+            disabled={active === menuDays.length - 1}
+            style={[
+              s.iconWrap,
+              active === menuDays.length - 1 && { opacity: 0.3 },
+            ]}
+          >
+            <ArrowRightIcon width={16} height={16} />
+          </TouchableOpacity>
+        </LinearGradient>
       </View>
 
       <Divider />
@@ -218,6 +281,7 @@ export default function DayTabs({
         showsHorizontalScrollIndicator={false}
         ListHeaderComponent={<View />}
         ListFooterComponent={<View style={{ width: SIDE_SPACER }} />}
+
       />
     </View>
   );
@@ -257,6 +321,11 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
     width: ITEM_W,
+    // paddingHorizontal: 4,
+  },
+  dayItemSelected: {
+    borderColor: "#FFCA40",
+    borderWidth: 0.5,
   },
   dayName: {
     fontSize: 12,

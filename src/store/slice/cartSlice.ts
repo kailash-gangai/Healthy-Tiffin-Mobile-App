@@ -23,7 +23,7 @@ type RemovePayload = {
   type: 'main' | 'addon';
 };
 
-type RemoveByDayPayload = { day: string };
+type RemoveByDayPayload = { date: string };
 
 export type CartLine = {
   id: string;
@@ -131,7 +131,8 @@ const cartSlice = createSlice({
       const existing = s.lines.find(
           line => line.id === id &&
           line.variantId === variantId &&
-          line.day === day
+          line.date === date &&
+          line.type === type
       );
       s.isCartCleared = false;
       if (existing) {
@@ -229,14 +230,14 @@ const cartSlice = createSlice({
       s.isCartCleared = false;
     },
     removeDayMains: (s, a: PayloadAction<RemoveByDayPayload>) => {
-      const { day } = a.payload;
-      s.lines = s.lines.filter(l => !(l.day === day && l.type === 'main'));
+      const { date } = a.payload;
+      s.lines = s.lines.filter(l => !(l.date === date && l.type === 'main'));
     },
 
     // NEW: remove all ADDON items for a day
     removeDayAddons: (s, a: PayloadAction<RemoveByDayPayload>) => {
-      const { day } = a.payload;
-      s.lines = s.lines.filter(l => !(l.day === day && l.type === 'addon'));
+      const { date } = a.payload;
+      s.lines = s.lines.filter(l => !(l.date === date && l.type === 'addon'));
     },
   },
 });

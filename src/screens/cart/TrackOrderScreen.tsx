@@ -223,7 +223,6 @@ const s = StyleSheet.create({
   invite: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.white,
     borderRadius: 12,
     padding: SPACING,
     marginTop: 24,

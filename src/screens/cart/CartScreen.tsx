@@ -17,6 +17,7 @@ import {
 
 import AppHeader from '../../components/AppHeader';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import WaveImageOrder from '../../assets/newicon/img-order.svg';
 
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -39,9 +40,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import { SHADOW } from '../../ui/theme';
 import { COLORS as C } from '../../ui/theme';
 import MissingCategoryModal from '../../components/MissingCategoryModal';
+import { formatDate } from '../../utils/tiffinHelpers';
 
-const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
-const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
+const MAIN_CAT_ORDER = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
+const REQUIRED_CATS = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
@@ -66,10 +68,10 @@ export default function CartScreen({ navigation }: any) {
   const [expandedDays, setExpandedDays] = useState<{ [key: string]: boolean }>({});
   const [missingOpen, setMissingOpen] = useState(false);
 
-  const toggleDay = (day: string) =>
-    setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
+  const toggleDay = (date: string) =>
+    setExpandedDays(prev => ({ ...prev, [date]: !prev[date] }));
 
-  const isDayOpen = (day: string) => expandedDays[day] ?? true;
+  const isDayOpen = (date: string) => expandedDays[date] ?? false;
 
   const hasAnyMain = useMemo(
     () => lines.some(l => l.type === 'main'),
@@ -88,7 +90,7 @@ export default function CartScreen({ navigation }: any) {
     .filter(i => i.type === 'addon')
     .reduce((s, x) => s + +x.price * x.qty, 0);
 
-  const uniqueDayCount = new Set(lines.map(it => it.day).filter(Boolean)).size;
+  const uniqueDayCount = new Set(lines.map(it => it.date).filter(Boolean)).size;
   const uniqueTiffinCount = new Set(lines.map(it => it.tiffinPlan).filter(Boolean)).size;
 
   let tiffinPrice = 29 * uniqueDayCount * uniqueTiffinCount;
@@ -100,8 +102,8 @@ export default function CartScreen({ navigation }: any) {
   const isEmpty = lines.length === 0;
 
   // ===== Days (Sorted) =====
-  const days = useMemo(() => {
-    const byDaySet = [...new Set(lines.map(l => l.day))].filter(Boolean) as string[];
+  const dates = useMemo(() => {
+    const byDaySet = [...new Set(lines.map(l => l.date))].filter(Boolean) as string[];
     const ring = rotateFromToday(WEEK);
     return byDaySet.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
   }, [lines]);
@@ -109,9 +111,9 @@ export default function CartScreen({ navigation }: any) {
   // ===== Grouped items =====
   const grouped = useMemo(
     () =>
-      days.map(d => {
-        const mains = lines.filter(x => x.day === d && x.type === 'main');
-        const addons = lines.filter(x => x.day === d && x.type === 'addon');
+      dates.map(d => {
+        const mains = lines.filter(x => x.date === d && x.type === 'main');
+        const addons = lines.filter(x => x.date === d && x.type === 'addon');
 
         const plansMap = mains.reduce((acc: any, item: any) => {
           if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
@@ -128,24 +130,23 @@ export default function CartScreen({ navigation }: any) {
           }))
           .sort((a, b) => a.plan - b.plan);
 
-        return { day: d, mains, addons, tiffinPlans };
+        return { date: d, mains, addons, tiffinPlans };
       }),
-    [days, lines],
+    [dates, lines],
   );
-
   // ===== Missing Items =====
   const missingInfo = useMemo(() => {
     if (!hasAnyMain) return null;
 
     const ring = rotateFromToday(WEEK);
-    const daysInCart = [...new Set(lines.map(l => l.day))].filter(Boolean) as string[];
+    const daysInCart = [...new Set(lines.map(l => l.date))].filter(Boolean) as string[];
     const scan = ring.filter(d => daysInCart.includes(d));
 
     const allMissing: any[] = [];
     for (const d of scan) {
       const tiffinPlans = [
         ...new Set(
-          lines.filter(l => l.day === d && l.type === 'main').map(l => l.tiffinPlan),
+          lines.filter(l => l.date === d && l.type === 'main').map(l => l.tiffinPlan),
         ),
       ].sort();
 
@@ -153,12 +154,12 @@ export default function CartScreen({ navigation }: any) {
         const catsPresent = new Set(
           lines
             .filter(
-              l => l.day === d && l.type === 'main' && l.tiffinPlan === plan,
+              l => l.date === d && l.type === 'main' && l.tiffinPlan === plan,
             )
             .map(l => String(l.category).toUpperCase()),
         );
         const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
-        if (missing.length) allMissing.push({ day: d, tiffinPlan: plan, missing });
+        if (missing.length) allMissing.push({ date: d, tiffinPlan: plan, missing });
       }
     }
 
@@ -208,7 +209,7 @@ export default function CartScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 180 }}
         >
-          {grouped.map(({ day, mains, addons, tiffinPlans }) => {
+          {grouped.map(({ date, mains, addons, tiffinPlans }) => {
             const dayAddonsTotal = addons.reduce(
               (s, x) => s + Number(x.price) * (x.qty ?? 1),
               0,
@@ -225,12 +226,12 @@ export default function CartScreen({ navigation }: any) {
             const dayTotal = dayBase + dayMainsExtra + dayAddonsTotal;
 
             return (
-              <View key={day} style={styles.dayCard}>
+              <View key={date} style={styles.dayCard}>
                 <TouchableOpacity
                   style={styles.dayHeader}
-                  onPress={() => toggleDay(day)}
+                  onPress={() => toggleDay(date)}
                 >
-                  <Text style={styles.dayText}>{day}</Text>
+                  <Text style={styles.dayText}>{formatDate(date)}</Text>
 
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={styles.priceTag}>
@@ -238,7 +239,7 @@ export default function CartScreen({ navigation }: any) {
                     </View>
 
                     <View style={styles.arrowBox}>
-                      {isDayOpen(day) ? (
+                      {isDayOpen(date) ? (
                         <ArrowUp width={20} height={20} />
                       ) : (
                         <ArrowDown width={20} height={20} />
@@ -247,7 +248,7 @@ export default function CartScreen({ navigation }: any) {
                   </View>
                 </TouchableOpacity>
 
-                {isDayOpen(day) && (
+                {isDayOpen(date) && (
                   <View style={{ marginTop: 16 }}>
                     <Divider />
 
@@ -305,7 +306,7 @@ export default function CartScreen({ navigation }: any) {
 
                           <TouchableOpacity
                             style={styles.deleteBtn}
-                            onPress={() => dispatch(removeDayAddons({ day }))}
+                            onPress={() => dispatch(removeDayAddons({ date }))}
                           >
                             <TrashIcon width={18} height={18} />
                           </TouchableOpacity>
@@ -320,7 +321,7 @@ export default function CartScreen({ navigation }: any) {
                               <View style={styles.itemLeft}>
                                 <Image source={{ uri: item.image }} style={styles.imgMini} />
 
-                                <View style={styles.itemDetails}>
+                                <View style={styles.additemDetails}>
                                   <Text style={[styles.itemCategory, styles.addonCategory]}>
                                     {item.category}
                                   </Text>
@@ -388,14 +389,14 @@ export default function CartScreen({ navigation }: any) {
                     )}
 
                     {/* Remove all mains for the day */}
-                    {mains.length > 0 && (
+                    {/* {mains.length > 0 && (
                       <TouchableOpacity
                         style={styles.clearSubBtn}
-                        onPress={() => dispatch(removeDayMains({ day }))}
+                        onPress={() => dispatch(removeDayMains({ date }))}
                       >
-                        <Text style={styles.clearSubText}>Remove all mains for {day}</Text>
+                        <Text style={styles.clearSubText}>Remove all mains for {date}</Text>
                       </TouchableOpacity>
-                    )}
+                    )} */}
                   </View>
                 )}
               </View>
@@ -442,6 +443,8 @@ export default function CartScreen({ navigation }: any) {
               <Text style={styles.summaryTotalValue}>${total.toFixed(2)}</Text>
             </View>
           </View>
+          <WaveImageOrder style={styles.wave} />
+
 
           {/* Missing Category Modal */}
           {missingInfo && (
@@ -526,7 +529,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  dayText: { fontSize: 16, fontWeight: '700', color: C.black },
+  dayText: { fontSize: 14, lineHeight: 16, letterSpacing: -0.24, fontWeight: '500', color: C.black },
   priceTag: {
     backgroundColor: C.black,
     paddingVertical: 6,
@@ -563,7 +566,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 12,
   },
-  addonChip: { backgroundColor: '#FFF4E8', color: C.oranger },
+  addonChip: { backgroundColor: '#ffff', color: C.oranger },
   addonCategory: { color: '#1B4FBF' },
 
   // Items
@@ -575,10 +578,11 @@ const styles = StyleSheet.create({
   },
   itemLeft: { flexDirection: 'row', alignItems: 'center' },
   imgMini: { width: 54, height: 54, borderRadius: 16, resizeMode: 'cover' },
-  itemDetails: { marginLeft: 12, width: 150 },
+  itemDetails: { marginLeft: 12, width: 220 },
+  additemDetails: { marginLeft: 12, width: 150 },
   itemCategory: { fontSize: 11, fontWeight: '700', color: C.green },
   itemName: { fontSize: 12, fontWeight: '600', marginTop: 2, color: C.black },
-  itemExtra: { fontSize: 12, color: C.gray, marginTop: 4 },
+  itemExtra: { fontSize: 12, color: C.sub, marginTop: 4 },
 
   deleteBtn: {
     width: 32,
@@ -590,7 +594,7 @@ const styles = StyleSheet.create({
   },
 
   // Addon qty controls
-  bControls: { flexDirection: 'row', alignItems: 'center' },
+  bControls: { flexDirection: 'row', alignItems: 'center', gap: 1 },
   qtyBtn: {
     width: 24,
     height: 24,
@@ -630,7 +634,8 @@ const styles = StyleSheet.create({
   // Summary
   summaryCard: {
     marginTop: 20,
-    borderRadius: 16,
+    borderTopEndRadius: 16,
+    borderTopStartRadius: 16,
     padding: 16,
     ...SHADOW,
   },
@@ -644,7 +649,10 @@ const styles = StyleSheet.create({
 
   summaryTotalLabel: { fontSize: 16, fontWeight: '700', color: C.black },
   summaryTotalValue: { fontSize: 18, fontWeight: '800', color: C.black },
+  wave: {
+    marginTop: -4,
 
+  },
   noticeBox: {
     backgroundColor: '#ececee',
     paddingVertical: 8,

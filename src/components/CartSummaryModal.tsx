@@ -23,19 +23,17 @@ import { SHADOW } from '../ui/theme';
 import LinearGradient from 'react-native-linear-gradient';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
-  addItems,
   removeItem,
-  clearCart,
   decreaseItem,
   increaseItem,
-  removeDayMains,
   removeDayAddons,
 } from '../store/slice/cartSlice';
-import { SvgUri } from 'react-native-svg';
+import { createCart } from '../shopify/mutation/cart';
+import { useShopifyCheckoutSheet } from '@shopify/checkout-sheet-kit';
+import { catRank, formatDate, rotateFromToday } from '../utils/tiffinHelpers';
 
 const { height } = Dimensions.get('window');
-const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
-const REQUIRED_CATS = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
+const REQUIRED_CATS = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 
 const WEEK = [
   'Monday',
@@ -65,19 +63,10 @@ const COLORS = {
   border: '#EDEDED',
   red: '#FF6B6B',
 };
-const width = Dimensions.get('window').width;
 
-const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-const rotateFromToday = (arr: string[]) => {
-  const i = arr.indexOf(todayName);
-  if (i < 0) return arr;
-  return [...arr.slice(i), ...arr.slice(0, i)];
-};
 
-const catRank = (c?: string) => {
-  const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
-  return i === -1 ? 1e9 : i;
-};
+
+
 
 export default function CartSummaryModal({
   visible,
@@ -88,6 +77,25 @@ export default function CartSummaryModal({
   onClose: () => void;
   navigation: any;
 }) {
+  const { lines } = useAppSelector(state => state.cart);
+  const shopifyCheckout = useShopifyCheckoutSheet();
+  const { customerToken, email } = useAppSelector(state => state.user);
+  const onOrderPress = async () => {
+    console.log(lines, 'lines');
+    console.log(customerToken, email);
+
+    try {
+      const createdCart = await createCart(
+        lines,
+        customerToken as string,
+        email as string,
+      );
+      console.log(createdCart, 'cart');
+      shopifyCheckout.present(createdCart.checkoutUrl);
+    } catch (error) {
+      console.log('something went wrong', error);
+    }
+  };
   const translateY = useRef(new Animated.Value(height)).current;
   const [expandedDays, setExpandedDays] = useState<{ [key: string]: boolean }>(
     {},
@@ -97,7 +105,6 @@ export default function CartSummaryModal({
   }>({});
   const [selectedType, setSelectedType] = useState<'Steel' | 'ECO'>('Steel');
   const dispatch = useAppDispatch();
-  const { lines } = useAppSelector(state => state.cart);
 
   useEffect(() => {
     if (visible) {
@@ -116,27 +123,34 @@ export default function CartSummaryModal({
     }
   }, [visible]);
 
-  const toggleDayExpand = (day: string) => {
+  const toggleDayExpand = (date: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
+
+    setExpandedDays((prev) => {
+      const isCurrentlyOpen = prev[date];
+      return {
+        ...prev,
+        [date]: !isCurrentlyOpen
+      };
+    });
   };
 
-  const togglePlanExpand = (day: string, plan: number) => {
-    const key = `${day}:${plan}`;
+
+  const togglePlanExpand = (date: string, plan: number) => {
+    const key = `${date}:${plan}`;
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedPlans(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const isDayOpen = (day: string) => expandedDays[day] ?? true;
-  const isPlanOpen = (day: string, plan: number) =>
-    expandedPlans[`${day}:${plan}`] ?? true;
+  const isDayOpen = (date: string) => expandedDays[date] ?? false;
+  const isPlanOpen = (date: string, plan: number) =>
+    expandedPlans[`${date}:${plan}`] ?? true;
 
-  // Calculate totals and validation
   const mealCost = lines
     .filter(i => i.type === 'main')
     .reduce((s, x) => s + +x.price * x.qty, 0);
 
-  const uniqueDayCount = new Set(lines.map(it => it.day).filter(Boolean)).size;
+  const uniqueDayCount = new Set(lines.map(it => it.date).filter(Boolean)).size;
   const uniqueTiffinCount = new Set(
     lines.map(it => it.tiffinPlan).filter(Boolean),
   ).size;
@@ -157,9 +171,9 @@ export default function CartSummaryModal({
   const subtotal = mealCost + addons;
   const total = subtotal + tiffinPrice;
 
-  // Group items by day and tiffin plan
-  const days = useMemo(() => {
-    const byDaySet = [...new Set(lines.map(l => l.day))].filter(
+  // Group items by date and tiffin plan
+  const dates = useMemo(() => {
+    const byDaySet = [...new Set(lines.map(l => l.date))].filter(
       Boolean,
     ) as string[];
     const ring = rotateFromToday(WEEK);
@@ -168,9 +182,9 @@ export default function CartSummaryModal({
 
   const grouped = useMemo(
     () =>
-      days.map(d => {
-        const allMains = lines.filter(x => x.day === d && x.type === 'main');
-        const addons = lines.filter(x => x.day === d && x.type === 'addon');
+      dates.map(d => {
+        const allMains = lines.filter(x => x.date === d && x.type === 'main');
+        const addons = lines.filter(x => x.date === d && x.type === 'addon');
 
         const plansMap = allMains.reduce((acc: any, item: any) => {
           if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
@@ -187,9 +201,9 @@ export default function CartSummaryModal({
           }))
           .sort((a, b) => a.plan - b.plan);
 
-        return { day: d, mains: allMains, tiffinPlans, addons };
+        return { date: d, mains: allMains, tiffinPlans, addons };
       }),
-    [days, lines],
+    [dates, lines],
   );
 
   // Missing categories validation
@@ -242,7 +256,7 @@ export default function CartSummaryModal({
 
   const canProceed = !missingInfo && !addonsMinInfo && lines.length > 0;
 
-  const DayBlock = ({ day, mains, addons, tiffinPlans }: any) => {
+  const DayBlock = ({ date, mains, addons, tiffinPlans }: any) => {
     const dayAddonsTotal = addons.reduce(
       (s: number, x: any) => s + Number(x.price || 0) * (x.qty ?? 1),
       0,
@@ -256,20 +270,20 @@ export default function CartSummaryModal({
     const plansCount = new Set(mains.map((m: any) => m.tiffinPlan)).size;
     const dayBase = plansCount > 0 ? 29 * plansCount : 0;
     const dayTotal = dayBase + dayMainsExtra + dayAddonsTotal;
-
+    // Function to get the day with suffix (st, nd, rd, th)
     return (
       <View style={s.dayCard}>
         <TouchableOpacity
           style={s.dayHeader}
           activeOpacity={0.8}
-          onPress={() => toggleDayExpand(day)}
+          onPress={() => toggleDayExpand(date)}
         >
-          <Text style={s.dayText}>{day}</Text>
+          <Text style={s.dayText}>{formatDate(date)}</Text>
           <View style={s.priceTag}>
             <Text style={s.priceText}>${dayTotal.toFixed(2)}</Text>
           </View>
           <View style={s.arrowBox}>
-            {isDayOpen(day) ? (
+            {isDayOpen(date) ? (
               <ArrowUp height={20} width={20} />
             ) : (
               <ArrowDown height={20} width={20} />
@@ -277,12 +291,12 @@ export default function CartSummaryModal({
           </View>
         </TouchableOpacity>
         <View
-          style={{ marginTop: 12, display: isDayOpen(day) ? 'flex' : 'none' }}
+          style={{ marginTop: 12, display: isDayOpen(date) ? 'flex' : 'none' }}
         >
           <Divider />
         </View>
 
-        {isDayOpen(day) && (
+        {isDayOpen(date) && (
           <View>
             {/* Mains Section */}
             {mains.length > 0 && (
@@ -291,26 +305,13 @@ export default function CartSummaryModal({
                   <View key={`tiffin-${plan.plan}`} style={s.planSection}>
                     <View
                       style={s.planHeader}
-                    // onPress={() => togglePlanExpand(day, plan.plan)}
                     >
                       <Text style={s.planTitle}>Tiffin {plan.plan}</Text>
 
-                      {/* <View style={s.sectionHeader}>
-                        <TouchableOpacity
-                          onPress={() => dispatch(removeDayMains({ day }))}
-                          style={s.trashBtn}
-                        >
-                          <TrashIcon height={16} width={16} />
-                        </TouchableOpacity>
-                        {isPlanOpen(day, plan.plan) ? (
-                          <ArrowDown height={16} width={16} />
-                        ) : (
-                          <ArrowUp height={16} width={16} />
-                        )}
-                      </View> */}
+
                     </View>
 
-                    {isPlanOpen(day, plan.plan) && (
+                    {isPlanOpen(date, plan.plan) && (
                       <View style={s.planItems}>
                         {plan.items.map((item: any) => (
                           <View
@@ -373,7 +374,7 @@ export default function CartSummaryModal({
                 <View style={s.sectionHeader}>
                   <Text style={[s.sectionChip, s.addonChip]}>Add-ons</Text>
                   <TouchableOpacity
-                    onPress={() => dispatch(removeDayAddons({ day }))}
+                    onPress={() => dispatch(removeDayAddons({ date }))}
                     style={s.trashBtn}
                   >
                     <TrashIcon height={16} width={16} />
@@ -390,7 +391,7 @@ export default function CartSummaryModal({
                             style={s.imgMini}
                           />
                         </View>
-                        <View style={s.content}>
+                        <View style={s.addcontent}>
                           <Text style={[s.itemCategory, s.addonCategory]}>
                             {item.category}
                           </Text>
@@ -484,7 +485,7 @@ export default function CartSummaryModal({
           <Text style={s.title}>Cart Summary</Text>
 
           {/* Container Type */}
-          <Text style={s.label}>Select container type</Text>
+          {/* <Text style={s.label}>Select container type</Text>
           <View style={s.toggleWrap}>
             {['Steel', 'ECO'].map(opt => {
               const isActive = selectedType === opt;
@@ -510,13 +511,14 @@ export default function CartSummaryModal({
                 </LinearGradient>
               );
             })}
-          </View>
+          </View> */}
 
           {/* Cart Items */}
-          {grouped.map(({ day, mains, addons, tiffinPlans }) => (
+          {grouped.map(({ date, mains, addons, tiffinPlans }) => (
             <DayBlock
-              key={day}
-              day={day}
+              key={date}
+              // day={day}
+              date={date}
               mains={mains}
               addons={addons}
               tiffinPlans={tiffinPlans}
@@ -588,7 +590,7 @@ export default function CartSummaryModal({
             <TouchableOpacity
               style={s.orderBtnContent}
               activeOpacity={0.9}
-              onPress={() => canProceed && navigation.navigate('OrderTrack')}
+              onPress={() => canProceed && onOrderPress()}
               disabled={!canProceed}
             >
               <Text style={s.orderText}>
@@ -685,7 +687,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  dayText: { fontWeight: '700', color: COLORS.black, fontSize: 16, flex: 1 },
+  dayText: { fontWeight: '500', color: COLORS.black, fontSize: 12, lineHeight: 20, letterSpacing: -0.24, flex: 1 },
   priceTag: {
     backgroundColor: COLORS.black,
     paddingVertical: 6,
@@ -767,6 +769,7 @@ const s = StyleSheet.create({
   thumb: {
     position: 'relative',
     marginRight: 12,
+    alignItems: 'center',
   },
   imgMini: {
     width: 54,
@@ -779,7 +782,7 @@ const s = StyleSheet.create({
     backgroundColor: '#1B4FBF',
   },
   priceBadgeText: {
-    color: '#000000',
+    color: COLORS.gray,
     fontSize: 12,
     fontWeight: '600',
     lineHeight: 20,
@@ -798,6 +801,12 @@ const s = StyleSheet.create({
     flexDirection: 'row',
   },
   content: {
+    display: 'flex',
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    width: 220,
+  },
+  addcontent: {
     display: 'flex',
     paddingHorizontal: 8,
     justifyContent: 'center',

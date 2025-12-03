@@ -35,7 +35,9 @@ import {
   getMetaObjectByHandle,
 } from "../../shopify/queries/getMetaObject";
 import { getProductsByIds } from "../../shopify/queries/getProducts";
-import Toast from "react-native-toast-message";
+import Toast, { SuccessToast } from "react-native-toast-message";
+import { extractAddonKey, extractMainKey, filterItemsByTags, sortByOrder } from "../../utils/tiffinHelpers";
+import { showToastInfo, showToastSuccess } from "../../config/ShowToastMessages";
 
 const MAIN_ORDER = ["proteins", "veggies", "sides", "probiotics"];
 
@@ -51,61 +53,6 @@ const ALA_ORDER = [
   "oatmeal",
 ];
 
-//----------------------------------------------
-// Helpers
-//----------------------------------------------
-const safeKey = (raw: any) =>
-  typeof raw === "string" ? raw : "";
-
-const extractMainKey = (key: string) =>
-  safeKey(key).replace("main_tiffin_", "").toLowerCase();
-
-const extractAddonKey = (key: string) =>
-  safeKey(key).replace("ala_carte_", "").toLowerCase();
-
-const sortByOrder = (items: any[], orderList: string[], extractor: (k: string) => string) =>
-  items.sort((a, b) => {
-    const aKey = extractor(a.key);
-    const bKey = extractor(b.key);
-
-    const aIndex = orderList.indexOf(aKey);
-    const bIndex = orderList.indexOf(bKey);
-
-    return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
-  });
-const filterItemsByTags = (items: any[], selectedTags: string[]) => {
-  if (!selectedTags || selectedTags.length === 0) {
-    return items; // Return all items if no tags selected
-  }
-
-  return items.filter((item) => {
-    let customTags = item?.metafields?.find(
-      (mf: any) => mf && mf.key === "dietary_tags"
-    );
-    if (customTags) {
-      try {
-        customTags = JSON.parse(customTags.value);
-      } catch (error) {
-        console.error("Error parsing dietary tags:", error);
-        customTags = []; // Default to empty array if parsing fails
-      }
-    } else {
-      customTags = []; // Default to empty array if no tags are found
-    }
-    if (!customTags || !Array.isArray(customTags)) {
-      return false; // Skip items without tags
-    }
-
-    // Convert both item tags and selected tags to lowercase for case-insensitive comparison
-    const itemTagsLower = customTags.map((tag: string) => tag.toLowerCase());
-    const selectedTagsLower = selectedTags.map((tag) => tag.toLowerCase());
-
-    // Check if any of the selected tags match any of the item's tags
-    return selectedTagsLower.some((selectedTag) =>
-      itemTagsLower.some((itemTag: any) => itemTag.includes(selectedTag))
-    );
-  });
-};
 //----------------------------------------------
 // MAIN COMPONENT
 //----------------------------------------------
@@ -141,6 +88,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     setCurrentDate(date);
     setCurrentMetaId(id);
     setMenuDisabled(false);
+    openAllMain();
   };
 
   //---------------------------------------------------
@@ -211,7 +159,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         ...category,
         value: filterItemsByTags(category.value, selectedTags), // Apply filter to addon items
       }));
-      console.log('filteredAddonCategories', filteredAddonCategories)
+      // console.log('filteredAddonCategories', filteredAddonCategories)
       setCategories(filteredMainCategories);
       setAddonCategories(filteredAddonCategories);
     } catch (err) {
@@ -259,22 +207,41 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
   // 5. Determine current tiffin plan
   const currentTiffinPlan = useMemo(() => {
+
     if (incompleteTiffinPlans.length > 0) return incompleteTiffinPlans[0];
 
     const max = dayTiffinPlans.length > 0 ? Math.max(...dayTiffinPlans) : 0;
     return max + 1; // start a new tiffin
   }, [incompleteTiffinPlans, dayTiffinPlans]);
+  const isTiffinCompletePlan = useCallback((plan: number) => {
+    const items = dayMainItems.filter(i => i.tiffinPlan === plan);
+    const selectedCats = items
+      .map(i => i.category?.toUpperCase())
+      .filter(Boolean);
 
+    return mainCategoryKeys.every(cat => selectedCats.includes(cat));
+  }, [dayMainItems, mainCategoryKeys]);
   // 6. When tiffin changes → UX Toast
   useEffect(() => {
     if (!currentDay) return;
-    Toast.show({
-      type: "success",
-      text1: `Using Tiffin ${currentTiffinPlan} for ${currentDay}`,
-      position: "top",
-      visibilityTime: 1500,
-    });
-  }, [currentTiffinPlan, currentDay]);
+
+    const prevPlan = currentTiffinPlan - 1;
+
+    // If previous tiffin exists & is incomplete → warn user
+    if (prevPlan > 0 && !isTiffinCompletePlan(prevPlan)) {
+      showToastInfo(`Please complete Tiffin ${prevPlan} first`);
+      return;
+    }
+
+    // Otherwise proceed normally
+    // Toast.show({
+    //   type: "success",
+    //   text1: `Using Tiffin ${currentTiffinPlan} for ${currentDay}`,
+    //   position: "top",
+    //   visibilityTime: 1500,
+    // });
+  }, [currentTiffinPlan, currentDay, isTiffinCompletePlan]);
+
 
   // 7. Helper to get selected item for a category
   const getSelectedForCategory = useCallback(
@@ -302,35 +269,44 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     const nextKey = `main:${next.key}`;
     setOpen(nextKey, true); // Open the next category
   };
+  const isTiffinComplete = (
+    selectedItems: any[],
+    mainCategoryKeys: string[]
+  ) => {
+    const selectedCats = selectedItems
+      .map(i => i?.category?.toUpperCase())
+      .filter(Boolean);
+
+    return mainCategoryKeys.every(cat => selectedCats.includes(cat));
+  };
 
   const handleItemSelection = useCallback(
     (category: string) => {
       const key = `main:${category}`;
-      setOpen(key, false); // Close the selected category
+      setOpen(key, false); // Close current
 
-      // Automatically open the next category for the current tiffin plan
+      // Open next category
       openNextMainSection(category, categories, setOpen);
 
-      // Track which items are selected for the current tiffin plan
+      // Get updated selection for this category
       const selectedNow = getSelectedForCategory(category);
       const updatedSelected = [...dayMainItems, selectedNow];
 
-      // Check if all categories have been selected for the current tiffin plan
-      const selectedCats = updatedSelected.map(i => i?.category?.toUpperCase());
-      const complete = mainCategoryKeys.every(cat => selectedCats.includes(cat));
-
+      // Check if tiffin complete
+      const complete = isTiffinComplete(updatedSelected, mainCategoryKeys);
       if (complete) {
-        // Show toast that the tiffin is complete
-        Toast.show({
-          type: "success",
-          text1: `Tiffin ${currentTiffinPlan} completed!`,
-          visibilityTime: 1800,
-        });
+        showToastSuccess(`Tiffin ${currentTiffinPlan} completed!`);
       }
-      // Don't close categories if the tiffin plan is not complete
     },
-    [categories, dayMainItems, mainCategoryKeys, currentTiffinPlan, getSelectedForCategory]
+    [
+      categories,
+      dayMainItems,
+      mainCategoryKeys,
+      currentTiffinPlan,
+      getSelectedForCategory,
+    ]
   );
+
 
   //---------------------------------------------------
   // Handle "Add Another Tiffin" logic
@@ -343,6 +319,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     });
     setOpenByKey((s) => ({ ...s, ...next }));
   }, [categories]);
+
   const handleAddNewTiffin = useCallback(() => {
     const dayTiffinPlans = new Set(
       lines.filter(item => item.day === currentDay && item.type === "main").map(item => item.tiffinPlan || 1)
@@ -350,14 +327,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     const nextTiffinPlan = Math.max(...Array.from(dayTiffinPlans)) + 1;
 
     // Show toast for adding a new tiffin
-    Toast.show({
-      type: "success",
-      text1: `Switching to Tiffin ${nextTiffinPlan} for ${currentDay}`,
-      position: "top",
-      visibilityTime: 3000,
-      autoHide: true,
-    });
-
+    showToastSuccess(`Switching to Tiffin ${nextTiffinPlan} for ${currentDay}`, 'top');
     setPreviousTiffinPlan(nextTiffinPlan);
     openAllMain();
     // scroll to top 
@@ -369,6 +339,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   //---------------------------------------------------
   const handleGoToNextDay = useCallback(() => {
     // const nextDayIndex = currentDate + 1;
+    setFilteredIndex(prev => prev + 1);
+    //scroll to top
+    scrollRef?.current?.scrollTo({ y: 0, animated: true });
 
   }, []);
 
@@ -449,11 +422,11 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             )}
 
             {/* ADDONS */}
-            {addonCategories.length > 0 && (
+            {addonCategories.length > 0 && addonCategories[0].value.length > 0 && (
 
               <Section
                 key="addons"
-                title="Addons"
+                title="Select Add ons"
                 open={isOpen("addons")}
                 setOpen={(v) => setOpen("addons", v)}
                 onToggle={(v) => setOpen("addons", v)}
@@ -575,6 +548,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     </View>
   );
 };
+export default HomeScreen;
 
 //----------------------------------------------
 // STYLES
@@ -668,4 +642,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;

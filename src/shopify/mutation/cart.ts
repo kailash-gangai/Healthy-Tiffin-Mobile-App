@@ -20,16 +20,12 @@ export const createCart = async (
 
   // Collect unique days
   input?.forEach(i => {
-    uniqueDays.add(i.day);
+    uniqueDays.add(i.date);
   });
-
   // Variables for the request
   const variables = {
     input: {
-      attributes: [
-        { key: 'DayCount', value: uniqueDays.size.toString() },
-        { key: 'Discount', value: '10' },
-      ],
+      attributes: [{ key: 'DayCount', value: uniqueDays.size.toString() }],
       buyerIdentity: {
         customerAccessToken: customerAccessToken,
         email: email,
@@ -40,20 +36,20 @@ export const createCart = async (
           item.type === 'main'
             ? [
                 { key: 'Category', value: item.category?.toLowerCase() },
-                { key: '_DayDate', value: item.date },
-                { key: '_Day', value: item.day },
+                { key: 'Date', value: item.date },
+                { key: 'Day', value: item.day },
                 { key: '_Type', value: item.type },
                 { key: '_TiffinPlan', value: item.tiffinPlan.toString() },
                 { key: '__mainprodid', value: mainProductid },
               ]
             : [
                 { key: 'Category', value: item.category?.toLowerCase() },
-                { key: 'DayDate', value: item.date },
+                { key: 'Date', value: item.date },
                 { key: 'Day', value: item.day },
-                { key: 'Type', value: item.type },
-                { key: 'TiffinPlan', value: item.tiffinPlan.toString() },
+                { key: '_Type', value: item.type },
+                // { key: 'TiffinPlan', value: item.tiffinPlan.toString() },
               ];
-
+        console.log(itemAttributes, 'itemAttributes');
         return {
           quantity: item.qty,
           merchandiseId: item.variantId,
@@ -62,6 +58,8 @@ export const createCart = async (
       }),
     },
   };
+
+  console.log(variables, 'varinales');
 
   // console.log(variables, 'varinales');
   try {
