@@ -14,9 +14,8 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import ArrowUp from '../assets/htf-icon/icon-up.svg';
-import ArrowDown from '../assets/htf-icon/icon-down.svg';
-import TrashIcon from '../assets/htf-icon/icon-trans.svg';
+import ArrowDown from '../assets/newicon/icon-down-arrow.svg';
+import TrashIcon from '../assets/newicon/icon-delete.svg';
 import Divider from '../assets/newicon/divider.svg';
 import WaveImageOrder from '../assets/newicon/img-order.svg';
 import { SHADOW } from '../ui/theme';
@@ -32,6 +31,7 @@ import { createCart } from '../shopify/mutation/cart';
 import { useShopifyCheckoutSheet } from '@shopify/checkout-sheet-kit';
 import { catRank, formatDate, rotateFromToday } from '../utils/tiffinHelpers';
 import MobileMenubg from '../assets/newicon/mobile-menu-oprn.svg'
+import OrderNote from './OrderNote';
 
 const { height } = Dimensions.get('window');
 const REQUIRED_CATS = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -54,7 +54,7 @@ if (
 }
 
 const COLORS = {
-  white: '#ffffff',
+  white: '#FFFFFF',
   black: '#000000',
   gray: '#8A8A8A',
   green: '#0B5733',
@@ -65,10 +65,6 @@ const COLORS = {
   red: '#FF6B6B',
 };
 
-
-
-
-
 export default function CartSummaryModal({
   visible,
   onClose,
@@ -78,6 +74,8 @@ export default function CartSummaryModal({
   onClose: () => void;
   navigation: any;
 }) {
+  const [collapsed, setCollapsed] = useState(true); // Collapsed state for the note section
+  const [note, setNote] = useState('');
   const { lines } = useAppSelector(state => state.cart);
   const shopifyCheckout = useShopifyCheckoutSheet();
   const { customerToken, email } = useAppSelector(state => state.user);
@@ -90,6 +88,7 @@ export default function CartSummaryModal({
         lines,
         customerToken as string,
         email as string,
+        note,
       );
       console.log(createdCart, 'cart');
       shopifyCheckout.present(createdCart.checkoutUrl);
@@ -143,7 +142,7 @@ export default function CartSummaryModal({
     setExpandedPlans(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const isDayOpen = (date: string) => expandedDays[date] ?? false;
+  const isDayOpen = (date: string) => expandedDays[date] ?? true;
   const isPlanOpen = (date: string, plan: number) =>
     expandedPlans[`${date}:${plan}`] ?? true;
 
@@ -257,6 +256,15 @@ export default function CartSummaryModal({
   const width = Dimensions.get('window').width;
   const canProceed = !missingInfo && !addonsMinInfo && lines.length > 0;
 
+  // Toggle the collapsed state (expand/collapse the text area)
+  const toggleCollapse = () => {
+    setCollapsed(prevState => !prevState);
+  };
+
+  // Handle note input change
+  const handleNoteChange = (text: string) => {
+    setNote(text);
+  };
   const DayBlock = ({ date, mains, addons, tiffinPlans }: any) => {
     const dayAddonsTotal = addons.reduce(
       (s: number, x: any) => s + Number(x.price || 0) * (x.qty ?? 1),
@@ -284,11 +292,9 @@ export default function CartSummaryModal({
             <Text style={s.priceText}>${dayTotal.toFixed(2)}</Text>
           </View>
           <View style={s.arrowBox}>
-            {isDayOpen(date) ? (
-              <ArrowUp height={20} width={20} />
-            ) : (
-              <ArrowDown height={20} width={20} />
-            )}
+
+            <ArrowDown style={isDayOpen(date) && { transform: [{ rotate: '180deg' }] }} height={20} width={20} />
+
           </View>
         </TouchableOpacity>
         <View
@@ -319,6 +325,15 @@ export default function CartSummaryModal({
                             key={`${item.id}-${item.variantId}-${item.tiffinPlan}-${item.type}-${item.day}-${item.category}-${item.title}`}
                             style={s.itemRow}
                           >
+                            <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                              <View style={s.itemCategory}>
+                                <Text >
+                                  {item.category}
+                                </Text>
+                              </View>
+                              <Text> </Text>
+                            </View>
+
                             <View style={s.itemContent}>
                               <View style={s.itemContent2}>
                                 <View style={s.thumb}>
@@ -327,42 +342,48 @@ export default function CartSummaryModal({
                                     style={s.imgMini}
                                   />
                                 </View>
+
                                 <View style={s.content}>
-                                  <Text style={s.itemCategory}>
-                                    {item.category}
+                                  <Text
+                                    style={s.itemName}
+                                    numberOfLines={3} // Prevents overflow and truncates text
+                                    ellipsizeMode="tail" // Adds "..." when text overflows
+                                  >
+                                    {item.title}
                                   </Text>
-                                  <Text style={s.itemName}>{item.title}</Text>
-                                  <View >
-                                    {Number(item.price) > 0 && (
-                                      <View style={s.priceBadge}>
-                                        <Text style={s.priceBadgeText}>
-                                          +${item.price}
-                                        </Text>
-                                      </View>
-                                    )}
-                                  </View>
+
+                                  {Number(item.price) > 0 && (
+                                    <View style={s.priceBadge}>
+                                      <Text style={s.priceBadgeText}>
+                                        +${item.price}
+                                      </Text>
+                                    </View>
+                                  )}
                                 </View>
                               </View>
 
-                              <TouchableOpacity
-                                style={s.deleteBtn}
-                                onPress={() =>
-                                  dispatch(
-                                    removeItem({
-                                      id: item.id,
-                                      variantId: item.variantId,
-                                      tiffinPlan: item.tiffinPlan,
-                                      type: item.type,
-                                    }),
-                                  )
-                                }
-                              >
-                                <TrashIcon height={16} width={16} />
-                              </TouchableOpacity>
+                              <View style={{ display: 'flex', justifyContent: 'center' }}>
+                                <TouchableOpacity
+                                  style={s.deleteBtn}
+                                  onPress={() =>
+                                    dispatch(
+                                      removeItem({
+                                        id: item.id,
+                                        variantId: item.variantId,
+                                        tiffinPlan: item.tiffinPlan,
+                                        type: item.type,
+                                      }),
+                                    )
+                                  }
+                                >
+                                  <TrashIcon height={16} width={16} />
+                                </TouchableOpacity>
+                              </View>
                             </View>
                           </View>
                         ))}
                       </View>
+
                     )}
                   </View>
                 ))}
@@ -373,17 +394,29 @@ export default function CartSummaryModal({
             {addons.length > 0 && (
               <View style={s.section}>
                 <View style={s.sectionHeader}>
-                  <Text style={[s.sectionChip, s.addonChip]}>Add-ons</Text>
-                  <TouchableOpacity
+                  <Text style={[s.sectionChip]}>A La Carte</Text>
+                  {/* <TouchableOpacity
                     onPress={() => dispatch(removeDayAddons({ date }))}
                     style={s.trashBtn}
                   >
                     <TrashIcon height={16} width={16} />
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
 
                 {addons.map((item: any) => (
-                  <View key={`${item.id}-${item.variantId}`} style={s.itemRow}>
+                  <View
+                    key={`${item.id}-${item.variantId}-${item.tiffinPlan}-${item.type}-${item.day}-${item.category}-${item.title}`}
+                    style={s.itemRow}
+                  >
+                    <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <View style={s.itemCategory}>
+                        <Text >
+                          {item.category}
+                        </Text>
+                      </View>
+                      <Text> </Text>
+                    </View>
+
                     <View style={s.itemContent}>
                       <View style={s.itemContent2}>
                         <View style={s.thumb}>
@@ -392,54 +425,27 @@ export default function CartSummaryModal({
                             style={s.imgMini}
                           />
                         </View>
-                        <View style={s.addcontent}>
-                          <Text style={[s.itemCategory, s.addonCategory]}>
-                            {item.category}
+
+                        <View style={s.content}>
+                          <Text
+                            style={s.itemName}
+                            numberOfLines={3} // Prevents overflow and truncates text
+                            ellipsizeMode="tail" // Adds "..." when text overflows
+                          >
+                            {item.title}
                           </Text>
-                          <Text style={s.itemName}>{item.title}</Text>
-                          <View>
+
+                          {Number(item.price) > 0 && (
                             <View style={s.priceBadge}>
-                              {item.price > 0 && (
-                                <Text style={s.priceBadgeText}>+${item.price}</Text>
-                              )}
+                              <Text style={s.priceBadgeText}>
+                                ${item.price}
+                              </Text>
                             </View>
-                          </View>
+                          )}
                         </View>
                       </View>
-                      <View style={s.bControls}>
-                        <View style={s.qtyControls}>
-                          <TouchableOpacity
-                            style={s.qtyBtn}
-                            onPress={() =>
-                              dispatch(
-                                decreaseItem({
-                                  id: item.id,
-                                  variantId: item.variantId,
-                                  tiffinPlan: item.tiffinPlan,
-                                  type: item.type,
-                                }),
-                              )
-                            }
-                          >
-                            <Text style={s.qtyBtnText}>−</Text>
-                          </TouchableOpacity>
-                          <Text style={s.qtyText}>{item.qty}</Text>
-                          <TouchableOpacity
-                            style={s.qtyBtn}
-                            onPress={() =>
-                              dispatch(
-                                increaseItem({
-                                  id: item.id,
-                                  variantId: item.variantId,
-                                  tiffinPlan: item.tiffinPlan,
-                                  type: item.type,
-                                }),
-                              )
-                            }
-                          >
-                            <Text style={s.qtyBtnText}>+</Text>
-                          </TouchableOpacity>
-                        </View>
+
+                      <View style={{ display: 'flex', justifyContent: 'center' }}>
                         <TouchableOpacity
                           style={s.deleteBtn}
                           onPress={() =>
@@ -477,12 +483,11 @@ export default function CartSummaryModal({
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }], }]}>
         <MobileMenubg height={75} width={width} style={{ position: "absolute", top: 5, left: 0, right: 0 }} />
-        <TouchableOpacity style={s.handleWrapper} onPress={onClose}>
+        <Pressable style={s.handleWrapper} onPress={onClose} onPressIn={onClose}>
           <View style={s.handle}></View>
+        </Pressable>
 
-        </TouchableOpacity>
-
-        <View style={{  backgroundColor: '#F7F7F9',}}>
+        <View style={{ backgroundColor: '#F7F7F9', }}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
@@ -553,6 +558,12 @@ export default function CartSummaryModal({
             </View>
           )} */}
 
+            <OrderNote
+              collapsed={collapsed}
+              toggleCollapse={toggleCollapse}
+              note={note}
+              onChangeNote={handleNoteChange}
+            />
             {/* Cart Summary */}
             <View style={s.summaryCard}>
               {(addonsMinInfo || missingInfo) && (
@@ -566,6 +577,7 @@ export default function CartSummaryModal({
               )}
 
               <View>
+
                 <View style={s.summaryRow}>
                   <Text style={s.label}>Subtotal</Text>
                   <Text style={s.value}>
@@ -596,7 +608,7 @@ export default function CartSummaryModal({
               style={s.orderBtn}
             >
               <TouchableOpacity
-                style={[s.orderBtnContent, !canProceed && { opacity: 0.5}]}
+                style={[s.orderBtnContent, !canProceed && { opacity: 0.5 }]}
                 activeOpacity={0.9}
                 onPress={() => canProceed && onOrderPress()}
                 disabled={!canProceed}
@@ -699,8 +711,8 @@ const s = StyleSheet.create({
   dayText: { fontWeight: '500', color: COLORS.black, fontSize: 12, lineHeight: 20, letterSpacing: -0.24, flex: 1 },
   priceTag: {
     backgroundColor: COLORS.black,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: 12,
     marginHorizontal: 8,
   },
@@ -728,11 +740,10 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   sectionChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     borderRadius: 12,
-    backgroundColor: '#EAF6EF',
-    color: COLORS.green,
+    color: '#000',
     fontWeight: '700',
     fontSize: 12,
   },
@@ -766,10 +777,12 @@ const s = StyleSheet.create({
 
   // Item Row Styles
   itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingVertical: 2,
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    borderRadius: 6,
+    padding: 8,
+    backgroundColor: '#ECECEE59',
+    // gap: 10
   },
   addonItem: {
     backgroundColor: '#F8FAFF',
@@ -791,41 +804,45 @@ const s = StyleSheet.create({
     backgroundColor: '#1B4FBF',
   },
   priceBadgeText: {
-    color: COLORS.gray,
+    color: '#00020E',
     fontSize: 12,
     fontWeight: '600',
-    lineHeight: 20,
+    lineHeight: 16,
   },
   // In the styles section, update these:
   itemContent: {
     display: 'flex',
     flexDirection: 'row',
-    flex: 1,
-    alignItems: 'center',
     justifyContent: 'space-between',
   },
   itemContent2: {
     display: 'flex',
     justifyContent: 'center',
     flexDirection: 'row',
+
   },
   content: {
     display: 'flex',
-    paddingHorizontal: 8,
-    justifyContent: 'center',
-    width: 220,
-  },
-  addcontent: {
-    display: 'flex',
-    paddingHorizontal: 8,
-    justifyContent: 'center',
-    width: 150,
+    width: 200,
+
   },
   itemCategory: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.green,
-    marginBottom: 2,
+    textTransform: 'capitalize',
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'Poppins',
+    marginBottom: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: 8,
+    borderColor: '#E0E8FF',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+
   },
   addonCategory: {
     color: '#1B4FBF',
@@ -833,9 +850,11 @@ const s = StyleSheet.create({
   itemName: {
     fontSize: 12,
     fontWeight: '500',
-    color: COLORS.black,
+    color: '#00020E',
     lineHeight: 20,
     marginBottom: 4,
+    flexWrap: 'wrap',
+    width: '100%',
   },
   itemQty: {
     fontSize: 12,
@@ -877,11 +896,12 @@ const s = StyleSheet.create({
   deleteBtn: {
     width: 32,
     height: 32,
-    backgroundColor: '#FFECEC',
+    backgroundColor: '#FFE3E3',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
     marginLeft: 8,
+    bottom: 0
   },
 
   // Validation Styles

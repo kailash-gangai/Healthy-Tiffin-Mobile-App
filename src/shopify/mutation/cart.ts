@@ -4,6 +4,7 @@ export const createCart = async (
   input: any[],
   customerAccessToken: string,
   email: string,
+  note?: string,
 ) => {
   const mutation = `
       mutation cartCreate($input: CartInput!) {
@@ -26,6 +27,7 @@ export const createCart = async (
   const variables = {
     input: {
       attributes: [{ key: 'DayCount', value: uniqueDays.size.toString() }],
+      note: note,
       buyerIdentity: {
         customerAccessToken: customerAccessToken,
         email: email,

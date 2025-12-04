@@ -13,11 +13,12 @@ import {
   selectIsWishlisted,
   toggleWishlist,
 } from '../store/slice/favoriteSlice';
-import EyeShow from '../assets/htf-icon/icon-eye-white.svg';
+import EyeShow from '../assets/newicon/i-icon.svg';
 import HeartIcon from '../assets/newicon/heart.svg';
 import { EMPTY_STATE_URL } from '../constants';
 import SkeletonLoading from './SkeletonLoading';
 import { addItems, removeItem } from '../store/slice/cartSlice';
+import LinearGradient from 'react-native-linear-gradient';
 
 const width = Dimensions.get('window').width;
 
@@ -182,9 +183,12 @@ export default function DishCard({
           </TouchableOpacity>
 
           {/* Selection circle */}
-          <View style={[s.radio, isItemInCart && s.radioOn]}>
-            {isItemInCart && <Text style={s.radioDot} />}
-          </View>
+          <LinearGradient
+            colors={isItemInCart ? ['#5FBC9B', '#1E9E64'] : ['#fff', '#fff']}
+           style={[s.radio, isItemInCart && s.radioOn]}
+          >
+                     
+          </LinearGradient>
         </View>
 
         <View style={s.tagContainer}>
@@ -252,12 +256,9 @@ const s = StyleSheet.create({
     position: 'absolute',
     bottom: 12,
     right: 4,
-    borderWidth: 1.2,
-    borderColor: '#878787',
+    backgroundColor:'#CBC6CD',
     borderStyle: 'solid',
-    backgroundColor: '#878787',
     borderRadius: 14,
-    padding: 2,
   },
   radio: {
     position: 'absolute',
@@ -267,22 +268,21 @@ const s = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1.6,
-    borderColor: '#DFB318',
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderColor: '#CBC6CD',
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioOn: {
     borderRadius: 10,
     borderColor: '#FFFFFF',
-    backgroundColor: '#0B5733',
+    // backgroundColor: '#0B5733',
   },
-  radioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.green,
-  },
+  // radioDot: {
+  //   width: 8,
+  //   height: 8,
+  //   borderRadius: 4,
+  //   backgroundColor: COLORS.green,
+  // },
   tagContainer: {
     position: 'absolute',
     top: width / 2 - 50,

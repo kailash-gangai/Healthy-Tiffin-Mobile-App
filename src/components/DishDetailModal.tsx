@@ -29,6 +29,7 @@ import { useAppDispatch } from '../store/hooks';
 import { addItem, addItems } from '../store/slice/cartSlice';
 const { height } = Dimensions.get('window');
 const width = Dimensions.get('window').width;
+import MobileMenubg from '../assets/newicon/mobile-menu-oprn.svg'
 
 const COLORS = {
   backdrop: 'rgba(0,0,0,0.45)',
@@ -165,87 +166,93 @@ export default function DishDetailModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
+        <MobileMenubg height={75} width={width} style={{ position: "absolute", top: -3, left: 0, right: 0 }} />
+
         <TouchableOpacity onPress={onClose} style={s.handleWrapper}>
-          <View style={s.handle}></View>
+          {/* <View style={s.handle}></View> */}
         </TouchableOpacity>
-
-        {/* Scrollable content */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
-        >
-          {/* Header */}
-          <View style={s.headerRow}>
-            <Text style={s.title} numberOfLines={2}>
-              {dish.title || 'Product Name'}
-            </Text>
-            <View style={s.actions}>
-              <TouchableOpacity onPress={handleShare}>
-                <ShearIcon width={22} height={22} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleCopyLink}>
-                <Text style={s.copy}>⧉</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onToggleLike}>
-                <HeartIcon
-                  width={26}
-                  height={26}
-                  fill={liked ? '#FF0000' : '#C7C7C7'}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Image */}
-          <Image source={{ uri: dish.image }} style={s.image} />
-
-          {/* Tags */}
-          <View style={s.tagWrap}>
-            {(dish.tags || ['VEG', 'VGN', 'NV', 'FODMAP', 'PLATE METHOD'])
-              .slice(0, 5)
-              .map(t => (
-                <View key={t} style={[s.tag, getTagColor(t)]}>
-                  <Text style={s.tagText}>{t}</Text>
-                </View>
-              ))}
-          </View>
-
-          {/* Description */}
-          <Text style={s.desc}>{dish.description || ' '}</Text>
-
-          <View style={s.nutritionWrap}>
-            {nutritionInfo.map(
-              (n, i) =>
-                n.value !== '' && (
-                  <View key={i} style={s.nutriBox}>
-                    <View>
-                      <Text style={s.nutriIcon}>{n.icon}</Text>
-                    </View>
-                    <View>
-                      <Text style={s.nutriLabel}>{n.label}</Text>
-                      <Text style={s.nutriValue}>{n.value}</Text>
-                    </View>
-                  </View>
-                ),
-            )}
-          </View>
-        </ScrollView>
-
-        {/* FIXED BUTTON (non-scrollable) */}
-        {/* FIXED BUTTON (non-scrollable) */}
-        <View style={s.footer}>
-          <TouchableOpacity onPress={handleAddToCart} activeOpacity={0.9}>
-            <LinearGradient
-              colors={['#42D296', '#2AB47B']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={[s.addBtn]}
-            >
-              <View style={s.toggleBtnContent}>
-                <Text style={s.addText}>Add to Cart</Text>
+        <View style={{
+          backgroundColor: '#F7F7F9', paddingTop: 8,
+          paddingHorizontal: 20,
+        }}>
+          {/* Scrollable content */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 120 }}
+          >
+            {/* Header */}
+            <View style={s.headerRow}>
+              <Text style={s.title} numberOfLines={2}>
+                {dish.title || 'Product Name'}
+              </Text>
+              <View style={s.actions}>
+                <TouchableOpacity onPress={handleShare}>
+                  <ShearIcon width={22} height={22} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleCopyLink}>
+                  <Text style={s.copy}>⧉</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onToggleLike}>
+                  <HeartIcon
+                    width={26}
+                    height={26}
+                    fill={liked ? '#FF0000' : '#C7C7C7'}
+                  />
+                </TouchableOpacity>
               </View>
-            </LinearGradient>
-          </TouchableOpacity>
+            </View>
+
+            {/* Image */}
+            <Image source={{ uri: dish.image }} style={s.image} />
+
+            {/* Tags */}
+            <View style={s.tagWrap}>
+              {(dish.tags || ['VEG', 'VGN', 'NV', 'FODMAP', 'PLATE METHOD'])
+                .slice(0, 5)
+                .map(t => (
+                  <View key={t} style={[s.tag, getTagColor(t)]}>
+                    <Text style={s.tagText}>{t}</Text>
+                  </View>
+                ))}
+            </View>
+
+            {/* Description */}
+            <Text style={s.desc}>{dish.description || ' '}</Text>
+
+            <View style={s.nutritionWrap}>
+              {nutritionInfo.map(
+                (n, i) =>
+                  n.value !== '' && (
+                    <View key={i} style={s.nutriBox}>
+                      <View>
+                        <Text style={s.nutriIcon}>{n.icon}</Text>
+                      </View>
+                      <View>
+                        <Text style={s.nutriLabel}>{n.label}</Text>
+                        <Text style={s.nutriValue}>{n.value}</Text>
+                      </View>
+                    </View>
+                  ),
+              )}
+            </View>
+          </ScrollView>
+
+          {/* FIXED BUTTON (non-scrollable) */}
+          {/* FIXED BUTTON (non-scrollable) */}
+          <View style={s.footer}>
+            <TouchableOpacity onPress={handleAddToCart} activeOpacity={0.9}>
+              <LinearGradient
+                colors={['#42D296', '#2AB47B']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={[s.addBtn]}
+              >
+                <View style={s.toggleBtnContent}>
+                  <Text style={s.addText}>Add to Cart</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
       </Animated.View>
     </Modal>
@@ -276,12 +283,10 @@ const s = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: '#f7f7f9',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: height * 0.9,
-    paddingTop: 8,
-    paddingHorizontal: 20,
+
   },
   handleWrapper: {
     width: '100%',

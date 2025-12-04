@@ -16,6 +16,9 @@ import { useSelector } from 'react-redux';
 
 import { RootStackParamList } from './navigation/types';
 import { RootState } from '../store';
+import HeaderImage from '../assets/newicon/header-image.svg';
+import LinearGradient from 'react-native-linear-gradient';
+import Video from 'react-native-video';
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -41,22 +44,23 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
     >
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 1 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom  }}
         showsVerticalScrollIndicator={false}
       >
         {/* 1. Header Image */}
         <Image
-          source={require('../assets/banners/chana.jpg')}
+          source={require('../assets/banners/KalaChanaChaatSalad.webp')}
           style={styles.headerImage}
           resizeMode="cover"
         />
 
         {/* 2. Green Section with Text */}
-        <View style={styles.greenSection}>
+        <View style={[styles.greenSection, { position: 'relative' }]}>
           <Text style={styles.greenText}>
             <Text style={{ fontWeight: 'bold' }}>Fresh</Text> healthy meal{'\n'}
             delivered <Text style={{ fontWeight: 'bold' }}>daily!</Text>
           </Text>
+          <HeaderImage style={{ width: '100%', height: 100, position: 'absolute', bottom: 0 }} />
         </View>
 
         {/* 3. Features Grid */}
@@ -99,6 +103,20 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
             resizeMode="cover"
           />
           <View style={styles.bannerOverlay}>
+            <Video
+              source={require('../assets/banners/banner.mp4')} // Replace with your video URL or local file path
+              style={{height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
+              controls={false} // Shows controls (play, pause, volume, etc.)
+              resizeMode="cover" // Adjust the video's size within the container
+              repeat={true} // Repeat the video
+              muted={true} // Mute the video
+              paused={false} // Pause the video
+              volume={1} // Set the volume (0-1)
+              rate={1} // Set the playback rate
+              ignoreSilentSwitch="obey" // Ignore the system's silent switch
+              playWhenInactive={false} // Play the video when the app is inactive
+              playInBackground={false} // Play the video in the background
+            />
             <Text style={styles.bannerText}>
               ALL <Text style={styles.highlight}>YOUR HEALTH</Text>
               {'\n'}
@@ -109,11 +127,20 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* 5. CTA Button */}
         <TouchableOpacity
-          style={[styles.button, { marginBottom: 16 + insets.bottom }]}
           onPress={handlePress}
           activeOpacity={0.9}
         >
-          <Text style={styles.buttonText}>TRY IT TODAY</Text>
+          <LinearGradient
+            colors={
+              ['#5FBC9B', '#1E9E64']
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[styles.button]}
+
+          >
+            <Text style={styles.buttonText}>TRY IT TODAY</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -145,10 +172,10 @@ const styles = StyleSheet.create({
   },
   headerImage: {
     width: '100%',
-    height: 350,
+    height: 250,
   },
   greenSection: {
-    backgroundColor: '#006400',
+    backgroundColor: '#2e7b59ff',
     padding: 20,
     alignItems: 'center',
   },
@@ -158,13 +185,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  featuresContainer: {  
+  featuresContainer: {
     padding: 20,
   },
   featureRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   featureItem: {
     flex: 1,
@@ -173,8 +200,8 @@ const styles = StyleSheet.create({
   },
   featureIcon: {
     marginBottom: 8,
-    height: 92,
-    width: 92,
+    height: 64,
+    width: 64,
   },
   featureText: {
     textAlign: 'center',
@@ -183,13 +210,13 @@ const styles = StyleSheet.create({
   },
   banner: {
     position: 'relative',
-    marginVertical: 20,
-    marginHorizontal: 20,
+    marginBottom: 16,
+    // marginHorizontal: 20,
   },
   bannerImage: {
     width: '100%',
-    height: 146,
-    borderRadius: 10,
+    height: 195,
+    // borderRadius: 10,
   },
   bannerOverlay: {
     position: 'absolute',

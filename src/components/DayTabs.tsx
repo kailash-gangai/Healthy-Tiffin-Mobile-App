@@ -48,10 +48,11 @@ export default function DayTabs({
   const { lines } = useAppSelector(state => state.cart);
   const [uniqueDates, setUniqueDates] = useState<string[]>([]);
   useEffect(() => {
+
     const dates = lines.map((item: any) => item.date);
     const uniqueDates = Array.from(new Set(dates));
     setUniqueDates(uniqueDates);
-  }, [ active, activeIndex]);
+  }, [active, activeIndex]);
   /* ============================================================
      1) LOAD METAOBJECTS & APPLY RULES
      ============================================================ */
@@ -84,14 +85,14 @@ export default function DayTabs({
       showToastInfo('No more days to show.');
       return;
     }
-    setActive(active + 1);
-    centerItem(active + 1);
+    setActive(activeIndex);
+    centerItem(activeIndex);
 
-    const item = menuDays[active + 1];
+    const item = menuDays[activeIndex];
     if (item) {
       onChange?.({
         id: item.id,
-        index: active + 1,
+        index: activeIndex,
         day: item.labelDay,
         date: item.date,
       });
@@ -217,10 +218,17 @@ export default function DayTabs({
             <View style={s.dot} />
           </LinearGradient>
         ) : (
-          <View style={[s.dateBox, s.dateBoxInactive, isSelected && s.dayItemSelected]}>
+          <LinearGradient
+            colors={isSelected ?['rgba(249, 199, 17, 0.1)', 'rgba(223, 179, 24, 0.1)']:['#fff', '#fff']}
+            start={{ x: 0.0, y: 0.0 }}
+            end={{ x: 1.0, y: 1.0 }}
+            style={[s.dateBox, s.dateBoxInactive, isSelected && s.dayItemSelected]}
+          >
+
             <Text style={s.dateText}>{item.dayNum}</Text>
             <View style={[s.dot, isSelected && { backgroundColor: "#F9C711" }]} />
-          </View>
+
+          </LinearGradient>
         )}
       </TouchableOpacity>
     );
@@ -258,7 +266,7 @@ export default function DayTabs({
           style={{ borderRadius: 8 }}
         >
           <TouchableOpacity
-            onPress={() => select(active + 1)}
+            onPress={() => select(activeIndex)}
             disabled={active === menuDays.length - 1}
             style={[
               s.iconWrap,
@@ -324,7 +332,7 @@ const s = StyleSheet.create({
     // paddingHorizontal: 4,
   },
   dayItemSelected: {
-    borderColor: "#FFCA40",
+    borderColor: "#F5C412",
     borderWidth: 0.5,
   },
   dayName: {

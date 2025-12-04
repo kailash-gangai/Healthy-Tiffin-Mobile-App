@@ -14,10 +14,11 @@ import {
   toggleWishlist,
 } from '../store/slice/favoriteSlice';
 import HeartIcon from '../assets/newicon/heart.svg';
-import EyeShow from '../assets/htf-icon/icon-eye-white.svg';
+import EyeShow from '../assets/newicon/i-icon.svg';
 import DeleteIcon from '../assets/htf-icon/icon-trans.svg';
 import SkeletonLoading from './SkeletonLoading';
 import { addItem, decreaseItem, removeItem } from '../store/slice/cartSlice';
+import LinearGradient from 'react-native-linear-gradient';
 
 const width = Dimensions.get('window').width;
 
@@ -230,11 +231,15 @@ export default React.memo(function AddonDishCard({
             }}
             style={[s.iconBtn, { right: 8, bottom: 8, position: 'absolute' }]}
           >
-            <EyeShow width={16} height={16} />
+            <EyeShow width={20} height={20} />
           </TouchableOpacity>
-          <View style={[s.radio, isItemInCart && s.radioOn]}>
-            {isItemInCart && <Text style={s.radioDot} />}
-          </View>
+          <LinearGradient
+            colors={isItemInCart ? ['#5FBC9B', '#1E9E64'] : ['#fff', '#fff']}
+            style={[s.radio, isItemInCart && s.radioOn]}
+          >
+
+          </LinearGradient>
+
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
@@ -359,14 +364,13 @@ const s = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1.6,
-    borderColor: '#DFB318',
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderColor: '#CBC6CD',
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioOn: {
     borderColor: '#FFFFFF',
-    backgroundColor: '#0B5733',
+
   },
   radioDot: {
     width: 8,
@@ -375,13 +379,13 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.green,
   },
   iconBtn: {
+  
     position: 'absolute',
-    borderWidth: 1.2,
-    borderColor: '#878787',
+    bottom: 12,
+    right: 4,
+    backgroundColor:'#CBC6CD',
     borderStyle: 'solid',
-    backgroundColor: '#878787',
     borderRadius: 14,
-    padding: 2,
   },
   textWrap: {
     marginTop: 12,

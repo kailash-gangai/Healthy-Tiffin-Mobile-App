@@ -74,7 +74,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [menuDisabled, setMenuDisabled] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showCart, setShowCart] = useState(false);
-  const [filteredIndex, setFilteredIndex] = useState(0);
+  const [filteredIndex, setFilteredIndex] = useState<any>(0);
 
   const [openByKey, setOpenByKey] = useState<Record<string, boolean>>({});
   const isOpen = (k: string) => openByKey[k] ?? true;
@@ -84,14 +84,15 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   //---------------------------------------------------
   // Day change
   //---------------------------------------------------
-  const handleDayChange = ({ id, day, date }: { id: string; day: string; date: string }) => {
+  const handleDayChange = ({ id, day, index, date }: { id: string; day: string; index: number; date: string }) => {
     setCurrentDay(day);
     setCurrentDate(date);
     setCurrentMetaId(id);
     setMenuDisabled(false);
+    setFilteredIndex(index);
     openAllMain();
   };
-
+  // console.log("activeMenu", activeMenu);
   //---------------------------------------------------
   // Load Shopify MetaObjects
   //---------------------------------------------------
@@ -185,8 +186,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
   // 2. All main items selected today
   const dayMainItems = useMemo(
-    () => lines.filter(i => i.day === currentDay && i.type === "main"),
-    [lines, currentDay]
+    () => lines.filter(i => i.date === currentDate && i.type === "main"),
+    [lines, currentDate]
   );
 
   // 3. Get all tiffin plan numbers used today
@@ -214,6 +215,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     const max = dayTiffinPlans.length > 0 ? Math.max(...dayTiffinPlans) : 0;
     return max + 1; // start a new tiffin
   }, [incompleteTiffinPlans, dayTiffinPlans]);
+
   const isTiffinCompletePlan = useCallback((plan: number) => {
     const items = dayMainItems.filter(i => i.tiffinPlan === plan);
     const selectedCats = items
@@ -324,7 +326,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
   const handleAddNewTiffin = useCallback(() => {
     const dayTiffinPlans = new Set(
-      lines.filter(item => item.day === currentDay && item.type === "main").map(item => item.tiffinPlan || 1)
+      lines.filter(item => item.date === currentDate && item.type === "main").map(item => item.tiffinPlan || 1)
     );
     const nextTiffinPlan = Math.max(...Array.from(dayTiffinPlans)) + 1;
 
@@ -341,7 +343,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   //---------------------------------------------------
   const handleGoToNextDay = useCallback(() => {
     // const nextDayIndex = currentDate + 1;
-    setFilteredIndex(prev => prev + 1);
+    setFilteredIndex(filteredIndex => filteredIndex + 1);
     //scroll to top
     scrollRef?.current?.scrollTo({ y: 0, animated: true });
 
@@ -357,7 +359,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       return lines.find(
         (item: any) =>
           item.day === currentDay &&
-          item.category?.toLowerCase() === category.toLowerCase() &&
+          item.category?.toLowerCase() === category.replace('main_tiffin_', '').toLowerCase() &&
           item.type === 'main' &&
           item.tiffinPlan === tiffinPlan,
       );
@@ -365,13 +367,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     [lines, currentDay],
   );
 
-  // Check if current tiffin plan is complete
-  const isCurrentTiffinComplete = useMemo(() => {
-    const allCategories = categories.map(cat => cat.key.toUpperCase());
-    return allCategories.every(cat =>
-      getSelectedItemForCategory(cat, currentTiffinPlan),
-    );
-  }, [categories, currentTiffinPlan, getSelectedItemForCategory]);
   //---------------------------------------------------
   // Render
   //---------------------------------------------------
@@ -418,7 +413,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                         ? selectedItem.title?.length > 30
                           ? `${selectedItem.title.slice(0, 30)}...`
                           : selectedItem.title
-                        : 'Choose your ' + cat.key.replace("main_tiffin_", "") + ' to continue.'
+                        : 'Choose ' + cat.key.replace("main_tiffin_", "") + ' to continue.'
                     }
                     open={isOpen(k)}
                     setOpen={(v) => setOpen(k, v)}
@@ -563,7 +558,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         activeOpacity={0.9}
       >
         {/* <View style={styles.cartNotch} /> */}
-      <MobileMenubg height={75} width={width} style={{ position: "absolute",marginBottom: -20, bottom: 0, left: 0, right: 0 }} />
+        <MobileMenubg height={75} width={width} style={{ position: "absolute", marginBottom: -20, bottom: 0, left: 0, right: 0 }} />
         <View style={styles.cartBarContent}>
           <Text style={styles.cartLabel}>Cart Summary</Text>
           <Text style={styles.cartTotal}>
