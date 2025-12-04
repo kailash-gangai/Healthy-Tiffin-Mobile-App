@@ -482,7 +482,7 @@ export default function CartSummaryModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }], }]}>
-        <MobileMenubg height={75} width={width} style={{ position: "absolute", top: 5, left: 0, right: 0 }} />
+        <MobileMenubg height={85} width={width+5} style={{ position: "absolute", top: -3, left: 0, right: 0 }} />
         <Pressable style={s.handleWrapper} onPress={onClose} onPressIn={onClose}>
           <View style={s.handle}></View>
         </Pressable>

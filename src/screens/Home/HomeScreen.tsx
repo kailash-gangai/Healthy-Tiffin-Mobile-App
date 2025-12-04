@@ -558,7 +558,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         activeOpacity={0.9}
       >
         {/* <View style={styles.cartNotch} /> */}
-        <MobileMenubg height={75} width={width} style={{ position: "absolute", marginBottom: -20, bottom: 0, left: 0, right: 0 }} />
+        <MobileMenubg height={80} width={width+5} style={{ position: "absolute", marginBottom: -30, bottom: 0, left: 0, right: 0 }} />
         <View style={styles.cartBarContent}>
           <Text style={styles.cartLabel}>Cart Summary</Text>
           <Text style={styles.cartTotal}>
@@ -641,7 +641,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    // backgroundColor: "#101010",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingVertical: 14,

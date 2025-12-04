@@ -65,7 +65,6 @@ export default function DishDetailModal({
   dish: Dish;
 }) {
   const translateY = useRef(new Animated.Value(height)).current; // start off-screen
-
   const nutritionInfo = [
     {
       label: 'Calories',
@@ -98,6 +97,11 @@ export default function DishDetailModal({
   const metaobject = dish?.metafields?.find(
     (mf: any) => mf && mf.key === 'nutrients_information',
   );
+
+  let dietary_tags = dish?.metafields?.find(
+    (mf: any) => mf && mf.key === 'dietary_tags',
+  );
+  dietary_tags = dietary_tags && JSON.parse(dietary_tags.value);
 
   if (metaobject) {
     const nutrientsInformation = JSON.parse(metaobject.value);
@@ -166,7 +170,7 @@ export default function DishDetailModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-        <MobileMenubg height={75} width={width} style={{ position: "absolute", top: -3, left: 0, right: 0 }} />
+        <MobileMenubg height={90} width={width+5} style={{ position: "absolute", top: -10, left: 0, right: 0 }} />
 
         <TouchableOpacity onPress={onClose} style={s.handleWrapper}>
           {/* <View style={s.handle}></View> */}
@@ -207,7 +211,7 @@ export default function DishDetailModal({
 
             {/* Tags */}
             <View style={s.tagWrap}>
-              {(dish.tags || ['VEG', 'VGN', 'NV', 'FODMAP', 'PLATE METHOD'])
+              {(dietary_tags || [])
                 .slice(0, 5)
                 .map(t => (
                   <View key={t} style={[s.tag, getTagColor(t)]}>
