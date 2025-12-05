@@ -8,7 +8,7 @@ const COLORS = {
   bg: '#FFFFFF',
   text: '#232323',
   sub: '#9E9E9E',
-  green: '#0B5733',
+  green: '#127E51',
   border: '#F0F0F0',
   mint: '#DFF3EB',
 };

@@ -26,7 +26,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
 
 const COLORS = {
-      green: '#0B5733',
+      green: '#127E51',
       greenLight: '#0E6C40',
       white: '#FFFFFF',
       text: '#232323',
@@ -128,8 +128,8 @@ const DietaryPreferencesScreen: React.FC<Props> = ({ navigation }) => {
                                                 ]}
                                           >
                                                 {/* Left check */}
-                                                <View style={[styles.check ]}>
-                                                      {isOn && <CheckIcon height={24} width={24}  />}
+                                                <View style={[styles.check]}>
+                                                      {isOn && <CheckIcon height={24} width={24} />}
                                                 </View>
 
                                                 {/* Label */}
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
             marginRight: 12,
             backgroundColor: '#fff',
       },
-     
+
       label: { flex: 1, fontSize: 16, color: COLORS.text, fontWeight: '600' },
       rightIcon: {
             width: 44,

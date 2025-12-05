@@ -4,7 +4,7 @@ import { Animated, StyleSheet, View } from 'react-native';
 const COLORS = {
   text: '#232323',
   sub: '#9E9E9E',
-  green: '#0B5733',
+  green: '#127E51',
   rowBg: '#F0FBF4',
   divider: '#EDEDED',
   backdrop: 'rgba(0,0,0,0.35)',

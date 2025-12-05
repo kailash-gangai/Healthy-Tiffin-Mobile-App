@@ -33,11 +33,12 @@ import { upsertDay } from "../../store/slice/catalogSlice";
 import { setAll } from "../../store/slice/priceSlice";
 
 import {
+  getAllMetaobjects,
   getMetaObjectByHandle,
 } from "../../shopify/queries/getMetaObject";
 import { getProductsByIds } from "../../shopify/queries/getProducts";
 import Toast, { SuccessToast } from "react-native-toast-message";
-import { extractAddonKey, extractMainKey, filterItemsByTags, sortByOrder } from "../../utils/tiffinHelpers";
+import { applyPriceThresholds, extractAddonKey, extractMainKey, filterItemsByTags, sortByOrder, updateCategoryTitle } from "../../utils/tiffinHelpers";
 import { showToastInfo, showToastSuccess } from "../../config/ShowToastMessages";
 
 const MAIN_ORDER = ["proteins", "veggies", "sides", "probiotics"];
@@ -75,6 +76,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [filteredIndex, setFilteredIndex] = useState<any>(0);
+  const [priceThresholdData, setPriceThresholdData] = useState<any>(null);
 
   const [openByKey, setOpenByKey] = useState<Record<string, boolean>>({});
   const isOpen = (k: string) => openByKey[k] ?? true;
@@ -96,6 +98,20 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   //---------------------------------------------------
   // Load Shopify MetaObjects
   //---------------------------------------------------
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getAllMetaobjects('price_threshold');
+        const price_threshold = await getMetaObjectByHandle(data[0].id);
+        setPriceThresholdData(price_threshold);  // Store the result in the state
+      } catch (error) {
+        console.error("Error fetching price threshold data:", error);
+      }
+    };
+
+    fetchData();  // Call the async function inside useEffect
+  }, []);  // Empty dependency array to run once on mount
+
   async function expandCategoryFields(metaObjectId: string) {
     const single: any[] = await getMetaObjectByHandle(metaObjectId);
 
@@ -113,6 +129,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         })
     );
   }
+
+
 
   //---------------------------------------------------
   // Fetch Menu
@@ -162,7 +180,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         value: filterItemsByTags(category.value, selectedTags), // Apply filter to addon items
       }));
       // console.log('filteredAddonCategories', filteredAddonCategories)
-      setCategories(filteredMainCategories);
+      setCategories(applyPriceThresholds(filteredMainCategories, priceThresholdData));
       setAddonCategories(filteredAddonCategories);
     } catch (err) {
       console.log("Menu Load Error:", err);
@@ -172,8 +190,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setLoading(false);
     }
   }, [currentDay, currentMetaId, selectedTags]);
-
-
   //-------------------------------
   // TIFFIN LOGIC (FULL)
   //-------------------------------
@@ -263,6 +279,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     dispatch(cartFLag());
     if (currentDay) fetchMetaAndData();
   }, [dispatch, fetchMetaAndData, currentDay]);
+
   const openNextMainSection = (currentKey: string, sortedCategories: any[], setOpen: any) => {
     const index = sortedCategories.findIndex(cat => cat.key === currentKey);
     const next = sortedCategories[index + 1];
@@ -337,7 +354,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     // scroll to top 
     scrollRef?.current?.scrollTo({ y: 0, animated: true });
   }, [lines, currentDay]);
-
   //---------------------------------------------------
   // Handle "Go to Next Day" logic
   //---------------------------------------------------
@@ -407,7 +423,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 return (
                   <Section
                     key={k}
-                    title={extractMainKey(cat.key).toUpperCase()}
+                    title={updateCategoryTitle(extractMainKey(cat.key), priceThresholdData).toUpperCase()}
                     note={
                       selectedItem
                         ? selectedItem.title?.length > 30
@@ -531,7 +547,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               styles.halfButton,
             ]}
           >
-            <PlusIcon width={16} height={16} fill="#0B5733" />
+            <PlusIcon width={16} height={16} fill="#127E51" />
             <Text style={styles.newTiffinText}>Add another tiffin</Text>
           </TouchableOpacity>
 
@@ -558,14 +574,15 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         activeOpacity={0.9}
       >
         {/* <View style={styles.cartNotch} /> */}
-        <MobileMenubg height={80} width={width+5} style={{ position: "absolute", marginBottom: -30, bottom: 0, left: 0, right: 0 }} />
+        <MobileMenubg height={80} width={width + 5} style={{ position: "absolute", marginBottom: -30, bottom: 0, left: 0, right: 0 }} />
         <View style={styles.cartBarContent}>
           <Text style={styles.cartLabel}>Cart Summary</Text>
           <Text style={styles.cartTotal}>
             Total $
             {lines
-              .reduce((sum, i) => sum + Number(i.price || 0), 0)
+              .reduce((sum, i) => sum + (Number(i.price || 0) * (i.qty || 1)), 0)
               .toFixed(2)}
+
           </Text>
         </View>
 
@@ -617,7 +634,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   addNewTiffin: {
-    borderColor: '#0B5733',
+    borderColor: '#127E51',
     backgroundColor: '#d0ece2',
   },
   newTiffinText: {
@@ -627,7 +644,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   goToNextDay: {
-    borderColor: '#0B5733',
+    borderColor: '#127E51',
     backgroundColor: '#32be84',
   },
   goToNextText: {

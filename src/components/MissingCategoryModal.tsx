@@ -18,44 +18,35 @@ import InfoIcon from '../assets/htf-icon/icon-info.svg';
 import Tiffin from '../assets/htf-icon/icon-myorder.svg';
 import CrossIcon from '../assets/htf-icon/icon-cross.svg';
 import { useAppSelector } from '../store/hooks';
-import { applyPriceThresholds } from '../screens/Home/HomeScreen';
-
-type DayName =
-  | 'Monday'
-  | 'Tuesday'
-  | 'Wednesday'
-  | 'Thursday'
-  | 'Friday'
-  | 'Saturday'
-  | 'Sunday';
+import { applyPriceThresholds } from '../utils/tiffinHelpers';
 
 type CatalogItem = {
   id: string;
   variantId: string;
   title: string;
-  description?: string;
-  tags?: string[];
+  description: string;
+  tags: string[];
   image: string | null;
   price: string | number;
 };
 
 type CatalogGroup = {
-  key: 'probiotics' | 'protein' | 'sides' | 'veggies';
+  key: 'probiotics' | 'proteins' | 'sides' | 'veggies';
   value: CatalogItem[];
 };
 
-type MissingRow = { day: DayName; tiffinPlan: number; missing: string[] };
+type MissingRow = { date: string; tiffinPlan: number; missing: string[] };
 
 export default function MissingCategoryModal({
   visible,
   onClose,
-  dataByDay,
+  dataByDate,
   missingList,
   onAdd,
 }: {
   visible: boolean;
   onClose: () => void;
-  dataByDay: Partial<Record<DayName, CatalogGroup[]>>;
+  dataByDate: Partial<Record<string, CatalogGroup[]>>; // Updated to use date (string)
   missingList: MissingRow[];
   onAdd: (payload: {
     id: string;
@@ -68,38 +59,36 @@ export default function MissingCategoryModal({
     type: 'main';
     category: string;
     qty: number;
-    day: DayName;
+    date: string;
     tiffinPlan: number;
   }) => void;
 }) {
   const { raw } = useAppSelector(state => state.price);
-  const days = useMemo(
-    () => Array.from(new Set(missingList.map(m => m.day))),
+  const dates = useMemo(
+    () => Array.from(new Set(missingList.map(m => m.date))),
     [missingList],
   );
-  const [day, setDay] = useState<DayName>(days[0] || 'Wednesday');
+  const [date, setDate] = useState<string>(dates[0] || '2025-12-01');
 
-  const plansForDay = useMemo(
+  const plansForDate = useMemo(
     () =>
       missingList
-        .filter(m => m.day === day)
+        .filter(m => m.date === date)
         .map(m => m.tiffinPlan)
         .sort((a, b) => a - b),
-    [missingList, day],
+    [missingList, date],
   );
 
-  const [plan, setPlan] = useState<number>(plansForDay[0] || 1);
+  const [plan, setPlan] = useState<number>(plansForDate[0] || 1);
 
   const missingCats = useMemo(() => {
-    const row = missingList.find(m => m.day === day && m.tiffinPlan === plan);
+    const row = missingList.find(m => m.date === date && m.tiffinPlan === plan);
     return (row?.missing ?? []).map(s => String(s).toUpperCase());
-  }, [missingList, day, plan]);
+  }, [missingList, date, plan]);
 
   const _groups = useMemo(() => {
-    const src = dataByDay[day] ?? [];
-    const want = new Set(missingCats);
-    return src.filter(g => want.has(String(g.key).toUpperCase()));
-  }, [dataByDay, day, missingCats]);
+    // console.log('dataByDate', dataByDate);
+  }, [dataByDate, date, missingCats]);
 
   const groups = applyPriceThresholds(_groups as any, raw);
 
@@ -131,7 +120,7 @@ export default function MissingCategoryModal({
         minHeight: 36,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap:4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         {iconComponent ?? (
           <FontAwesome5
             name={icon}
@@ -152,9 +141,6 @@ export default function MissingCategoryModal({
         </Text>
       </View>
     </TouchableOpacity>
-
-
-
   );
 
   return (
@@ -174,35 +160,34 @@ export default function MissingCategoryModal({
             <View style={{ flex: 1 }}>
               <Text style={s.h1}>Finish your box</Text>
               <Text style={s.subH}>
-                {day} • Tiffin {plan}
+                {date} • Tiffin {plan}
               </Text>
             </View>
             <TouchableOpacity
               onPress={onClose}
               style={s.iconBtn}
-              // hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
             >
-              <CrossIcon width={25} height={25}  />
+              <CrossIcon width={25} height={25} />
             </TouchableOpacity>
           </View>
 
           <View>
-            {/* day selector */}
+            {/* date selector */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={s.rowChips}
             >
-              {days.map(d => (
+              {dates.map(d => (
                 <Chip
-                  key={d}
+                  key={d + plan + date}
                   label={d}
-                  active={d === day}
+                  active={d === date}
                   iconComponent={<Calender width={12} height={12} />}
                   onPress={() => {
-                    setDay(d);
+                    setDate(d);
                     const first =
-                      missingList.find(m => m.day === d)?.tiffinPlan ?? 1;
+                      missingList.find(m => m.date === d)?.tiffinPlan ?? 1;
                     setPlan(first);
                   }}
                 />
@@ -215,7 +200,7 @@ export default function MissingCategoryModal({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={[s.rowChips]}
             >
-              {plansForDay.map(p => (
+              {plansForDate.map(p => (
                 <Chip
                   key={p}
                   label={`Tiffin ${p}`}
@@ -248,15 +233,15 @@ export default function MissingCategoryModal({
               <Text style={s.allSet}>All set for this tiffin.</Text>
             )}
           </View>
+
           {/* suggestions */}
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}> 
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
             {groups.map(g => (
               <View key={g.key}>
                 <View style={s.groupHdr}>
                   <Text style={s.groupTitle}>
                     {String(g.key).toUpperCase()}
                   </Text>
-                  
                 </View>
 
                 {g.value.map(it => (
@@ -270,22 +255,18 @@ export default function MissingCategoryModal({
                         }
                         style={s.imgSm}
                       />
-
                     </View>
 
                     <View style={{ flex: 1, minWidth: 0 }}>
-
-                      <View>
-                        <Text style={s.itemTitle} numberOfLines={2}>
-                          {it.title}
+                      <Text style={s.itemTitle} numberOfLines={2}>
+                        {it.title}
+                      </Text>
+                      {Number(it.price) > 0 ? (
+                        <Text style={{ marginTop: 4, fontSize: 12, color: C.subText }}>
+                          +{'('}${it.price}
+                          {')'}
                         </Text>
-                        {Number(it.price) > 0 ? (
-                          <Text style={{ marginTop: 4, fontSize: 12, color: C.subText }}>
-                            +{'('}${it.price}
-                            {')'}
-                          </Text>
-                        ) : null}
-                      </View>
+                      ) : null}
                     </View>
 
                     <TouchableOpacity
@@ -303,13 +284,12 @@ export default function MissingCategoryModal({
                           type: 'main',
                           category: String(g.key).toUpperCase(),
                           qty: 1,
-                          day,
+                          date,
                           tiffinPlan: plan,
                         })
                       }
                     >
                       <AddIcon width={17} height={17} />
-                      {/* <Text style={s.addTxt}>Add</Text> */}
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -332,6 +312,9 @@ export default function MissingCategoryModal({
     </Modal>
   );
 }
+
+
+
 
 const s = StyleSheet.create({
   backdrop: {
@@ -391,7 +374,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
   },
 
-  // Day / Tiffin Chips
+  // Day / Date Chips
   rowChips: {
     paddingHorizontal: 16,
     paddingTop: 6,

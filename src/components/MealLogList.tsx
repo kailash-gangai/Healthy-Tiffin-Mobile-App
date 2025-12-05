@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
             paddingVertical: 12,
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderColor: "#E5E7EB",
-            backgroundColor: "#0B5733",
+            backgroundColor: "#127E51",
       },
       chev: { marginLeft: 8 },
 

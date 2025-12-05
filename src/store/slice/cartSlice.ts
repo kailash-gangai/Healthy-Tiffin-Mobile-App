@@ -4,6 +4,7 @@ type AddPayload = {
   id: string;
   title: string;
   price: number | string;
+  priceAfterThreshold: number | string;
   category: string;
   day: string;
   date: string;
@@ -34,6 +35,7 @@ export type CartLine = {
   variantId: string;
   title: string;
   price: number | string;
+  priceAfterThreshold: number | string;
   qty: number;
   image?: string;
   tiffinPlan?: number;
@@ -102,6 +104,7 @@ const cartSlice = createSlice({
           variantId: p.variantId,
           title: p.title,
           price: p.price,
+          priceAfterThreshold: p.priceAfterThreshold ?? 0,
           image: p.image,
           qty: p.qty ?? 1,
           type: p.type,
@@ -120,6 +123,7 @@ const cartSlice = createSlice({
         variantId,
         title,
         price,
+        priceAfterThreshold=0,
         image,
         type,
         qty = 1,
@@ -144,6 +148,7 @@ const cartSlice = createSlice({
           title,
           tiffinPlan,
           price,
+          priceAfterThreshold ,
           image,
           qty,
           type,

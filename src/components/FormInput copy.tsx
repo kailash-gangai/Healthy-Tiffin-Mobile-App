@@ -19,7 +19,7 @@ type Props = {
 } & Omit<React.ComponentProps<typeof TextInput>, 'style' | 'placeholderTextColor'>;
 
 const COLORS = {
-    green: '#0B5733',
+    green: '#127E51',
     fieldBorder: '#E5E5E5',
     label: '#1b1b1b',
     line: '#D9D9D9',

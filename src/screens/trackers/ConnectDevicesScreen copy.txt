@@ -9,7 +9,7 @@ import AppleHealthKit, { HealthValue } from 'react-native-health';
 import AppHeader from '../../components/AppHeader';
 import { connectFitbit, getValidTokens, disconnectFitbit } from "../../config/fitbitService";
 
-const C = { green: '#0B5733', white: '#FFF', text: '#232323', sub: '#6F6F6F', chip: '#F4F5F6', ok: '#1FA56A' };
+const C = { green: '#127E51', white: '#FFF', text: '#232323', sub: '#6F6F6F', chip: '#F4F5F6', ok: '#1FA56A' };
 // // ---- Fitbit OAuth config (fill in) ----
 // const FITBIT = {
 //       clientId: '23QMBM',

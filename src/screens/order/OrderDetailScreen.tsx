@@ -76,10 +76,10 @@ export default function OrderDetailScreen({ navigation }: any) {
                 {item.title}
               </Text>
               <Text style={s.itemSub}>
-                SKU {item.sku ?? '—'} -
-                <Text style={s.price}>
+                SKU: {item.sku ?? '-'} 
+                {/* <Text style={}>
                   ${parseFloat(item.price || '0').toFixed(2)}
-                </Text>
+                </Text> */}
               </Text>
             </View>
             <Text style={s.qty}>×{item.quantity}</Text>
@@ -112,7 +112,7 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.green,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
   },
   back: {
     width: 32,
@@ -120,7 +120,7 @@ const s = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'center',
     color: COLORS.white,
-    fontSize: 22,
+    fontSize: 12,
     backgroundColor: COLORS.chip,
     opacity: 0.4,
     borderRadius: 16,
@@ -130,10 +130,10 @@ const s = StyleSheet.create({
     textAlign: 'center',
     color: COLORS.white,
     fontWeight: '800',
-    fontSize: 16,
+    fontSize: 12,
   },
 
-  body: { padding: 16, paddingBottom: 24 },
+  body: { padding: 16, paddingBottom: 16 },
 
   sectionHd: {
     marginTop: 16,
@@ -143,7 +143,6 @@ const s = StyleSheet.create({
   },
 
   metaCard: {
-    backgroundColor: '#F3F4F6',
     borderRadius: 14,
     padding: 14,
     ...SHADOW,
@@ -153,11 +152,10 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 6,
   },
-  k: { color: COLORS.sub, fontWeight: '700' },
-  v: { color: COLORS.black, fontWeight: '800' },
+  k: { color: COLORS.sub, fontWeight: '400' },
+  v: { color: COLORS.black, fontWeight: '500' },
 
   addrCard: {
-    backgroundColor: '#F9FAFB',
     borderRadius: 14,
     padding: 14,
     ...SHADOW,
@@ -165,7 +163,6 @@ const s = StyleSheet.create({
   addrLine: { color: COLORS.black, marginTop: 2 },
 
   itemRow: {
-    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 10,
     flexDirection: 'row',
@@ -179,17 +176,16 @@ const s = StyleSheet.create({
     marginRight: 10,
     backgroundColor: '#EEE',
   },
-  itemTitle: { color: COLORS.black, fontWeight: '800' },
+  itemTitle: { color: COLORS.black, fontWeight: '400', fontSize: 12 },
   itemSub: {
-    color: COLORS.sub,
+    color: COLORS.black,
     marginTop: 2,
     fontSize: 12,
     display: 'flex',
     alignItems: 'center',
     gap: 2,
   },
-  price: { color: 'red', fontWeight: '700' },
-  qty: { color: COLORS.black, fontWeight: '800', marginLeft: 8 },
+  qty: { color: COLORS.black, fontWeight: '400', marginLeft: 8 },
 
   totalRow: {
     marginTop: 16,

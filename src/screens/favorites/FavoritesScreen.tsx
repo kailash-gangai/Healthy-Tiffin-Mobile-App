@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#0B5733',
+    backgroundColor: '#127E51',
   },
   ctaTxt: { color: '#FFF', fontWeight: '700' },
 
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   addNewTiffin: {
-    borderColor: '#0B5733',
+    borderColor: '#127E51',
     backgroundColor: '#d0ece2',
   },
   newTiffinText: {

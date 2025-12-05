@@ -97,9 +97,10 @@ const ForgetPasswordScreen: React.FC<Props> = ({ navigation }) => {
                     // navigation.navigate("CodeVerification");
                 }}>
                     <LinearGradient
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        colors={[COLORS.green, COLORS.greenLight]}
+                        colors={['#42D296', '#2AB47B']}
+                        start={{ x: 0.0, y: 0.0 }}
+                        end={{ x: 1.0, y: 1.0 }}
+                        locations={[0.0982, 0.9387]}
                         style={styles.ctaGradient}
                     >
                         <Text style={styles.ctaText}>Continue </Text>

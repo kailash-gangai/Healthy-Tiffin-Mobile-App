@@ -4,7 +4,7 @@ export const COLORS = {
   card: '#FFFFFF',
   black: '#232323',
   sub: '#8e8e8e',
-  green: '#0B5733',
+  green: '#127E51',
   white50: 'rgba(255,255,255,0.5)',
   greenLight: '#0E6C40',
   subText: '#8e8e8e',

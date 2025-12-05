@@ -28,19 +28,20 @@ function Pill({
   kind: 'fulfillment' | 'payment';
 }) {
   const map =
-    kind === 'fulfillment'
-      ? {
-          FULFILLED: { bg: '#E8F4FF', fg: '#1A73E8' },
-          PARTIALLY_FULFILLED: { bg: '#E8F4FF', fg: '#1A73E8' },
-          UNFULFILLED: { bg: '#FBEAEA', fg: '#D93025' },
-          default: { bg: '#EEE', fg: '#444' },
-        }
-      : {
-          PAID: { bg: '#E6F7EF', fg: '#0F9D58' },
-          PENDING: { bg: '#FFF7E6', fg: '#C47F00' },
-          REFUNDED: { bg: '#F4E6FF', fg: '#7B57C5' },
-          default: { bg: '#EEE', fg: '#444' },
-        };
+  kind === 'fulfillment'
+    ? {
+        FULFILLED: { bg: '#E0F7FA', fg: '#00796B' }, 
+        PARTIALLY_FULFILLED: { bg: '#B3E5FC', fg: '#0288D1' }, 
+        UNFULFILLED: { bg: '#FFCDD2', fg: '#D32F2F' }, 
+        default: { bg: '#F0F0F0', fg: '#616161' }, 
+      }
+    : {
+        PAID: { bg: '#C8E6C9', fg: '#388E3C' }, 
+        PENDING: { bg: '#FFF3E0', fg: '#FF8F00' }, 
+        REFUNDED: { bg: '#E1BEE7', fg: '#7B1FA2' }, 
+        default: { bg: '#F0F0F0', fg: '#616161' }, 
+      };
+
   const c = (map as any)[text] ?? (map as any).default;
   return (
     <View style={[s.pill, { backgroundColor: c.bg }]}>
@@ -113,8 +114,7 @@ export default memo(function OrderCard({
 const s = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 12,
     ...SHADOW,
   },
@@ -134,15 +134,15 @@ const s = StyleSheet.create({
   title: {
     flexShrink: 1,
     color: COLORS.black,
-    fontWeight: '800',
-    fontSize: 16,
+    fontWeight: '500',
+    fontSize: 14,
   },
-  sub: { color: COLORS.sub, fontWeight: '600', fontSize: 12 },
+  sub: { color: COLORS.sub, fontWeight: '400', fontSize: 12 },
 
   pill: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 999,
+    borderRadius: 22,
     alignSelf: 'flex-start',
   },
   pillTxt: { fontSize: 12, fontWeight: '800' },
@@ -157,7 +157,7 @@ const s = StyleSheet.create({
     backgroundColor: '#EEE',
   },
   more: { alignItems: 'center', justifyContent: 'center' },
-  moreTxt: { fontWeight: '800', color: '#444', fontSize: 12 },
+  moreTxt: { fontWeight: '400', color: '#444', fontSize: 12 },
 
   metaGrid: {
     flexDirection: 'row',
@@ -165,8 +165,8 @@ const s = StyleSheet.create({
     marginTop: 6,
   },
   metaCol: { flexShrink: 1 },
-  metaK: { color: COLORS.sub, fontWeight: '700', fontSize: 12 },
-  metaV: { color: COLORS.black, fontWeight: '700', fontSize: 12 },
+  metaK: { color: COLORS.sub, fontWeight: '400', fontSize: 12 },
+  metaV: { color: COLORS.black, fontWeight: '400', fontSize: 12 },
 
   itemsLine: { marginTop: 8, color: COLORS.sub, fontSize: 12 },
 });

@@ -131,11 +131,10 @@ const AboutScreen: React.FC<Props> = ({ navigation }) => {
           activeOpacity={0.9}
         >
           <LinearGradient
-            colors={
-              ['#5FBC9B', '#1E9E64']
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
+           colors={['#42D296', '#2AB47B']} 
+              start={{ x: 0.0, y: 0.0 }} 
+              end={{ x: 1.0, y: 1.0 }} 
+              locations={[0.0982, 0.9387]} 
             style={[styles.button]}
 
           >

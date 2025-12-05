@@ -41,7 +41,7 @@ import SocialAuthButtons from '../../components/SocialMediaLogin';
 
 
 const { height } = Dimensions.get('window');
-const heroHeight = Math.max(240, Math.min(480, Math.round(height * 0.35)));
+const heroHeight = Math.max(350, Math.min(480, Math.round(height * 0.35)));
 
 type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: AboutScreenNavigationProp };
@@ -253,9 +253,10 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
           onPress={onSubmit}
         >
           <LinearGradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            colors={[COLORS.green, COLORS.greenLight]}
+            colors={['#42D296', '#2AB47B']} 
+            start={{ x: 0.0, y: 0.0 }} 
+            end={{ x: 1.0, y: 1.0 }} 
+            locations={[0.0982, 0.9387]} 
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Sign Up</Text>

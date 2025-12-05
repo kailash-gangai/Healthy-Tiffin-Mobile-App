@@ -41,7 +41,7 @@ const items_old = [
     unit: '',
     type: 'Steps',
     bgColor: '#DDEEE2',
-    color: '#0B5733',
+    color: '#127E51',
     navigate: 'StepsTracker',
   },
   {
@@ -185,9 +185,9 @@ export default function StatsCard() {
       try {
         let steps = '0', calories = '0', weight = '0', sleep = '0 H 0 M', water = '0';
         if (user?.customerToken) {
-          const bed_time = await getCustomerMetaField(user.customerToken, 'bed_time');       
-          const wake_up_time = await getCustomerMetaField(user.customerToken, 'wake_up_time'); 
-           weight = await getCustomerMetaField(user.customerToken, 'cur_weight'); 
+          const bed_time = await getCustomerMetaField(user.customerToken, 'bed_time');
+          const wake_up_time = await getCustomerMetaField(user.customerToken, 'wake_up_time');
+          weight = await getCustomerMetaField(user.customerToken, 'cur_weight');
 
           if (bed_time && wake_up_time) {
             const sleepMinutes = calculateSleepMinutes(bed_time, wake_up_time);

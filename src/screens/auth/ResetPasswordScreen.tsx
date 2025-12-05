@@ -24,7 +24,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: Nav };
 
 const COLORS = {
-  green: '#0B5733',
+  green: '#127E51',
   greenLight: '#0E6C40',
   white: '#FFFFFF',
   text: '#232323',
@@ -122,9 +122,10 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
           style={[styles.ctaBtn, !canSubmit && { opacity: 0.5 }]}
         >
           <LinearGradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            colors={[COLORS.green, COLORS.greenLight]}
+            colors={['#42D296', '#2AB47B']}
+            start={{ x: 0.0, y: 0.0 }}
+            end={{ x: 1.0, y: 1.0 }}
+            locations={[0.0982, 0.9387]}
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Save</Text>

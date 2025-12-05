@@ -859,7 +859,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 styles.halfButton,
               ]}
             >
-              <PlusIcon width={16} height={16} fill="#0B5733" />
+              <PlusIcon width={16} height={16} fill="#127E51" />
               <Text style={styles.newTiffinText}>Add another tiffin</Text>
             </TouchableOpacity>
           )}
@@ -954,7 +954,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   addNewTiffin: {
-    borderColor: '#0B5733',
+    borderColor: '#127E51',
     backgroundColor: '#d0ece2',
   },
   newTiffinText: {
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   goToNextDay: {
-    borderColor: '#0B5733',
+    borderColor: '#127E51',
     backgroundColor: '#32be84',
   },
   goToNextText: {
@@ -1026,7 +1026,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tiffinText: {
-    color: '#0B5733',
+    color: '#127E51',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
@@ -1055,13 +1055,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterText: {
-    color: '#0B5733',
+    color: '#127E51',
     fontSize: 14,
     fontWeight: '600',
     flex: 1,
   },
   clearFilterButton: {
-    backgroundColor: '#0B5733',
+    backgroundColor: '#127E51',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,

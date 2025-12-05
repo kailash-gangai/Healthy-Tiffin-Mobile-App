@@ -57,7 +57,7 @@ const COLORS = {
   white: '#FFFFFF',
   black: '#000000',
   gray: '#8A8A8A',
-  green: '#0B5733',
+  green: '#127E51',
   yellow: '#FFCA40',
   bg: 'rgba(0,0,0,0.45)',
   lightGray: '#F4F4F4',
@@ -169,7 +169,7 @@ export default function CartSummaryModal({
   if (!hasAnyMain) tiffinPrice = 0;
 
   const subtotal = mealCost + addons;
-  const total = subtotal + tiffinPrice;
+  const total = subtotal;
 
   // Group items by date and tiffin plan
   const dates = useMemo(() => {
@@ -207,20 +207,21 @@ export default function CartSummaryModal({
   );
 
   // Missing categories validation
+  // Missing categories validation
   const missingInfo = useMemo(() => {
     if (!hasAnyMain) return null;
-    const ring = rotateFromToday(WEEK);
-    const daysInCart = [...new Set(lines.map(l => l.day))].filter(
-      Boolean,
-    ) as string[];
-    const scan = ring.filter(d => daysInCart.includes(d));
+
+    // Get unique dates from the lines (use the actual date)
+    const datesInCart = [...new Set(lines.map(l => l.date))].filter(Boolean) as string[];
+
     const allMissing: any[] = [];
 
-    for (const d of scan) {
+    // Iterate over each unique date in the cart
+    for (const d of datesInCart) {
       const tiffinPlans = [
         ...new Set(
           lines
-            .filter(l => l.day === d && l.type === 'main')
+            .filter(l => l.date === d && l.type === 'main')
             .map(l => l.tiffinPlan),
         ),
       ].sort();
@@ -229,15 +230,16 @@ export default function CartSummaryModal({
         const catsPresent = new Set(
           lines
             .filter(
-              l => l.day === d && l.type === 'main' && l.tiffinPlan === plan,
+              l => l.date === d && l.type === 'main' && l.tiffinPlan === plan,
             )
             .map(l => String(l.category).toUpperCase()),
         );
         const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
         if (missing.length)
-          allMissing.push({ day: d, tiffinPlan: plan, missing });
+          allMissing.push({ date: d, tiffinPlan: plan, missing });
       }
     }
+
     return allMissing.length ? allMissing : null;
   }, [lines, hasAnyMain]);
 
@@ -276,9 +278,15 @@ export default function CartSummaryModal({
         (s: number, x: any) => s + Number(x.price || 0) * (x.qty ?? 1),
         0,
       );
+      const mainExtra = mains
+      .filter((x: any) => Number(x.priceAfterThreshold) > 0)
+      .reduce(
+        (s: number, x: any) => s + Number(x.priceAfterThreshold || 0) * (x.qty ?? 1),
+        0,
+      )
     const plansCount = new Set(mains.map((m: any) => m.tiffinPlan)).size;
     const dayBase = plansCount > 0 ? 29 * plansCount : 0;
-    const dayTotal = dayBase + dayMainsExtra + dayAddonsTotal;
+    const dayTotal = dayMainsExtra + dayAddonsTotal;
     // Function to get the day with suffix (st, nd, rd, th)
     return (
       <View style={s.dayCard}>
@@ -289,7 +297,10 @@ export default function CartSummaryModal({
         >
           <Text style={s.dayText}>{formatDate(date)}</Text>
           <View style={s.priceTag}>
-            <Text style={s.priceText}>${dayTotal.toFixed(2)}</Text>
+            <Text style={s.priceText}>
+              ${(dayTotal-mainExtra).toFixed(2)} {'+ $' + (mainExtra > 0 && mainExtra.toFixed(2))}
+            </Text>
+
           </View>
           <View style={s.arrowBox}>
 
@@ -352,10 +363,10 @@ export default function CartSummaryModal({
                                     {item.title}
                                   </Text>
 
-                                  {Number(item.price) > 0 && (
+                                  {Number(item.priceAfterThreshold) > 0 && (
                                     <View style={s.priceBadge}>
                                       <Text style={s.priceBadgeText}>
-                                        +${item.price}
+                                        +${item.priceAfterThreshold}
                                       </Text>
                                     </View>
                                   )}
@@ -402,69 +413,71 @@ export default function CartSummaryModal({
                     <TrashIcon height={16} width={16} />
                   </TouchableOpacity> */}
                 </View>
+                <View style={s.planItems}>
 
-                {addons.map((item: any) => (
-                  <View
-                    key={`${item.id}-${item.variantId}-${item.tiffinPlan}-${item.type}-${item.day}-${item.category}-${item.title}`}
-                    style={s.itemRow}
-                  >
-                    <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <View style={s.itemCategory}>
-                        <Text >
-                          {item.category}
-                        </Text>
-                      </View>
-                      <Text> </Text>
-                    </View>
-
-                    <View style={s.itemContent}>
-                      <View style={s.itemContent2}>
-                        <View style={s.thumb}>
-                          <Image
-                            source={{ uri: item.image }}
-                            style={s.imgMini}
-                          />
-                        </View>
-
-                        <View style={s.content}>
-                          <Text
-                            style={s.itemName}
-                            numberOfLines={3} // Prevents overflow and truncates text
-                            ellipsizeMode="tail" // Adds "..." when text overflows
-                          >
-                            {item.title}
+                  {addons.map((item: any) => (
+                    <View
+                      key={`${item.id}-${item.variantId}-${item.tiffinPlan}-${item.type}-${item.day}-${item.category}-${item.title}`}
+                      style={s.itemRow}
+                    >
+                      <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <View style={s.itemCategory}>
+                          <Text >
+                            {item.category}
                           </Text>
+                        </View>
+                        <Text> </Text>
+                      </View>
 
-                          {Number(item.price) > 0 && (
-                            <View style={s.priceBadge}>
-                              <Text style={s.priceBadgeText}>
-                                ${item.price}
-                              </Text>
-                            </View>
-                          )}
+                      <View style={s.itemContent}>
+                        <View style={s.itemContent2}>
+                          <View style={s.thumb}>
+                            <Image
+                              source={{ uri: item.image }}
+                              style={s.imgMini}
+                            />
+                          </View>
+
+                          <View style={s.content}>
+                            <Text
+                              style={s.itemName}
+                              numberOfLines={3} // Prevents overflow and truncates text
+                              ellipsizeMode="tail" // Adds "..." when text overflows
+                            >
+                              {item.title}
+                            </Text>
+
+                            {Number(item.price) > 0 && (
+                              <View style={s.priceBadge}>
+                                <Text style={s.priceBadgeText}>
+                                  ${item.price} {item.qty > 1 && `x ${item.qty}`}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+
+                        <View style={{ display: 'flex', justifyContent: 'center' }}>
+                          <TouchableOpacity
+                            style={s.deleteBtn}
+                            onPress={() =>
+                              dispatch(
+                                removeItem({
+                                  id: item.id,
+                                  variantId: item.variantId,
+                                  tiffinPlan: item.tiffinPlan,
+                                  type: item.type,
+                                }),
+                              )
+                            }
+                          >
+                            <TrashIcon height={16} width={16} />
+                          </TouchableOpacity>
                         </View>
                       </View>
-
-                      <View style={{ display: 'flex', justifyContent: 'center' }}>
-                        <TouchableOpacity
-                          style={s.deleteBtn}
-                          onPress={() =>
-                            dispatch(
-                              removeItem({
-                                id: item.id,
-                                variantId: item.variantId,
-                                tiffinPlan: item.tiffinPlan,
-                                type: item.type,
-                              }),
-                            )
-                          }
-                        >
-                          <TrashIcon height={16} width={16} />
-                        </TouchableOpacity>
-                      </View>
                     </View>
-                  </View>
-                ))}
+                  ))}
+                </View>
               </View>
             )}
           </View>
@@ -482,7 +495,7 @@ export default function CartSummaryModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }], }]}>
-        <MobileMenubg height={85} width={width+5} style={{ position: "absolute", top: -3, left: 0, right: 0 }} />
+        <MobileMenubg height={85} width={width + 5} style={{ position: "absolute", top: -3, left: 0, right: 0 }} />
         <Pressable style={s.handleWrapper} onPress={onClose} onPressIn={onClose}>
           <View style={s.handle}></View>
         </Pressable>
@@ -541,10 +554,16 @@ export default function CartSummaryModal({
             {/* Validation Messages */}
             {missingInfo && (
               <View style={s.validationBox}>
-                <Text style={s.validationTitle}>Missing Items</Text>
                 <Text style={s.validationText}>
                   Please complete all tiffins before proceeding
                 </Text>
+                {missingInfo.map((item, index) => (
+                  <View key={index}>
+                    <Text style={[s.validationText, { color: '#666' }]}>
+                      {item.date}: Tiffin Plan {item.tiffinPlan} is missing {item.missing.join(', ')}.
+                    </Text>
+                  </View>
+                ))}
               </View>
             )}
 
@@ -579,9 +598,9 @@ export default function CartSummaryModal({
               <View>
 
                 <View style={s.summaryRow}>
-                  <Text style={s.label}>Subtotal</Text>
+                  <Text style={s.label}>Meal Box</Text>
                   <Text style={s.value}>
-                    ${(mealCost + tiffinPrice).toFixed(2)}
+                    ${(mealCost).toFixed(2)}
                   </Text>
                 </View>
                 <View style={s.summaryRow}>
@@ -602,9 +621,10 @@ export default function CartSummaryModal({
             <WaveImageOrder style={s.wave} />
 
             <LinearGradient
-              colors={
-                canProceed ? ['#5FBC9B', '#1E9E64'] : ['#5FBC9B', '#88c3a8ff']
-              }
+              colors={['#42D296', '#2AB47B']}
+              start={{ x: 0.0, y: 0.0 }}
+              end={{ x: 1.0, y: 1.0 }}
+              locations={[0.0982, 0.9387]}
               style={s.orderBtn}
             >
               <TouchableOpacity

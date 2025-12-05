@@ -41,12 +41,12 @@ type Dish = {
 const COLORS = {
   text: '#232323',
   sub: '#7A7A7A',
-  green: '#0B5733',
+  green: '#127E51',
   white: '#FFFFFF',
   border: '#E7ECE9',
   borderStrong: '#D7E2DC',
   pill: '#F2F7F4',
-  badge: '#0B5733',
+  badge: '#127E51',
   shadow: 'rgba(0,0,0,0.08)',
 };
 
@@ -131,7 +131,7 @@ export default React.memo(function AddonDishCard({
       tiffinPlan,
       qty: 1,
     };
-    console.log('Adding to cart:', itemWithMeta);
+    // console.log('Adding to cart:', itemWithMeta);
     dispatch(addItem(itemWithMeta as any));
     onChange?.({ ...item, selected: true, liked: isFav });
   }, [dispatch, item, category, day, tiffinPlan, onChange, isFav]);
@@ -280,10 +280,9 @@ export default React.memo(function AddonDishCard({
           <View style={s.textWrap}>
             <Text style={s.title} numberOfLines={2}>
               {item.title}
+              <Text style={s.priceText}> ${item.price}</Text>
             </Text>
-            <View >
-              <Text style={s.priceText}>${item.price}</Text>
-            </View>
+
           </View>
 
           {/* Qty Control */}
@@ -379,11 +378,11 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.green,
   },
   iconBtn: {
-  
+
     position: 'absolute',
     bottom: 12,
     right: 4,
-    backgroundColor:'#CBC6CD',
+    backgroundColor: '#CBC6CD',
     borderStyle: 'solid',
     borderRadius: 14,
   },
@@ -410,7 +409,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingVertical: 4,
     gap: 6,
   },
   pillBtn: {

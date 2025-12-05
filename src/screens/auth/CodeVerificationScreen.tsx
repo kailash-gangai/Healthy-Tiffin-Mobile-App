@@ -20,7 +20,7 @@ type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Props = { navigation: AboutScreenNavigationProp };
 
 const COLORS = {
-  green: '#0B5733',
+  green: '#127E51',
   greenLight: '#0E6C40',
   white: '#FFFFFF',
   text: '#232323',

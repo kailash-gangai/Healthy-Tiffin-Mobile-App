@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         borderWidth: 0.5,
         borderColor: '#E9E8E9',
-           },
+    },
     vegTag: {
         backgroundColor: '#A6CE39', // Green color for VEG
     },
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
         color: '#127e51', // White text when selected
     },
     defaultTag: {
-        backgroundColor: '#0B5733', // Default light background for tags
+        backgroundColor: '#127E51', // Default light background for tags
     },
 });
 

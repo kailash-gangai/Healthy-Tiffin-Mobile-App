@@ -25,7 +25,7 @@ const width = Dimensions.get('window').width;
 const COLORS = {
   text: '#232323',
   sub: '#9E9E9E',
-  green: '#0B5733',
+  green: '#127E51',
   white: '#FFFFFF',
   lightGray: '#EDEDED',
   veg: '#A6CE39',
@@ -99,7 +99,6 @@ export default function DishCard({
       tiffinPlan,
       qty: 1,
     };
-
     if (isItemInCart) {
       // Remove if already selected
       dispatch(
@@ -185,9 +184,9 @@ export default function DishCard({
           {/* Selection circle */}
           <LinearGradient
             colors={isItemInCart ? ['#5FBC9B', '#1E9E64'] : ['#fff', '#fff']}
-           style={[s.radio, isItemInCart && s.radioOn]}
+            style={[s.radio, isItemInCart && s.radioOn]}
           >
-                     
+
           </LinearGradient>
         </View>
 
@@ -212,12 +211,13 @@ export default function DishCard({
 
         {/* Product Info */}
         <View style={s.textWrap}>
-          <Text style={s.title} numberOfLines={2}>
+          <Text style={s.title} >
             {item.title || 'Product Name'}
+            {item.priceAfterThreshold !== 0 && (
+              <Text style={s.price}> +${item.priceAfterThreshold || '0.00'}</Text>
+            )}
           </Text>
-          {item.price !== 0 && (
-            <Text style={s.price}>+ ${item.price || '0.00'}</Text>
-          )}
+
         </View>
       </TouchableOpacity>
 
@@ -256,7 +256,7 @@ const s = StyleSheet.create({
     position: 'absolute',
     bottom: 12,
     right: 4,
-    backgroundColor:'#CBC6CD',
+    backgroundColor: '#CBC6CD',
     borderStyle: 'solid',
     borderRadius: 14,
   },
@@ -275,7 +275,7 @@ const s = StyleSheet.create({
   radioOn: {
     borderRadius: 10,
     borderColor: '#FFFFFF',
-    // backgroundColor: '#0B5733',
+    // backgroundColor: '#127E51',
   },
   // radioDot: {
   //   width: 8,

@@ -12,7 +12,6 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
-  TextInput,
 } from 'react-native';
 
 import AppHeader from '../../components/AppHeader';
@@ -22,25 +21,21 @@ import WaveImageOrder from '../../assets/newicon/img-order.svg';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   addItems,
-  clearCart,
-  decreaseItem,
-  increaseItem,
   removeDayAddons,
-  removeDayMains,
   removeItem,
 } from '../../store/slice/cartSlice';
 
-import ArrowUp from '../../assets/htf-icon/icon-up.svg';
-import ArrowDown from '../../assets/htf-icon/icon-down.svg';
-import TrashIcon from '../../assets/htf-icon/icon-trans.svg';
+import ArrowDown from '../../assets/newicon/icon-down-arrow.svg';
+import TrashIcon from '../../assets/newicon/icon-delete.svg';
 import Divider from '../../assets/newicon/divider.svg';
 import InfoIcon from '../../assets/htf-icon/icon-info.svg';
 import LinearGradient from 'react-native-linear-gradient';
 
-import { SHADOW } from '../../ui/theme';
+import { COLORS, SHADOW } from '../../ui/theme';
 import { COLORS as C } from '../../ui/theme';
 import MissingCategoryModal from '../../components/MissingCategoryModal';
 import { formatDate } from '../../utils/tiffinHelpers';
+import OrderNote from '../../components/OrderNote';
 
 const MAIN_CAT_ORDER = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 const REQUIRED_CATS = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
@@ -60,9 +55,10 @@ const catRank = (c?: string) => {
 
 export default function CartScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
-  const { byDay } = useAppSelector(state => state.catalog);
+  const { byDate } = useAppSelector(state => state.catalog);
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
+  const [collapsed, setCollapsed] = useState(true); // Collapsed state for the note section
 
   const [note, setNote] = useState('');
   const [expandedDays, setExpandedDays] = useState<{ [key: string]: boolean }>({});
@@ -71,7 +67,7 @@ export default function CartScreen({ navigation }: any) {
   const toggleDay = (date: string) =>
     setExpandedDays(prev => ({ ...prev, [date]: !prev[date] }));
 
-  const isDayOpen = (date: string) => expandedDays[date] ?? false;
+  const isDayOpen = (date: string) => expandedDays[date] ?? true;
 
   const hasAnyMain = useMemo(
     () => lines.some(l => l.type === 'main'),
@@ -97,16 +93,22 @@ export default function CartScreen({ navigation }: any) {
   if (!hasAnyMain) tiffinPrice = 0;
 
   const subtotal = mealCost + addons;
-  const total = subtotal + tiffinPrice;
+  const total = subtotal ;
 
   const isEmpty = lines.length === 0;
 
   // ===== Days (Sorted) =====
   const dates = useMemo(() => {
     const byDaySet = [...new Set(lines.map(l => l.date))].filter(Boolean) as string[];
-    const ring = rotateFromToday(WEEK);
-    return byDaySet.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
+    // Convert string dates to Date objects for proper sorting
+    const sortedDates = byDaySet.sort((a, b) => {
+      const dateA = new Date(a);
+      const dateB = new Date(b);
+      return dateA.getTime() - dateB.getTime(); // Sorting in ascending order
+    });
+    return sortedDates; // Return the sorted dates array
   }, [lines]);
+
 
   // ===== Grouped items =====
   const grouped = useMemo(
@@ -138,34 +140,44 @@ export default function CartScreen({ navigation }: any) {
   const missingInfo = useMemo(() => {
     if (!hasAnyMain) return null;
 
-    const ring = rotateFromToday(WEEK);
-    const daysInCart = [...new Set(lines.map(l => l.date))].filter(Boolean) as string[];
-    const scan = ring.filter(d => daysInCart.includes(d));
+    // Get unique dates from lines
+    const datesInCart = [...new Set(lines.map(l => l.date))].filter(Boolean) as string[];
+    console.log(datesInCart, 'datesInCart'); // Log the unique dates in cart
 
     const allMissing: any[] = [];
-    for (const d of scan) {
+
+    // Iterate over each date in the cart
+    for (const d of datesInCart) {
+      console.log(d, 'date');
+
+      // Get unique tiffin plans for the given date
       const tiffinPlans = [
         ...new Set(
-          lines.filter(l => l.date === d && l.type === 'main').map(l => l.tiffinPlan),
+          lines.filter(l => l.date === d && l.type === 'main').map(l => l.tiffinPlan)
         ),
       ].sort();
 
+      // Check for missing categories for each tiffin plan on the date
       for (const plan of tiffinPlans) {
         const catsPresent = new Set(
           lines
-            .filter(
-              l => l.date === d && l.type === 'main' && l.tiffinPlan === plan,
-            )
-            .map(l => String(l.category).toUpperCase()),
+            .filter(l => l.date === d && l.type === 'main' && l.tiffinPlan === plan)
+            .map(l => String(l.category).toUpperCase()) // Make sure category is in uppercase
         );
+
+        // Find missing categories
         const missing = REQUIRED_CATS.filter(c => !catsPresent.has(c));
-        if (missing.length) allMissing.push({ date: d, tiffinPlan: plan, missing });
+        if (missing.length) {
+          allMissing.push({ date: d, tiffinPlan: plan, missing });
+        }
       }
     }
 
-    return allMissing.length ? allMissing : null;
+    console.log(allMissing, 'allMissing');
+    return allMissing.length ? allMissing : null; // Return missing info or null if no missing categories
   }, [lines, hasAnyMain]);
 
+  console.log(missingInfo, "missingInfo")
   // ===== A La Carte Minimum =====
   const ADDONS_MIN = 29;
   const addonsOnly = hasAnyAddon && !hasAnyMain;
@@ -187,7 +199,14 @@ export default function CartScreen({ navigation }: any) {
   // =======================================
   // RENDER
   // =======================================
+  const toggleCollapse = () => {
+    setCollapsed(prevState => !prevState);
+  };
 
+  // Handle note input change
+  const handleNoteChange = (text: string) => {
+    setNote(text);
+  };
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar barStyle="dark-content" />
@@ -220,10 +239,17 @@ export default function CartScreen({ navigation }: any) {
                 (s, x) => s + Number(x.price) * (x.qty ?? 1),
                 0,
               );
-
+            const mainExtra = mains
+              .filter((x: any) => Number(x.priceAfterThreshold) > 0)
+              .reduce(
+                (s: number, x: any) => s + Number(x.priceAfterThreshold || 0) * (x.qty ?? 1),
+                0,
+              )
             const plansCount = new Set(mains.map(m => m.tiffinPlan)).size;
             const dayBase = plansCount > 0 ? 29 * plansCount : 0;
-            const dayTotal = dayBase + dayMainsExtra + dayAddonsTotal;
+            // const dayTotal = dayBase + dayMainsExtra + dayAddonsTotal;
+            const dayTotal = dayMainsExtra + dayAddonsTotal;
+
 
             return (
               <View key={date} style={styles.dayCard}>
@@ -235,15 +261,15 @@ export default function CartScreen({ navigation }: any) {
 
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={styles.priceTag}>
-                      <Text style={styles.priceTagText}>${dayTotal.toFixed(2)}</Text>
+                      <Text style={styles.priceTagText}>
+                        ${(dayTotal - mainExtra).toFixed(2)} {'+ $' + (mainExtra > 0 && mainExtra.toFixed(2))}
+                      </Text>
                     </View>
 
                     <View style={styles.arrowBox}>
-                      {isDayOpen(date) ? (
-                        <ArrowUp width={20} height={20} />
-                      ) : (
-                        <ArrowDown width={20} height={20} />
-                      )}
+
+                      <ArrowDown style={isDayOpen(date) && { transform: [{ rotate: '180deg' }] }} width={20} height={20} />
+
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -256,45 +282,70 @@ export default function CartScreen({ navigation }: any) {
                     {tiffinPlans.map(plan => (
                       <View key={plan.plan} style={styles.section}>
                         <Text style={styles.planTitle}>Tiffin {plan.plan}</Text>
-
-                        {plan.items.map((item: any) => (
-                          <View
-                            key={`${item.id}-${item.variantId}-${item.tiffinPlan}`}
-                            style={styles.itemRow}
-                          >
-                            <View style={styles.itemContent}>
-                              <View style={styles.itemLeft}>
-                                <Image source={{ uri: item.image }} style={styles.imgMini} />
-
-                                <View style={styles.itemDetails}>
-                                  <Text style={styles.itemCategory}>{item.category}</Text>
-                                  <Text style={styles.itemName}>{item.title}</Text>
-                                  {Number(item.price) > 0 && (
-                                    <Text style={styles.itemPrice}>
-                                      +${item.price}
-                                    </Text>
-                                  )}
+                        <View style={styles.items}>
+                          {plan.items.map((item: any) => (
+                            <View
+                              key={`${item.id}-${item.variantId}-${item.tiffinPlan}-${item.type}-${item.day}-${item.category}-${item.title}`}
+                              style={styles.itemRow}
+                            >
+                              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <View style={styles.itemCategory}>
+                                  <Text >
+                                    {item.category}
+                                  </Text>
                                 </View>
+                                <Text> </Text>
                               </View>
 
-                              <TouchableOpacity
-                                style={styles.deleteBtn}
-                                onPress={() =>
-                                  dispatch(
-                                    removeItem({
-                                      id: item.id,
-                                      variantId: item.variantId,
-                                      tiffinPlan: item.tiffinPlan as number,
-                                      type: item.type as 'main' | 'addon',
-                                    }),
-                                  )
-                                }
-                              >
-                                <TrashIcon width={18} height={18} />
-                              </TouchableOpacity>
+                              <View style={styles.itemContent}>
+                                <View style={styles.itemContent2}>
+                                  <View style={styles.thumb}>
+                                    <Image
+                                      source={{ uri: item.image }}
+                                      style={styles.imgMini}
+                                    />
+                                  </View>
+
+                                  <View style={styles.content}>
+                                    <Text
+                                      style={styles.itemName}
+                                      numberOfLines={3} // Prevents overflow and truncates text
+                                      ellipsizeMode="tail" // Adds "..." when text overflows
+                                    >
+                                      {item.title}
+                                    </Text>
+
+                                    {Number(item.priceAfterThreshold) > 0 && (
+                                      <View style={styles.priceBadge}>
+                                        <Text style={styles.priceBadgeText}>
+                                          +${item.priceAfterThreshold}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  </View>
+                                </View>
+
+                                <View style={{ display: 'flex', justifyContent: 'center' }}>
+                                  <TouchableOpacity
+                                    style={styles.deleteBtn}
+                                    onPress={() =>
+                                      dispatch(
+                                        removeItem({
+                                          id: item.id,
+                                          variantId: item.variantId,
+                                          tiffinPlan: item.tiffinPlan,
+                                          type: item.type,
+                                        }),
+                                      )
+                                    }
+                                  >
+                                    <TrashIcon height={16} width={16} />
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
                             </View>
-                          </View>
-                        ))}
+                          ))}
+                        </View>
                       </View>
                     ))}
 
@@ -302,70 +353,59 @@ export default function CartScreen({ navigation }: any) {
                     {addons.length > 0 && (
                       <View style={styles.section}>
                         <View style={styles.sectionHeader}>
-                          <Text style={[styles.sectionChip, styles.addonChip]}>Add-ons</Text>
+                          <Text style={[styles.sectionChip, styles.addonChip]}>A La Carte</Text>
 
-                          <TouchableOpacity
+                          {/* <TouchableOpacity
                             style={styles.deleteBtn}
                             onPress={() => dispatch(removeDayAddons({ date }))}
                           >
                             <TrashIcon width={18} height={18} />
-                          </TouchableOpacity>
+                          </TouchableOpacity> */}
                         </View>
 
                         {addons.map(item => (
                           <View
-                            key={`${item.id}-${item.variantId}`}
+                            key={`${item.id}-${item.variantId}-${item.tiffinPlan}-${item.type}-${item.day}-${item.category}-${item.title}`}
                             style={styles.itemRow}
                           >
+                            <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                              <View style={styles.itemCategory}>
+                                <Text >
+                                  {item.category}
+                                </Text>
+                              </View>
+                              <Text> </Text>
+                            </View>
+
                             <View style={styles.itemContent}>
-                              <View style={styles.itemLeft}>
-                                <Image source={{ uri: item.image }} style={styles.imgMini} />
+                              <View style={styles.itemContent2}>
+                                <View style={styles.thumb}>
+                                  <Image
+                                    source={{ uri: item.image }}
+                                    style={styles.imgMini}
+                                  />
+                                </View>
 
-                                <View style={styles.additemDetails}>
-                                  <Text style={[styles.itemCategory, styles.addonCategory]}>
-                                    {item.category}
+                                <View style={styles.content}>
+                                  <Text
+                                    style={styles.itemName}
+                                    numberOfLines={3} // Prevents overflow and truncates text
+                                    ellipsizeMode="tail" // Adds "..." when text overflows
+                                  >
+                                    {item.title}
                                   </Text>
-                                  <Text style={styles.itemName}>{item.title}</Text>
 
-                                  <Text style={styles.itemExtra}>${item.price}</Text>
+                                  {Number(item.price) > 0 && (
+                                    <View style={styles.priceBadge}>
+                                      <Text style={styles.priceBadgeText}>
+                                        +${item.price}
+                                      </Text>
+                                    </View>
+                                  )}
                                 </View>
                               </View>
 
-                              <View style={styles.bControls}>
-                                <TouchableOpacity
-                                  style={styles.qtyBtn}
-                                  onPress={() =>
-                                    dispatch(
-                                      decreaseItem({
-                                        id: item.id,
-                                        variantId: item.variantId,
-                                        tiffinPlan: item.tiffinPlan as number,
-                                        type: item.type,
-                                      }),
-                                    )
-                                  }
-                                >
-                                  <Text style={styles.qtyBtnText}>−</Text>
-                                </TouchableOpacity>
-
-                                <Text style={styles.qtyText}>{item.qty}</Text>
-
-                                <TouchableOpacity
-                                  style={styles.qtyBtn}
-                                  onPress={() =>
-                                    dispatch(
-                                      increaseItem({
-                                        id: item.id,
-                                        variantId: item.variantId,
-                                        tiffinPlan: item.tiffinPlan as number,
-                                        type: item.type,
-                                      }),
-                                    )
-                                  }
-                                >
-                                  <Text style={styles.qtyBtnText}>+</Text>
-                                </TouchableOpacity>
-
+                              <View style={{ display: 'flex', justifyContent: 'center' }}>
                                 <TouchableOpacity
                                   style={styles.deleteBtn}
                                   onPress={() =>
@@ -379,7 +419,7 @@ export default function CartScreen({ navigation }: any) {
                                     )
                                   }
                                 >
-                                  <TrashIcon width={18} height={18} />
+                                  <TrashIcon height={16} width={16} />
                                 </TouchableOpacity>
                               </View>
                             </View>
@@ -403,17 +443,33 @@ export default function CartScreen({ navigation }: any) {
             );
           })}
 
-          <View style={styles.noteWrap}>
-            <Text style={styles.noteLabel}>Add delivery instructions</Text>
-            <TextInput
-              style={styles.noteInput}
-              placeholder="Add a note"
-              placeholderTextColor={C.sub}
-              multiline
-              value={note}
-              onChangeText={setNote}
-            />
-          </View>
+          {missingInfo && (
+            <View style={styles.validationBox}>
+              <InfoIcon width={20} height={20} />
+              <View>
+                <Text style={[styles.validationText, { fontWeight: '500', color: '#7f4f06ff' }]}>Some meals are incomplete</Text>
+                {missingInfo.map((item, index) => (
+                  <View key={index}>
+                    <Text style={[styles.validationText, { color: '#666' }]}>
+                      {item.date}: Tiffin Plan {item.tiffinPlan} is missing {item.missing.join(', ')}.
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              {/* <TouchableOpacity
+                style={styles.validationBtn}
+                onPress={() => setMissingOpen(true)}
+              >
+                <Text style={styles.validationBtnTxt}>Add</Text>
+              </TouchableOpacity> */}
+            </View>
+          )}
+          <OrderNote
+            collapsed={collapsed}
+            toggleCollapse={toggleCollapse}
+            note={note}
+            onChangeNote={handleNoteChange}
+          />
 
           {/* Summary */}
           <View style={styles.summaryCard}>
@@ -446,43 +502,25 @@ export default function CartScreen({ navigation }: any) {
           <WaveImageOrder style={styles.wave} />
 
 
-          {/* Missing Category Modal */}
-          {missingInfo && (
-            <MissingCategoryModal
-              visible={missingOpen}
-              onClose={() => setMissingOpen(false)}
-              dataByDay={byDay}
-              missingList={missingInfo}
-              onAdd={payload => dispatch(addItems([payload] as any))}
-            />
-          )}
+
         </ScrollView>
       )}
 
       {/* Footer CTA */}
       {!isEmpty && (
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-          {missingInfo && (
-            <View style={styles.validationBox}>
-              <InfoIcon width={20} height={20} />
-              <Text style={styles.validationText}>Some meals are incomplete</Text>
-              <TouchableOpacity
-                style={styles.validationBtn}
-                onPress={() => setMissingOpen(true)}
-              >
-                <Text style={styles.validationBtnTxt}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
           <LinearGradient
-            colors={canProceed ? ['#5FBC9B', '#1E9E64'] : ['#CCCCCC', '#999999']}
+            colors={['#42D296', '#2AB47B']}
+            start={{ x: 0.0, y: 0.0 }}
+            end={{ x: 1.0, y: 1.0 }}
+            locations={[0.0982, 0.9387]}
             style={styles.orderBtn}
           >
             <TouchableOpacity
               disabled={!canProceed}
               onPress={() => navigation.navigate('OrderTrack')}
-              style={styles.orderBtnContent}
+              style={[styles.orderBtnContent, !canProceed && { opacity: 0.5 }]}
             >
               <Text style={styles.orderText}>
                 {canProceed
@@ -492,8 +530,9 @@ export default function CartScreen({ navigation }: any) {
             </TouchableOpacity>
           </LinearGradient>
         </View>
-      )}
-    </SafeAreaView>
+      )
+      }
+    </SafeAreaView >
   );
 }
 
@@ -502,8 +541,7 @@ export default function CartScreen({ navigation }: any) {
 // ===========================================================
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.white },
-
+  screen: { flex: 1, backgroundColor: 'F7F7F9' },
   // Empty
   emptyWrap: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: C.black, marginBottom: 20 },
@@ -532,8 +570,8 @@ const styles = StyleSheet.create({
   dayText: { fontSize: 14, lineHeight: 16, letterSpacing: -0.24, fontWeight: '500', color: C.black },
   priceTag: {
     backgroundColor: C.black,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: 12,
     marginHorizontal: 8,
   },
@@ -555,65 +593,149 @@ const styles = StyleSheet.create({
   },
 
   planTitle: { fontSize: 14, fontWeight: '700', color: C.black },
-
+  items: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
   // Chips
   sectionChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 0,
     paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: '#EAF6EF',
-    color: C.green,
     fontWeight: '700',
     fontSize: 12,
   },
-  addonChip: { backgroundColor: '#ffff', color: C.oranger },
+  addonChip: { backgroundColor: '#ffff' },
   addonCategory: { color: '#1B4FBF' },
 
-  // Items
-  itemRow: { marginTop: 10 },
+  // Item Row Styles
+  itemRow: {
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    borderRadius: 6,
+    padding: 8,
+    backgroundColor: '#ECECEE59',
+    // gap: 10
+  },
+  addonItem: {
+    backgroundColor: '#F8FAFF',
+    borderColor: '#E0E8FF',
+  },
+  thumb: {
+    position: 'relative',
+    marginRight: 12,
+    alignItems: 'center',
+  },
+  imgMini: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    resizeMode: 'cover',
+  },
+  priceBadge: {},
+  addonPriceBadge: {
+    backgroundColor: '#1B4FBF',
+  },
+  priceBadgeText: {
+    color: '#00020E',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  // In the styles section, update these:
   itemContent: {
+    display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  itemLeft: { flexDirection: 'row', alignItems: 'center' },
-  imgMini: { width: 54, height: 54, borderRadius: 16, resizeMode: 'cover' },
-  itemDetails: { marginLeft: 12, width: 220 },
-  additemDetails: { marginLeft: 12, width: 150 },
-  itemCategory: { fontSize: 11, fontWeight: '700', color: C.green },
-  itemName: { fontSize: 12, fontWeight: '600', marginTop: 2, color: C.black },
-  itemExtra: { fontSize: 12, color: C.sub, marginTop: 4 },
-
-  deleteBtn: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#FFECEC',
+  itemContent2: {
+    display: 'flex',
     justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: 'row',
+
+  },
+  content: {
+    display: 'flex',
+    width: 200,
+
+  },
+  itemCategory: {
+    textTransform: 'capitalize',
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'Poppins',
+    marginBottom: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
     borderRadius: 8,
+    borderColor: '#E0E8FF',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+
   },
 
-  // Addon qty controls
-  bControls: { flexDirection: 'row', alignItems: 'center', gap: 1 },
+  itemName: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#00020E',
+    lineHeight: 20,
+    marginBottom: 4,
+    flexWrap: 'wrap',
+    width: '100%',
+  },
+  itemQty: {
+    fontSize: 12,
+    color: COLORS.gray,
+    fontWeight: '600',
+  },
+  bControls: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  qtyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1,
+  },
   qtyBtn: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: '#D9E3DC',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  qtyBtnText: { fontSize: 12, fontWeight: '700', color: C.green },
+  qtyBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.green,
+  },
   qtyText: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.black,
+    color: COLORS.black,
     minWidth: 20,
     textAlign: 'center',
-    marginHorizontal: 4,
   },
+  deleteBtn: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#FFE3E3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    marginLeft: 8,
+    bottom: 0
+  },
+
 
   // Remove per-day items
   clearSubBtn: { marginTop: 8 },
@@ -633,7 +755,6 @@ const styles = StyleSheet.create({
 
   // Summary
   summaryCard: {
-    marginTop: 20,
     borderTopEndRadius: 16,
     borderTopStartRadius: 16,
     padding: 16,
@@ -685,8 +806,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   validationText: {
-    color: '#8A5A00',
-    fontWeight: '700',
+    color: '#000',
+    fontWeight: '400',
     flex: 1,
     marginLeft: 10,
   },

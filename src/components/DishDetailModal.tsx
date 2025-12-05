@@ -36,7 +36,7 @@ const COLORS = {
   white: '#ffffff',
   text: '#1B1B1B',
   sub: '#8F8F8F',
-  green: '#0B5733',
+  green: '#127E51',
   border: '#EEEEEE',
 };
 
@@ -170,7 +170,7 @@ export default function DishDetailModal({
     >
       <Pressable style={s.backdrop} onPress={onClose} />
       <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-        <MobileMenubg height={90} width={width+5} style={{ position: "absolute", top: -10, left: 0, right: 0 }} />
+        <MobileMenubg height={90} width={width + 5} style={{ position: "absolute", top: -10, left: 0, right: 0 }} />
 
         <TouchableOpacity onPress={onClose} style={s.handleWrapper}>
           {/* <View style={s.handle}></View> */}
@@ -274,7 +274,7 @@ function getTagColor(tag: string) {
     case 'foodmap':
       return { backgroundColor: '#A5B6A5' };
     default:
-      return { backgroundColor: '#0B5733' };
+      return { backgroundColor: '#127E51' };
   }
 }
 
