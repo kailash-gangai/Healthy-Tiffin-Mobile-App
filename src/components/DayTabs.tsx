@@ -169,8 +169,8 @@ export default function DayTabs({
      ============================================================ */
   const select = (i: number) => {
     if (i < 0 || i >= menuDays.length) return;
-
     setActive(i);  // Set the active day index
+    activeIndex = i;
     centerItem(i);
 
     const item = menuDays[i];
@@ -266,7 +266,7 @@ export default function DayTabs({
           style={{ borderRadius: 8 }}
         >
           <TouchableOpacity
-            onPress={() => select(activeIndex)}
+            onPress={() => select(active + 1)}
             disabled={active === menuDays.length - 1}
             style={[
               s.iconWrap,
