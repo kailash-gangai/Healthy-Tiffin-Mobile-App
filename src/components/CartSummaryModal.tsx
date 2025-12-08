@@ -180,31 +180,33 @@ export default function CartSummaryModal({
     return byDaySet.sort((a, b) => ring.indexOf(a) - ring.indexOf(b));
   }, [lines]);
 
-  const grouped = useMemo(
-    () =>
-      dates.map(d => {
-        const allMains = lines.filter(x => x.date === d && x.type === 'main');
-        const addons = lines.filter(x => x.date === d && x.type === 'addon');
+  const grouped = useMemo(() => {
+    const result = dates.map(d => {
+      const allMains = lines.filter(x => x.date === d && x.type === 'main');
+      const addons = lines.filter(x => x.date === d && x.type === 'addon');
 
-        const plansMap = allMains.reduce((acc: any, item: any) => {
-          if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
-          acc[item.tiffinPlan].push(item);
-          return acc;
-        }, {});
+      const plansMap = allMains.reduce((acc: any, item: any) => {
+        if (!acc[item.tiffinPlan]) acc[item.tiffinPlan] = [];
+        acc[item.tiffinPlan].push(item);
+        return acc;
+      }, {});
 
-        const tiffinPlans = Object.entries(plansMap)
-          .map(([planNumber, items]: any) => ({
-            plan: parseInt(planNumber),
-            items: items.sort(
-              (a: any, b: any) => catRank(a.category) - catRank(b.category),
-            ),
-          }))
-          .sort((a, b) => a.plan - b.plan);
+      const tiffinPlans = Object.entries(plansMap)
+        .map(([planNumber, items]: any) => ({
+          plan: parseInt(planNumber),
+          items: items.sort(
+            (a: any, b: any) => catRank(a.category) - catRank(b.category)
+          ),
+        }))
+        .sort((a, b) => a.plan - b.plan);
 
-        return { date: d, mains: allMains, tiffinPlans, addons };
-      }),
-    [dates, lines],
-  );
+      return { date: d, mains: allMains, tiffinPlans, addons };
+    });
+
+    // ORDER BY DATE
+    return result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [dates, lines]);
+
 
   // Missing categories validation
   // Missing categories validation
@@ -278,7 +280,7 @@ export default function CartSummaryModal({
         (s: number, x: any) => s + Number(x.price || 0) * (x.qty ?? 1),
         0,
       );
-      const mainExtra = mains
+    const mainExtra = mains
       .filter((x: any) => Number(x.priceAfterThreshold) > 0)
       .reduce(
         (s: number, x: any) => s + Number(x.priceAfterThreshold || 0) * (x.qty ?? 1),
@@ -298,7 +300,7 @@ export default function CartSummaryModal({
           <Text style={s.dayText}>{formatDate(date)}</Text>
           <View style={s.priceTag}>
             <Text style={s.priceText}>
-              ${(dayTotal-mainExtra).toFixed(2)} {'+ $' + (mainExtra > 0 && mainExtra.toFixed(2))}
+              ${(dayTotal - mainExtra).toFixed(2)} {'+ $' + (mainExtra > 0 && mainExtra.toFixed(2))}
             </Text>
 
           </View>

@@ -47,7 +47,7 @@ export default function Section({
     <View style={s.wrap}>
       {/* HEADER */}
       <TouchableOpacity style={s.header} onPress={toggle} activeOpacity={0.8}>
-        <Text style={s.title}>{title}:</Text>
+        <Text style={s.title}>{title}</Text>
 
         {!!note && (
           <View style={s.notePill}>

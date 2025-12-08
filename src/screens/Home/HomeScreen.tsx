@@ -345,8 +345,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     const dayTiffinPlans = new Set(
       lines.filter(item => item.date === currentDate && item.type === "main").map(item => item.tiffinPlan || 1)
     );
+    if (dayTiffinPlans.size === 0) {
+      dayTiffinPlans.add(0);
+    }
     const nextTiffinPlan = Math.max(...Array.from(dayTiffinPlans)) + 1;
-
     // Show toast for adding a new tiffin
     showToastSuccess(`Switching to Tiffin ${nextTiffinPlan} for ${currentDay}`, 'top');
     setPreviousTiffinPlan(nextTiffinPlan);
@@ -506,7 +508,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 return (
                   <Section
                     key={k}
-                    title={extractAddonKey(cat.key).toUpperCase()}
+                    title={updateCategoryTitle(extractAddonKey(cat.key), priceThresholdData).toUpperCase()}
                     open={isOpen(k)}
                     setOpen={(v) => setOpen(k, v)}
                   >
@@ -538,6 +540,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         {/* Add New Tiffin Button */}
         {/* Action Buttons */}
         <View style={styles.dualButtonWrap}>
+
           <TouchableOpacity
             onPress={handleAddNewTiffin}
             activeOpacity={0.8}

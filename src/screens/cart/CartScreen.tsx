@@ -55,7 +55,7 @@ const catRank = (c?: string) => {
 
 export default function CartScreen({ navigation }: any) {
   const { lines } = useAppSelector(state => state.cart);
-  const { byDate } = useAppSelector(state => state.catalog);
+  // const { byDate } = useAppSelector(state => state.catalog);
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
   const [collapsed, setCollapsed] = useState(true); // Collapsed state for the note section
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  dayText: { fontSize: 14, lineHeight: 16, letterSpacing: -0.24, fontWeight: '500', color: C.black },
+  dayText: { fontSize: 12, lineHeight: 16, letterSpacing: -0.24, fontWeight: '500', color: C.black },
   priceTag: {
     backgroundColor: C.black,
     paddingVertical: 10,

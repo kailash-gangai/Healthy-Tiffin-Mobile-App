@@ -4,7 +4,7 @@
 export const safeKey = (raw: any) => (typeof raw === 'string' ? raw : '');
 
 export const extractMainKey = (key: string) => {
-  return safeKey(key).replace('main_tiffin_', '').toLowerCase(); 
+  return safeKey(key).replace('main_tiffin_', '').toLowerCase();
 };
 
 export const extractAddonKey = (key: string) =>
@@ -58,26 +58,38 @@ export const filterItemsByTags = (items: any[], selectedTags: string[]) => {
   });
 };
 
-const getDayWithSuffix = (day: number) => {
-  const suffix = ['st', 'nd', 'rd', 'th'];
-  const dayMod = day % 10;
-  return (
-    day +
-    suffix[
-      day % 100 >= 11 && day % 100 <= 13 ? 3 : dayMod <= 3 ? dayMod - 1 : 3
-    ]
-  );
+export const getDayWithSuffix = (day: number) => {
+  if (!day || isNaN(day)) return ''; 
+  const mod100 = day % 100;
+
+  if (mod100 >= 11 && mod100 <= 13) return `${day}th`; // 11, 12, 13 → always "th"
+
+  switch (day % 10) {
+    case 1:
+      return `${day}st`;
+    case 2:
+      return `${day}nd`;
+    case 3:
+      return `${day}rd`;
+    default:
+      return `${day}th`;
+  }
 };
 
 // Function to format the date
 export const formatDate = (dateStr: string) => {
-  const dateObj = new Date(dateStr);
-  return `${getDayWithSuffix(dateObj.getDate())} ${dateObj.toLocaleString(
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const dateObj = new Date(year, month - 1, day);
+  if (isNaN(dateObj.getTime())) return '';
+ 
+  let formattedDate = `${getDayWithSuffix(day)} ${dateObj.toLocaleString(
     'en-US',
     { month: 'short' },
-  )}, ${dateObj.getFullYear()} | ${dateObj.toLocaleString('en-US', {
-    weekday: 'long',
+  )}, ${year} | ${dateObj.toLocaleString('en-US', {
+    weekday: 'short',
   })}`;
+  return formattedDate;
 };
 
 const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
@@ -86,7 +98,7 @@ export const rotateFromToday = (arr: string[]) => {
   if (i < 0) return arr;
   return [...arr.slice(i), ...arr.slice(0, i)];
 };
-const MAIN_CAT_ORDER = ['PROTEIN', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
+const MAIN_CAT_ORDER = ['PROTEINS', 'VEGGIES', 'SIDES', 'PROBIOTICS'];
 
 export const catRank = (c?: string) => {
   const i = MAIN_CAT_ORDER.indexOf(String(c ?? '').toUpperCase());
@@ -163,7 +175,10 @@ function keepDecimals(from: string | number, num: number) {
   return decs > 0 ? Number(num.toFixed(decs)) : Math.trunc(num);
 }
 
-export function updateCategoryTitle(category: string, priceThresholdData: any[]) {
+export function updateCategoryTitle(
+  category: string,
+  priceThresholdData: any[],
+) {
   // console.log('priceThresholdData', priceThresholdData, category);
   category = category == 'proteins' ? 'protein' : category;
   // Construct the key based on category
